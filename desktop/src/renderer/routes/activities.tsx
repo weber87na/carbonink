@@ -8,6 +8,7 @@ import { SortMenu, type SortMenuOption } from '@renderer/components/sort-menu';
 import { ChipCountBadge } from '@renderer/components/source-filters';
 import { toast } from '@renderer/components/toast';
 import { Button } from '@renderer/components/ui/button';
+import { EmptyState } from '@renderer/components/ui/empty-state';
 import { activityApi } from '@renderer/lib/api/activity-data';
 import { sourceApi } from '@renderer/lib/api/emission-source';
 import { orgApi } from '@renderer/lib/api/organization';
@@ -17,7 +18,16 @@ import * as m from '@renderer/paraglide/messages';
 import type { ActivityDataWithDocument, EmissionSource, ReportingPeriod } from '@shared/types';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, Link, Navigate } from '@tanstack/react-router';
-import { Download, FileSpreadsheet, FileText, ListTree, PenLine, Search } from 'lucide-react';
+import {
+  ClipboardList,
+  Download,
+  FileSpreadsheet,
+  FileText,
+  Layers,
+  ListTree,
+  PenLine,
+  Search,
+} from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 /**
@@ -40,7 +50,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
  * which row that ULID belongs to, rather than dropping them on a flat
  * list of identical-looking entries.
  */
-type ActivitiesSearch = { highlight?: string };
+/**
+ * `?add=true` opens the add drawer on arrival — used by the dashboard's
+ * getting-started checklist so "record activity data" lands on the form
+ * rather than on an empty list the user has to interpret first.
+ */
+type ActivitiesSearch = { highlight?: string; add?: boolean };
 
 export const Route = createFileRoute('/activities')({
   component: ActivitiesRoute,
@@ -52,11 +67,13 @@ export const Route = createFileRoute('/activities')({
     if (typeof search.highlight === 'string' && search.highlight.length > 0) {
       out.highlight = search.highlight;
     }
+    if (search.add === true || search.add === 'true') out.add = true;
     return out;
   },
 });
 
 function ActivitiesRoute() {
+  const { add } = Route.useSearch();
   const orgQuery = useQuery({
     queryKey: ['org:get-current'],
     queryFn: orgApi.getCurrent,
@@ -68,14 +85,22 @@ function ActivitiesRoute() {
   if (!orgQuery.data) {
     return <Navigate to="/onboarding/$step" params={{ step: '1' }} />;
   }
-  return <ActivitiesList organizationId={orgQuery.data.id} />;
+  return <ActivitiesList organizationId={orgQuery.data.id} openFormInitially={add === true} />;
 }
 
 type ActivitySort = 'recent' | 'oldest' | 'co2e_desc' | 'co2e_asc' | 'source';
 type ActivityScopeFilter = 'all' | 1 | 2 | 3;
 
-function ActivitiesList({ organizationId }: { organizationId: string }) {
-  const [formOpen, setFormOpen] = useState(false);
+function ActivitiesList({
+  organizationId,
+  openFormInitially,
+}: {
+  organizationId: string;
+  openFormInitially: boolean;
+}) {
+  // Seeded from `?add=true`; owned locally afterwards so closing the drawer
+  // doesn't fight the URL.
+  const [formOpen, setFormOpen] = useState(openFormInitially);
   // Batch ledger import wizard (ROADMAP §8.1-①).
   const [importOpen, setImportOpen] = useState(false);
   const [rebindActivityId, setRebindActivityId] = useState<string | null>(null);
@@ -308,7 +333,33 @@ function ActivitiesList({ organizationId }: { organizationId: string }) {
       </div>
 
       {activities.length === 0 ? (
-        <p className="shrink-0 text-sm text-muted-foreground">{m.activities_empty()}</p>
+        sources.length === 0 ? (
+          // The dead end this page used to have: "click Add Activity above"
+          // was unactionable advice with zero sources, because an activity
+          // row has to hang off one. Name the prerequisite and hand over the
+          // link instead of letting the user discover it inside the form.
+          <EmptyState
+            icon={Layers}
+            title={m.activities_empty_no_sources_title()}
+            body={m.activities_empty_no_sources_body()}
+            className="flex-1 min-h-0"
+            actions={
+              <Button asChild>
+                <Link to="/sources" search={{ catalog: true }}>
+                  {m.activities_empty_no_sources_cta()}
+                </Link>
+              </Button>
+            }
+          />
+        ) : (
+          <EmptyState
+            icon={ClipboardList}
+            title={m.activities_empty_title()}
+            body={m.activities_empty_body()}
+            className="flex-1 min-h-0"
+            actions={<Button onClick={() => setFormOpen(true)}>{m.activities_add_button()}</Button>}
+          />
+        )
       ) : visible.length === 0 ? (
         <div className="flex-1 flex min-h-0 flex-col items-center justify-center gap-2 rounded-md border border-dashed border-border bg-card/40 p-8 text-sm text-muted-foreground">
           <p>{m.activities_filter_empty()}</p>

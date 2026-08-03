@@ -24,10 +24,17 @@ vi.mock('@renderer/lib/api/organization', () => ({
 vi.mock('@renderer/lib/api/activity-data', () => ({
   activityApi: {
     totalsByPeriod: vi.fn(),
+    listByPeriod: vi.fn(),
+  },
+}));
+vi.mock('@renderer/lib/api/emission-source', () => ({
+  sourceApi: {
+    listByOrg: vi.fn(),
   },
 }));
 
 import { activityApi } from '@renderer/lib/api/activity-data';
+import { sourceApi } from '@renderer/lib/api/emission-source';
 import { orgApi } from '@renderer/lib/api/organization';
 
 const FAKE_ORG = {
@@ -79,16 +86,19 @@ function buildHarness() {
     path: '/',
     component: indexComponent,
   });
-  // We also need an /activities route for the empty-state <Link> target to
-  // resolve cleanly under the test router. The component is irrelevant — the
-  // assertion only inspects the rendered DOM at /.
-  const activitiesRoute = createRoute({
-    getParentRoute: () => rootRoute,
-    path: '/activities',
-    component: () => <div />,
-  });
+  // The getting-started checklist links to /sources, /activities and
+  // /reports, so all three must exist for the <Link>s to resolve under the
+  // test router. The components are irrelevant — assertions only inspect the
+  // rendered DOM at /.
+  const stubRoutes = ['/sources', '/activities', '/reports'].map((path) =>
+    createRoute({
+      getParentRoute: () => rootRoute,
+      path,
+      component: () => <div />,
+    }),
+  );
   const router = createRouter({
-    routeTree: rootRoute.addChildren([indexRoute, activitiesRoute]),
+    routeTree: rootRoute.addChildren([indexRoute, ...stubRoutes]),
     history: createMemoryHistory({ initialEntries: ['/'] }),
   });
   return (
@@ -98,11 +108,25 @@ function buildHarness() {
   );
 }
 
+const FAKE_SOURCE = {
+  id: 'src_01',
+  site_id: 'site_01',
+  name: 'Purchased Electricity',
+  scope: 2 as const,
+  category: 'electricity.grid',
+  ghg_protocol_path: null,
+  default_ef_query: null,
+  template_origin: null,
+  is_active: true,
+};
+
 describe('/ dashboard route', () => {
   beforeEach(() => {
     vi.mocked(orgApi.hasAny).mockResolvedValue(true);
     vi.mocked(orgApi.getCurrent).mockResolvedValue(FAKE_ORG);
     vi.mocked(orgApi.listReportingPeriods).mockResolvedValue([FAKE_PERIOD]);
+    vi.mocked(sourceApi.listByOrg).mockResolvedValue([]);
+    vi.mocked(activityApi.listByPeriod).mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -132,11 +156,37 @@ describe('/ dashboard route', () => {
       expect(zeros.length).toBe(4);
     });
 
-    // Empty-state hint links to /activities.
+    // Getting-started checklist: with no sources yet, step 1 is the live one
+    // and points at /sources with the catalog drawer pre-opened. It must NOT
+    // point at /activities — an activity can't exist without a source, which
+    // is exactly the dead end this checklist replaced.
     const link = await screen.findByRole('link', {
-      name: /Add your first activity|添加第一笔活动数据/i,
+      name: /Browse the catalog|浏览排放源目录/i,
     });
-    expect(link.getAttribute('href')).toBe('/activities');
+    expect(link.getAttribute('href')).toBe('/sources?catalog=true');
+    expect(screen.queryByRole('link', { name: /Add activity data|添加活动数据/i })).toBeNull();
+  });
+
+  it('advances the checklist to the activity step once sources exist', async () => {
+    vi.mocked(activityApi.totalsByPeriod).mockResolvedValue({
+      total_co2e_kg: 0,
+      scope1_kg: 0,
+      scope2_kg: 0,
+      scope3_kg: 0,
+    });
+    vi.mocked(sourceApi.listByOrg).mockResolvedValue([FAKE_SOURCE]);
+
+    render(buildHarness());
+
+    // Step 2 is now live and opens the add drawer on arrival.
+    const link = await screen.findByRole('link', {
+      name: /Add activity data|添加活动数据/i,
+    });
+    expect(link.getAttribute('href')).toBe('/activities?add=true');
+
+    // Step 1 is done — it keeps its title but loses its button.
+    expect(screen.getByText(/Set up emission sources|建立排放源/i)).toBeTruthy();
+    expect(screen.queryByRole('link', { name: /Browse the catalog|浏览排放源目录/i })).toBeNull();
   });
 
   it('formats non-zero totals with thousands separators and hides the empty-state hint', async () => {
@@ -156,11 +206,7 @@ describe('/ dashboard route', () => {
     // Scope 1 = "100" (no decimals when integer).
     expect(screen.getByText('100')).toBeTruthy();
 
-    // total_co2e_kg !== 0 → empty-state link must NOT render.
-    expect(
-      screen.queryByRole('link', {
-        name: /Add your first activity|添加第一笔活动数据/i,
-      }),
-    ).toBeNull();
+    // total_co2e_kg !== 0 → the getting-started checklist must NOT render.
+    expect(screen.queryByText(/Start here|从这里开始/i)).toBeNull();
   });
 });

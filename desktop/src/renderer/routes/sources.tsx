@@ -9,6 +9,7 @@ import {
 } from '@renderer/components/source-filters';
 import { toast } from '@renderer/components/toast';
 import { Button } from '@renderer/components/ui/button';
+import { EmptyState } from '@renderer/components/ui/empty-state';
 import { sourceApi } from '@renderer/lib/api/emission-source';
 import { orgApi } from '@renderer/lib/api/organization';
 import {
@@ -33,11 +34,27 @@ import { useEffect, useMemo, useState } from 'react';
  * `is_active` read-only here. The orgId is resolved via `org:get-current`
  * (singleton accessor); if onboarding hasn't run, redirect to the wizard.
  */
+/**
+ * `?catalog=true` opens the preset catalog drawer on arrival. The dashboard's
+ * getting-started checklist links here — a first-time user's fastest route to
+ * a usable source is picking templates, so we skip the extra click rather than
+ * dropping them on an empty list next to two buttons.
+ */
+type SourcesSearch = { catalog?: boolean };
+
 export const Route = createFileRoute('/sources')({
   component: SourcesRoute,
+  // `exactOptionalPropertyTypes` is on, so we build the object conditionally
+  // instead of assigning `undefined` (same pattern as /activities).
+  validateSearch: (search: Record<string, unknown>): SourcesSearch => {
+    const out: SourcesSearch = {};
+    if (search.catalog === true || search.catalog === 'true') out.catalog = true;
+    return out;
+  },
 });
 
 function SourcesRoute() {
+  const { catalog } = Route.useSearch();
   const orgQuery = useQuery({
     queryKey: ['org:get-current'],
     queryFn: orgApi.getCurrent,
@@ -49,7 +66,7 @@ function SourcesRoute() {
   if (!orgQuery.data) {
     return <Navigate to="/onboarding/$step" params={{ step: '1' }} />;
   }
-  return <SourcesList organizationId={orgQuery.data.id} />;
+  return <SourcesList organizationId={orgQuery.data.id} openCatalogInitially={catalog === true} />;
 }
 
 /**
@@ -91,10 +108,19 @@ const SOURCE_EXTRACTORS: SourceFilterExtractors<EmissionSourceWithStats> = {
     `${s.ghg_protocol_path ?? ''} ${s.template_origin ?? ''} ${categoryLabel(s.category)}`,
 };
 
-function SourcesList({ organizationId }: { organizationId: string }) {
+function SourcesList({
+  organizationId,
+  openCatalogInitially,
+}: {
+  organizationId: string;
+  openCatalogInitially: boolean;
+}) {
   const [formOpen, setFormOpen] = useState(false);
   const [editingSource, setEditingSource] = useState<EmissionSourceWithStats | null>(null);
-  const [catalogOpen, setCatalogOpen] = useState(false);
+  // Seeded from `?catalog=true` (dashboard deep link) and thereafter owned
+  // locally — closing the drawer must not bounce back open on re-render, so
+  // we deliberately don't sync this back into the URL.
+  const [catalogOpen, setCatalogOpen] = useState(openCatalogInitially);
 
   // Enriched per-source rows with stats (count / total CO₂e / last activity).
   // Older surfaces still call `source:list-by-org` (no stats); this route
@@ -180,7 +206,24 @@ function SourcesList({ organizationId }: { organizationId: string }) {
       </div>
 
       {sources.length === 0 ? (
-        <p className="shrink-0 text-sm text-muted-foreground">{m.sources_empty()}</p>
+        // First-run state. The catalog is the recommended path (a preset
+        // arrives with scope, category and a bound emission factor already
+        // correct), so it takes the filled button; hand-rolling stays
+        // available as the outline alternative.
+        <EmptyState
+          icon={Library}
+          title={m.sources_empty_title()}
+          body={m.sources_empty_body()}
+          className="flex-1 min-h-0"
+          actions={
+            <>
+              <Button onClick={() => setCatalogOpen(true)}>{m.sources_catalog_button()}</Button>
+              <Button variant="outline" onClick={() => setFormOpen(true)}>
+                {m.sources_empty_manual_cta()}
+              </Button>
+            </>
+          }
+        />
       ) : visible.length === 0 ? (
         // The org has sources but the filter pipeline trimmed everything
         // out — show a quieter empty state with a "clear filters" hint.

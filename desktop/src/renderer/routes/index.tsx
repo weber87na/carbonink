@@ -1,12 +1,15 @@
 import { Main } from '@renderer/components/layout/main';
+import { Button } from '@renderer/components/ui/button';
 import { activityApi } from '@renderer/lib/api/activity-data';
 import { sourceApi } from '@renderer/lib/api/emission-source';
 import { orgApi } from '@renderer/lib/api/organization';
 import { formatCo2e } from '@renderer/lib/format';
+import { cn } from '@renderer/lib/utils';
 import * as m from '@renderer/paraglide/messages';
 import type { ActivityData, EmissionSource } from '@shared/types';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, Link, Navigate } from '@tanstack/react-router';
+import { Check } from 'lucide-react';
 import { useMemo } from 'react';
 
 export const Route = createFileRoute('/')({
@@ -70,6 +73,13 @@ function Dashboard() {
   const activities = activitiesQuery.data ?? [];
   const sourceById = new Map((sourcesQuery.data ?? []).map((s) => [s.id, s]));
 
+  // The getting-started checklist reads real state, so we hold it back until
+  // both feeder queries have settled — otherwise a user who already has
+  // sources sees "set up your first source" flash before the data lands.
+  // A failed query counts as settled: falling back to "not done yet" is the
+  // harmless direction (the step links still work).
+  const startupReady = !sourcesQuery.isLoading && !activitiesQuery.isLoading;
+
   return (
     <Main className="space-y-6">
       <h1 className="text-2xl font-semibold">{m.dashboard_inventory_title()}</h1>
@@ -81,16 +91,11 @@ function Dashboard() {
         <ScopeCard label={m.dashboard_scope_3()} value={totals?.scope3_kg} />
       </div>
 
-      {showEmptyHint && (
-        <div className="mt-4 rounded-lg border border-border/60 bg-card/40 p-6 text-sm text-muted-foreground">
-          {m.dashboard_empty_hint()}{' '}
-          <Link
-            to="/activities"
-            className="text-primary font-medium hover:underline underline-offset-4"
-          >
-            {m.dashboard_add_first_activity()} →
-          </Link>
-        </div>
+      {showEmptyHint && startupReady && (
+        <GettingStartedCard
+          hasSources={(sourcesQuery.data ?? []).length > 0}
+          hasActivities={activities.length > 0}
+        />
       )}
 
       {/* Two-column widget row below the KPI cards. Round 4 #5: was empty
@@ -103,6 +108,148 @@ function Dashboard() {
         </div>
       )}
     </Main>
+  );
+}
+
+/**
+ * Zero-state guidance for a freshly-onboarded org.
+ *
+ * The old empty state was one line — "No emissions data yet. Add your first
+ * activity →" — pointing straight at /activities. That was a dead end: the
+ * onboarding wizard creates an org, a period, a boundary and a site, but NO
+ * emission sources, and an activity can't exist without one. Users clicked
+ * through, hit "no sources yet" inside the form, and had to work out on their
+ * own that /sources came first.
+ *
+ * So the empty state now mirrors the actual dependency chain — source →
+ * activity → report — and reads live state to decide where the user is in it.
+ * Completed steps stay visible with a check (progress is reassuring, and it
+ * explains why the next step is the next step); the first unfinished step is
+ * the only one carrying a button, which keeps the One Mark Rule intact no
+ * matter which step is live.
+ */
+function GettingStartedCard({
+  hasSources,
+  hasActivities,
+}: {
+  hasSources: boolean;
+  hasActivities: boolean;
+}) {
+  const steps = [
+    {
+      key: 'sources',
+      done: hasSources,
+      title: m.dashboard_start_sources_title(),
+      body: m.dashboard_start_sources_body(),
+      // `catalog: true` pops the preset catalog drawer on arrival — the
+      // fastest path from nothing to a usable source is picking templates,
+      // not hand-typing one.
+      link: (
+        <Link to="/sources" search={{ catalog: true }}>
+          {m.dashboard_start_sources_cta()}
+        </Link>
+      ),
+    },
+    {
+      key: 'activities',
+      done: hasActivities,
+      title: m.dashboard_start_activities_title(),
+      body: m.dashboard_start_activities_body(),
+      link: (
+        <Link to="/activities" search={{ add: true }}>
+          {m.dashboard_start_activities_cta()}
+        </Link>
+      ),
+    },
+    {
+      key: 'report',
+      // Never pre-satisfied: this card only renders while total CO2e is 0,
+      // so the report step is always the one still ahead.
+      done: false,
+      title: m.dashboard_start_report_title(),
+      body: m.dashboard_start_report_body(),
+      link: <Link to="/reports">{m.dashboard_start_report_cta()}</Link>,
+    },
+  ];
+  const currentIndex = steps.findIndex((s) => !s.done);
+
+  return (
+    <div className="rounded-lg border border-border/60 p-6">
+      <h2 className="text-sm font-semibold text-foreground">{m.dashboard_start_title()}</h2>
+      <p className="mt-1 text-sm text-muted-foreground">{m.dashboard_start_subtitle()}</p>
+
+      <ol className="mt-4 divide-y divide-border/40">
+        {steps.map((step, i) => {
+          const isCurrent = i === currentIndex;
+          return (
+            <li key={step.key} className="flex items-start gap-3 py-3">
+              <StepMarker index={i} done={step.done} current={isCurrent} />
+              <div className="min-w-0 flex-1">
+                <div
+                  className={cn(
+                    'text-sm font-medium',
+                    step.done ? 'text-muted-foreground' : 'text-foreground',
+                  )}
+                >
+                  {step.title}
+                </div>
+                {/* Only the live step needs its "why" spelled out. Keeping the
+                 * body on done/upcoming steps too would turn a 3-line
+                 * checklist into a wall of prose. */}
+                {isCurrent && (
+                  <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                    {step.body}
+                  </p>
+                )}
+              </div>
+              {isCurrent && (
+                <Button asChild size="sm" className="shrink-0">
+                  {/* cloneElement-free: Slot forwards the button styling onto
+                   * the <Link> so the CTA is a real anchor (right-click,
+                   * middle-click, keyboard all behave natively). */}
+                  {step.link}
+                </Button>
+              )}
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
+
+/**
+ * Step bullet: green check when done, filled number when live, hollow number
+ * when still ahead. State never rides on color alone — the check glyph and
+ * the border weight carry it too.
+ */
+function StepMarker({ index, done, current }: { index: number; done: boolean; current: boolean }) {
+  if (done) {
+    return (
+      <span
+        // role="img" + aria-label so screen readers announce "done" rather
+        // than skipping a decorative glyph — the check is the only thing
+        // marking a completed step.
+        role="img"
+        className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary"
+        aria-label={m.dashboard_start_step_done()}
+      >
+        <Check className="size-3" strokeWidth={3} aria-hidden="true" />
+      </span>
+    );
+  }
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        'mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full text-[11px] font-medium tabular-nums',
+        current
+          ? 'bg-primary text-primary-foreground'
+          : 'border border-border text-muted-foreground',
+      )}
+    >
+      {index + 1}
+    </span>
   );
 }
 

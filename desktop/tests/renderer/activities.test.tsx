@@ -311,4 +311,29 @@ describe('/activities route', () => {
     expect(screen.queryByLabelText(/Start date|开始日期/i)).toBeNull();
     expect(screen.queryByRole('button', { name: /Record activity|记录活动/i })).toBeNull();
   });
+
+  // The dead end that motivated this: with zero sources the page told users
+  // to click "Add Activity", which opens a drawer that can only say no. The
+  // empty state now names the prerequisite and links to it.
+  it('points at /sources instead of the add drawer when the org has no sources', async () => {
+    vi.mocked(sourceApi.listByOrg).mockResolvedValue([]);
+
+    render(buildHarness());
+
+    expect(await screen.findByText(/Add an emission source first|请先建立排放源/i)).toBeTruthy();
+    const link = screen.getByRole('link', {
+      name: /Set up emission sources|去建立排放源/i,
+    });
+    expect(link.getAttribute('href')).toBe('/sources?catalog=true');
+  });
+
+  it('offers the add drawer from the empty state once sources exist', async () => {
+    render(buildHarness()); // beforeEach mocks one source + zero activities
+
+    expect(await screen.findByText(/No activity data yet|还没有活动数据/i)).toBeTruthy();
+    // No "go add a source" detour when the prerequisite is already met.
+    expect(
+      screen.queryByRole('link', { name: /Set up emission sources|去建立排放源/i }),
+    ).toBeNull();
+  });
 });

@@ -11,6 +11,7 @@ import * as m from '@renderer/paraglide/messages';
 import type { ActivityData, EmissionSource, ReportingPeriod } from '@shared/types';
 import { useForm, useStore } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 
 /**
@@ -309,9 +310,21 @@ export function ActivityForm({
       <div className="space-y-4">
         {noSources && <p className="text-sm text-destructive">{m.activities_form_no_sources()}</p>}
         {noPeriods && <p className="text-sm text-destructive">{m.activities_form_no_periods()}</p>}
-        <Button type="button" variant="outline" onClick={onCancel}>
-          {m.sources_cancel_button()}
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* Naming the blocker isn't enough — hand over the fix. Without
+           * this the user has to close the drawer, find the Sources page in
+           * the sidebar and work out that the catalog is the fast path. */}
+          {noSources && (
+            <Button asChild>
+              <Link to="/sources" search={{ catalog: true }}>
+                {m.activities_empty_no_sources_cta()}
+              </Link>
+            </Button>
+          )}
+          <Button type="button" variant="outline" onClick={onCancel}>
+            {m.sources_cancel_button()}
+          </Button>
+        </div>
       </div>
     );
   }

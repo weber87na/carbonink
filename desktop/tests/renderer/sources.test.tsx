@@ -188,4 +188,19 @@ describe('/sources route', () => {
       expect(submit.disabled).toBe(false);
     });
   });
+
+  // First-run empty state. A bare "no sources yet, click Add above" line
+  // under-explained what a source IS and buried the recommended path (the
+  // preset catalog) behind an unlabelled toolbar button.
+  it('renders the first-run empty state with both the catalog and manual paths', async () => {
+    render(buildHarness());
+
+    expect(await screen.findByText(/No emission sources yet|还没有排放源/i)).toBeTruthy();
+
+    // Two CTAs inside the empty state, plus the two toolbar buttons above it.
+    expect(
+      screen.getAllByRole('button', { name: /Add from catalog|从目录添加/i }).length,
+    ).toBeGreaterThanOrEqual(1);
+    expect(screen.getByRole('button', { name: /Define one manually|手动定义/i })).toBeTruthy();
+  });
 });
