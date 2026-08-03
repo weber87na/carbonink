@@ -197,10 +197,9 @@ describe('/sources route', () => {
 
     expect(await screen.findByText(/No emission sources yet|还没有排放源/i)).toBeTruthy();
 
-    // Two CTAs inside the empty state, plus the two toolbar buttons above it.
-    expect(
-      screen.getAllByRole('button', { name: /Add from catalog|从目录添加/i }).length,
-    ).toBeGreaterThanOrEqual(1);
-    expect(screen.getByRole('button', { name: /Define one manually|手动定义/i })).toBeTruthy();
+    // Both create paths live in the empty state — and ONLY there. Duplicating
+    // them in the toolbar would put two identical filled buttons on screen.
+    expect(screen.getAllByRole('button', { name: /Add from catalog|从目录添加/i }).length).toBe(1);
+    expect(screen.getAllByRole('button', { name: /Add Source|添加排放源/i }).length).toBe(1);
   });
 });

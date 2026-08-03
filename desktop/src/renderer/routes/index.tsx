@@ -196,8 +196,11 @@ function GettingStartedCard({
                 {/* Only the live step needs its "why" spelled out. Keeping the
                  * body on done/upcoming steps too would turn a 3-line
                  * checklist into a wall of prose. */}
+                {/* max-w so the sentence doesn't stretch to a 2000px line on
+                 * a maximized window — long measure is the fastest way to
+                 * make explanatory copy go unread. */}
                 {isCurrent && (
-                  <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                  <p className="mt-0.5 max-w-3xl text-xs leading-relaxed text-muted-foreground">
                     {step.body}
                   </p>
                 )}

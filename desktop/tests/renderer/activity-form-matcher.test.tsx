@@ -42,6 +42,13 @@ import { orgApi } from '@renderer/lib/api/organization';
 import { routingApi } from '@renderer/lib/api/routing';
 import type { EmissionFactor, EmissionSource, ReportingPeriod } from '@shared/types';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import {
+  createMemoryHistory,
+  createRootRoute,
+  createRoute,
+  createRouter,
+  RouterProvider,
+} from '@tanstack/react-router';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -326,5 +333,66 @@ describe('ActivityForm — routing lookup button', () => {
 
     // Source badge should show.
     await screen.findByText(/AMap.*1085|高德.*1085/);
+  });
+});
+
+/**
+ * Prerequisite guard. Moved here from `activities.test.tsx`, which used to
+ * drive it by clicking the page's toolbar Add button — that button is now
+ * hidden while the activity list is empty, so the guard has to be exercised
+ * at the component boundary instead.
+ *
+ * The guard renders a message + escape hatches instead of the form body, so
+ * users can't fill in dates and amounts only to meet a permanently-disabled
+ * submit button. The "go set up sources" escape hatch is a router <Link>,
+ * hence the RouterProvider wrapper.
+ */
+describe('ActivityForm — missing prerequisites', () => {
+  beforeEach(() => {
+    vi.mocked(orgApi.listReportingPeriods).mockResolvedValue([FAKE_PERIOD]);
+    vi.mocked(efApi.list).mockResolvedValue([]);
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+  });
+
+  it('renders the no-sources message and a link out, not the form body', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } },
+    });
+    const rootRoute = createRootRoute({
+      component: () => (
+        <ActivityForm {...DEFAULT_PROPS} sources={[]} onCancel={vi.fn()} onSuccess={vi.fn()} />
+      ),
+    });
+    const sourcesRoute = createRoute({
+      getParentRoute: () => rootRoute,
+      path: '/sources',
+      component: () => <div />,
+    });
+    const router = createRouter({
+      routeTree: rootRoute.addChildren([sourcesRoute]),
+      history: createMemoryHistory({ initialEntries: ['/'] }),
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByText(/No sources yet|还没有排放源。请先在/i)).toBeTruthy();
+
+    // The escape hatch out of the dead end.
+    const link = screen.getByRole('link', { name: /Set up emission sources|去建立排放源/i });
+    expect(link.getAttribute('href')).toBe('/sources?catalog=true');
+
+    // The form body does NOT render.
+    expect(screen.queryByLabelText(/Emission source|^排放源$/i)).toBeNull();
+    expect(screen.queryByLabelText(/Reporting period|报告期/i)).toBeNull();
+    expect(screen.queryByLabelText(/Start date|开始日期/i)).toBeNull();
+    expect(screen.queryByRole('button', { name: /Record activity|记录活动/i })).toBeNull();
   });
 });

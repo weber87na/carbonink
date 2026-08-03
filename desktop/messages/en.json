@@ -1117,7 +1117,6 @@
   "dashboard_start_step_done": "Done",
   "sources_empty_title": "No emission sources yet",
   "sources_empty_body": "Emission sources are the skeleton of the inventory — every activity row hangs off one. Start from the catalog to get scope, category and emission factor filled in for you, or define one by hand.",
-  "sources_empty_manual_cta": "Define one manually",
   "activities_empty_title": "No activity data yet",
   "activities_empty_body": "Record the consumption behind each source — a meter reading, a fuel receipt, a trip. Drop in a PDF and the fields get filled in for you.",
   "activities_empty_no_sources_title": "Add an emission source first",

@@ -1117,7 +1117,6 @@
   "dashboard_start_step_done": "已完成",
   "sources_empty_title": "还没有排放源",
   "sources_empty_body": "排放源是清单的骨架——每一条活动数据都要挂在某个排放源下。从目录添加可以直接带出范围、分类和排放因子，也可以自己手动定义。",
-  "sources_empty_manual_cta": "手动定义",
   "activities_empty_title": "还没有活动数据",
   "activities_empty_body": "记录每个排放源背后的实际用量——一次抄表、一张加油发票、一趟差旅。上传 PDF 还能自动填好表单。",
   "activities_empty_no_sources_title": "请先建立排放源",

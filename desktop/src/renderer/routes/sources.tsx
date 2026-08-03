@@ -177,13 +177,20 @@ function SourcesList({
            * existing names for duplicates while filling out a new
            * source. Same vaul shell as SourceEditDrawer for symmetry
            * (add and edit feel like one family). */}
-          <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => setCatalogOpen(true)}>
-              <Library className="mr-1 h-4 w-4" aria-hidden="true" />
-              {m.sources_catalog_button()}
-            </Button>
-            <Button onClick={() => setFormOpen(true)}>{m.sources_add_button()}</Button>
-          </div>
+          {/* On a first run these two move down into the empty state, which
+           * explains what a source is before asking for one. Leaving them
+           * here as well would put two identical filled buttons on the same
+           * screen — a duplicated call to action reads as a bug, and it
+           * breaks the One Mark Rule. */}
+          {sources.length > 0 && (
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={() => setCatalogOpen(true)}>
+                <Library className="mr-1 h-4 w-4" aria-hidden="true" />
+                {m.sources_catalog_button()}
+              </Button>
+              <Button onClick={() => setFormOpen(true)}>{m.sources_add_button()}</Button>
+            </div>
+          )}
         </div>
 
         {/* Search · scope tabs · category chips. Hidden only when the
@@ -219,7 +226,7 @@ function SourcesList({
             <>
               <Button onClick={() => setCatalogOpen(true)}>{m.sources_catalog_button()}</Button>
               <Button variant="outline" onClick={() => setFormOpen(true)}>
-                {m.sources_empty_manual_cta()}
+                {m.sources_add_button()}
               </Button>
             </>
           }

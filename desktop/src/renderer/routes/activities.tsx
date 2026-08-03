@@ -267,14 +267,23 @@ function ActivitiesList({
           {/* Create opens ActivityAddDrawer (right slide-in). The list
            * stays visible behind the overlay so the user can scan
            * existing rows for the date range / source they're about to
-           * duplicate. */}
-          <div className="flex items-center gap-2">
-            <Button variant="outline" className="gap-2" onClick={() => setImportOpen(true)}>
-              <FileSpreadsheet className="h-4 w-4" aria-hidden="true" />
-              {m.activity_import_button()}
-            </Button>
-            <Button onClick={() => setFormOpen(true)}>{m.activities_add_button()}</Button>
-          </div>
+           * duplicate.
+           *
+           * Hidden while the list is empty: the empty state below carries
+           * these same two actions with the context to make sense of them,
+           * and — when the org has no emission sources — deliberately does
+           * NOT, because both would open a form that can only refuse. A
+           * green "add activity" sitting next to "add an emission source
+           * first" is a contradiction, not an option. */}
+          {activities.length > 0 && (
+            <div className="flex items-center gap-2">
+              <Button variant="outline" className="gap-2" onClick={() => setImportOpen(true)}>
+                <FileSpreadsheet className="h-4 w-4" aria-hidden="true" />
+                {m.activity_import_button()}
+              </Button>
+              <Button onClick={() => setFormOpen(true)}>{m.activities_add_button()}</Button>
+            </div>
+          )}
         </div>
 
         {/* Filter + sort: visible whenever there are activities. The
@@ -357,7 +366,15 @@ function ActivitiesList({
             title={m.activities_empty_title()}
             body={m.activities_empty_body()}
             className="flex-1 min-h-0"
-            actions={<Button onClick={() => setFormOpen(true)}>{m.activities_add_button()}</Button>}
+            actions={
+              <>
+                <Button onClick={() => setFormOpen(true)}>{m.activities_add_button()}</Button>
+                <Button variant="outline" className="gap-2" onClick={() => setImportOpen(true)}>
+                  <FileSpreadsheet className="h-4 w-4" aria-hidden="true" />
+                  {m.activity_import_button()}
+                </Button>
+              </>
+            }
           />
         )
       ) : visible.length === 0 ? (

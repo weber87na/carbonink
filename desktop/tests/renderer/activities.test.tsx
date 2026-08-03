@@ -288,29 +288,13 @@ describe('/activities route', () => {
     });
   });
 
-  // Important #5: when there are no sources OR no reporting periods, the
-  // ActivityForm renders only a prerequisite-missing message + a Cancel
-  // button — not the full form body. This avoids the confusing UX where
-  // users could fill in dates/amount only to find a permanently-disabled
-  // submit button.
-  it('shows the no-sources message instead of the form body when sources is empty', async () => {
-    vi.mocked(sourceApi.listByOrg).mockResolvedValue([]);
-
-    render(buildHarness());
-    const addBtn = await screen.findByRole('button', {
-      name: /Add Activity|添加活动数据/i,
-    });
-    fireEvent.click(addBtn);
-
-    // The no-sources message appears.
-    expect(await screen.findByText(/No sources yet|还没有排放源。请先在/i)).toBeTruthy();
-
-    // The form body fields do NOT render.
-    expect(screen.queryByLabelText(/Emission source|^排放源$/i)).toBeNull();
-    expect(screen.queryByLabelText(/Reporting period|报告期/i)).toBeNull();
-    expect(screen.queryByLabelText(/Start date|开始日期/i)).toBeNull();
-    expect(screen.queryByRole('button', { name: /Record activity|记录活动/i })).toBeNull();
-  });
+  // NOTE: ActivityForm's own prerequisite guard (no sources / no periods →
+  // render the message instead of the form body) moved to
+  // `activity-form-matcher.test.tsx`. It used to be driven from here by
+  // clicking the toolbar's Add button, but that button is now hidden while
+  // the list is empty — precisely so a zero-source org can't be walked into
+  // a form that can only refuse. The page-level behaviour is covered by the
+  // test below instead.
 
   // The dead end that motivated this: with zero sources the page told users
   // to click "Add Activity", which opens a drawer that can only say no. The
