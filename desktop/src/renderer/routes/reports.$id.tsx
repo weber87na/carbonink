@@ -1,6 +1,7 @@
 import type { ReportNarrative } from '@main/llm/report-narrative';
 import type { TcfdNarrative } from '@main/llm/tcfd-narrative';
 import type { InventoryReportData } from '@main/services/report-data-service';
+import { ReadinessSection } from '@renderer/components/readiness/ReadinessSection';
 import { ReportPreview } from '@renderer/components/report/ReportPreview';
 import { TcfdReportPreview } from '@renderer/components/report/TcfdReportPreview';
 import { toast } from '@renderer/components/toast';
@@ -255,6 +256,14 @@ function ReportDetail() {
                 {m.reports_generate_button()}
               </button>
             )}
+
+            {/* Readiness review (spec 2026-08-13-inventory-readiness-rules).
+             * Placed on the pre-generation panel deliberately: the point is to
+             * catch problems BEFORE a report goes out, not to annotate one
+             * that already has. */}
+            <div className="border-t border-border pt-4">
+              <ReadinessSection reportingPeriodId={id} />
+            </div>
           </div>
         </div>
       )}

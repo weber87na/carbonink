@@ -17,6 +17,7 @@ import { lineageHandlers } from './handlers/lineage.js';
 import { mcpHandlers } from './handlers/mcp.js';
 import { organizationHandlers } from './handlers/organization.js';
 import { questionnaireHandlers } from './handlers/questionnaire.js';
+import { readinessHandlers } from './handlers/readiness.js';
 import { reportHandlers } from './handlers/report.js';
 import { routingHandlers } from './handlers/routing.js';
 import { settingsHandlers } from './handlers/settings.js';
@@ -66,6 +67,7 @@ const HANDLER_FACTORIES: ReadonlyArray<HandlerFactory> = [
   auditHandlers,
   evidenceHandlers,
   lineageHandlers,
+  readinessHandlers,
   updaterHandlers,
   appHandlers,
   dataHandlers,

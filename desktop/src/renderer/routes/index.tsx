@@ -107,6 +107,26 @@ function Dashboard() {
           <RecentActivitiesCard activities={activities} sourceById={sourceById} />
         </div>
       )}
+
+      {/* Readiness entry point. Deliberately a link, not a live count: the
+       * sweep writes a `readiness.reviewed` audit event, so running it on
+       * every dashboard visit would turn the audit log into browsing history.
+       * A card that neither lies nor spams can only point at the checklist. */}
+      {!showEmptyHint && currentPeriodId && (
+        <Link
+          to="/reports/$id"
+          params={{ id: currentPeriodId }}
+          className="flex items-center justify-between gap-3 rounded-md border border-border bg-card px-4 py-3 hover:bg-muted/30"
+        >
+          <span className="min-w-0">
+            <span className="block text-sm font-medium">{m.readiness_home_card_title()}</span>
+            <span className="block text-xs text-muted-foreground">{m.readiness_description()}</span>
+          </span>
+          <span className="shrink-0 text-xs text-muted-foreground">
+            {m.readiness_home_card_cta()} →
+          </span>
+        </Link>
+      )}
     </Main>
   );
 }

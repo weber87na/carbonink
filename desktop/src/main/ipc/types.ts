@@ -645,6 +645,15 @@ export type IpcTypeMap = {
     id: string;
   }) => import('@shared/types.js').LineageResult;
 
+  // readiness domain (spec 2026-08-13-inventory-readiness-rules) — the
+  // deterministic pre-delivery sweep. Read-only apart from the dismissal
+  // preference; no AI provider required.
+  'readiness:run': (input: {
+    reporting_period_id: string;
+  }) => import('@shared/types.js').ReadinessReport;
+  'readiness:dismiss': (input: { key: string }) => void;
+  'readiness:undismiss': (input: { key: string }) => void;
+
   // updater domain (Phase 5 — auto-update via electron-updater)
   // `updater:get-status` is a cheap read of the in-memory status slot in
   // `auto-updater.ts`; the renderer subscribes to `updater:status` (push)

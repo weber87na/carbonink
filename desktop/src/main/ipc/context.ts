@@ -41,6 +41,7 @@ import {
 import { OrganizationService } from '@main/services/organization-service.js';
 import { QuestionnairePdfDataService } from '@main/services/questionnaire-pdf-data-service.js';
 import { QuestionnaireService } from '@main/services/questionnaire-service.js';
+import { ReadinessService } from '@main/services/readiness/index.js';
 import { ReportDataService } from '@main/services/report-data-service.js';
 import { buildRoutingLayer, type RoutingR } from '@main/services/routing/tags.js';
 import { SettingsService } from '@main/services/settings-service.js';
@@ -131,6 +132,9 @@ export interface IpcContext {
   // end-to-end lineage assembly for the 溯源 panel.
   evidenceService: EvidenceService;
   lineageService: LineageService;
+  // Deterministic inventory readiness checks (spec
+  // 2026-08-13-inventory-readiness-rules). No LLM — usable with no provider.
+  readinessService: ReadinessService;
   // ROADMAP §8.1-④ — user-imported EF libraries (import staging, catalog
   // writes under the user: source namespace, library registry).
   userEfLibraryService: UserEfLibraryService;
@@ -246,6 +250,7 @@ export function createIpcContext(
   let reportDataServiceInstance: ReportDataService | undefined;
   let evidenceServiceInstance: EvidenceService | undefined;
   let lineageServiceInstance: LineageService | undefined;
+  let readinessServiceInstance: ReadinessService | undefined;
   let userEfLibraryServiceInstance: UserEfLibraryService | undefined;
   let activityImportServiceInstance: ActivityImportService | undefined;
   let batchExtractionServiceInstance: BatchExtractionService | undefined;
@@ -560,6 +565,17 @@ export function createIpcContext(
         });
       }
       return lineageServiceInstance;
+    },
+    get readinessService() {
+      if (!readinessServiceInstance) {
+        readinessServiceInstance = new ReadinessService({
+          db: svc.db,
+          now: svc.now,
+          unitConversion: unitConversionService,
+          settings: getSettings(),
+        });
+      }
+      return readinessServiceInstance;
     },
     get userEfLibraryService() {
       if (!userEfLibraryServiceInstance) {

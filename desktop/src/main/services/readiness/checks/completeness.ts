@@ -93,6 +93,7 @@ export const c5QuestionWithoutAnswer: ReadinessCheck = {
     const rows = ctx.db
       .prepare(
         `SELECT q.id,
+                q.questionnaire_id,
                 COALESCE(q.raw_text, q.normalized_text) AS question_text,
                 c.name AS customer_name
            FROM question q
@@ -106,6 +107,7 @@ export const c5QuestionWithoutAnswer: ReadinessCheck = {
       )
       .all(ctx.period.year) as Array<{
       id: string;
+      questionnaire_id: string;
       question_text: string | null;
       customer_name: string;
     }>;
@@ -117,6 +119,9 @@ export const c5QuestionWithoutAnswer: ReadinessCheck = {
       facts: {
         customer_name: r.customer_name,
         question_text: (r.question_text ?? '').slice(0, 120),
+        // Carried so the renderer can deep-link to the questionnaire: a
+        // finding the user cannot reach in one click does not get fixed.
+        questionnaire_id: r.questionnaire_id,
       },
     }));
   },

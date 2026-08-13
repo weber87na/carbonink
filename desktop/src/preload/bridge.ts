@@ -154,6 +154,10 @@ export const allowedChannels: ReadonlyArray<keyof IpcTypeMap> = [
   'evidence:list',
   'evidence:remove',
   'lineage:get',
+  // readiness domain (spec 2026-08-13-inventory-readiness-rules)
+  'readiness:run',
+  'readiness:dismiss',
+  'readiness:undismiss',
   // license domain (Phase 4 sub-project A — Ed25519 JWT + state machine)
   // updater domain (Phase 5 — auto-update via electron-updater)
   'updater:get-status',
