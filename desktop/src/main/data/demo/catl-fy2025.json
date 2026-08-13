@@ -213,7 +213,10 @@
         "kind": "disclosed",
         "source_ref": "catl-esg-2025",
         "locator": "ESG 数据表 · 能源使用情况 - 按能源类型分类, p.138",
-        "disclosed": { "value": 13688213.61, "unit": "兆瓦时 (MWh)" }
+        "disclosed": {
+          "value": 13688213.61,
+          "unit": "兆瓦时 (MWh)"
+        }
       }
     },
     {
@@ -229,7 +232,10 @@
         "kind": "disclosed",
         "source_ref": "catl-esg-2025",
         "locator": "ESG 数据表 · 能源使用情况 - 按能源类型分类, p.138",
-        "disclosed": { "value": 10464656.81, "unit": "兆瓦时 (MWh)" }
+        "disclosed": {
+          "value": 10464656.81,
+          "unit": "兆瓦时 (MWh)"
+        }
       }
     },
     {
@@ -237,21 +243,19 @@
       "period": "fy2025",
       "occurred_at_start": "2025-01-01T00:00:00Z",
       "occurred_at_end": "2025-12-31T23:59:59Z",
-      "amount": 642254296.71,
-      "unit": "m3",
+      "amount": 6404702.57,
+      "unit": "MWh",
       "fuel_code": "natural_gas",
       "ef": "fuel.natural_gas.combustion.global.2024",
       "provenance": {
-        "kind": "derived",
+        "kind": "disclosed",
         "source_ref": "catl-esg-2025",
         "locator": "ESG 数据表 · 能源使用情况 - 按能源类型分类, p.138",
-        "disclosed": { "value": 6404702.57, "unit": "兆瓦时 (MWh)" },
-        "derivation": {
-          "op": "energy_to_volume_via_lhv_per_m3",
-          "lhv_mj_per_m3": 35.9,
-          "lhv_source": "fuel_property.natural_gas (migration 007_seed_units.sql)",
-          "why": "The app cannot do this conversion itself: fuel_property.natural_gas carries lower_heating_value_MJ_per_m3 but no lower_heating_value_MJ_per_kg, and UnitConversionService's energy->volume path routes through mass. See gaps[]."
-        }
+        "disclosed": {
+          "value": 6404702.57,
+          "unit": "兆瓦时 (MWh)"
+        },
+        "note": "Entered verbatim in MWh; the app converts energy -> volume in-flight via fuel_property (migration 022)."
       }
     },
     {
@@ -259,20 +263,19 @@
       "period": "fy2024",
       "occurred_at_start": "2024-01-01T00:00:00Z",
       "occurred_at_end": "2024-12-31T23:59:59Z",
-      "amount": 465607606.46,
-      "unit": "m3",
+      "amount": 4643142.52,
+      "unit": "MWh",
       "fuel_code": "natural_gas",
       "ef": "fuel.natural_gas.combustion.global.2024",
       "provenance": {
-        "kind": "derived",
+        "kind": "disclosed",
         "source_ref": "catl-esg-2025",
         "locator": "ESG 数据表 · 能源使用情况 - 按能源类型分类, p.138",
-        "disclosed": { "value": 4643142.52, "unit": "兆瓦时 (MWh)" },
-        "derivation": {
-          "op": "energy_to_volume_via_lhv_per_m3",
-          "lhv_mj_per_m3": 35.9,
-          "lhv_source": "fuel_property.natural_gas (migration 007_seed_units.sql)"
-        }
+        "disclosed": {
+          "value": 4643142.52,
+          "unit": "兆瓦时 (MWh)"
+        },
+        "note": "Entered verbatim in MWh; the app converts energy -> volume in-flight via fuel_property (migration 022)."
       }
     },
     {
@@ -288,7 +291,10 @@
         "kind": "disclosed",
         "source_ref": "catl-esg-2025",
         "locator": "ESG 数据表 · 能源使用情况 - 按能源类型分类, p.138",
-        "disclosed": { "value": 2352136.22, "unit": "兆瓦时 (MWh)" },
+        "disclosed": {
+          "value": 2352136.22,
+          "unit": "兆瓦时 (MWh)"
+        },
         "note": "Entered verbatim in MWh; the app converts energy -> mass in-flight via fuel_property.coal_anthracite (29.3 MJ/kg). The report notes CATL uses each site's measured calorific value, which will differ from the library default."
       }
     },
@@ -305,7 +311,10 @@
         "kind": "disclosed",
         "source_ref": "catl-esg-2025",
         "locator": "ESG 数据表 · 能源使用情况 - 按能源类型分类, p.138",
-        "disclosed": { "value": 2256864.7, "unit": "兆瓦时 (MWh)" }
+        "disclosed": {
+          "value": 2256864.7,
+          "unit": "兆瓦时 (MWh)"
+        }
       }
     },
     {
@@ -321,7 +330,10 @@
         "kind": "modeled",
         "source_ref": "catl-esg-2025",
         "locator": "ESG 数据表 · 能源使用情况 - 按能源类型分类 脚注 2, p.138",
-        "disclosed": { "value": 45622.28, "unit": "兆瓦时 (MWh)" },
+        "disclosed": {
+          "value": 45622.28,
+          "unit": "兆瓦时 (MWh)"
+        },
         "assumption": "The report merges gasoline, diesel, LPG and acetylene into one '其他能源' line because together they are under 1% of energy use, and does not split them. Modeled entirely as diesel. Wrong by construction at the fuel level; immaterial at the total (this line is 0.19% of 2025 energy)."
       }
     },
@@ -338,7 +350,10 @@
         "kind": "modeled",
         "source_ref": "catl-esg-2025",
         "locator": "ESG 数据表 · 能源使用情况 - 按能源类型分类 脚注 2, p.138",
-        "disclosed": { "value": 43547.23, "unit": "兆瓦时 (MWh)" },
+        "disclosed": {
+          "value": 43547.23,
+          "unit": "兆瓦时 (MWh)"
+        },
         "assumption": "Same merged-carrier assumption as FY2025."
       }
     }
@@ -388,8 +403,16 @@
     {
       "item": "外购蒸汽 / Purchased steam",
       "values": [
-        { "period": "fy2025", "value": 2276845.01, "unit": "MWh" },
-        { "period": "fy2024", "value": 1825443.2, "unit": "MWh" }
+        {
+          "period": "fy2025",
+          "value": 2276845.01,
+          "unit": "MWh"
+        },
+        {
+          "period": "fy2024",
+          "value": 1825443.2,
+          "unit": "MWh"
+        }
       ],
       "reason": "The shipped EF library has no purchased-steam / purchased-heat factor. Disclosed but unmappable — left out of activities rather than forced onto a wrong factor.",
       "locator": "ESG 数据表 · 能源使用情况 - 按能源类型分类, p.138"
@@ -397,15 +420,19 @@
     {
       "item": "范围三 / Scope 3",
       "values": [
-        { "period": "fy2025", "value": 111151357.75, "unit": "tCO2e" },
-        { "period": "fy2024", "value": 112350996.78, "unit": "tCO2e" }
+        {
+          "period": "fy2025",
+          "value": 111151357.75,
+          "unit": "tCO2e"
+        },
+        {
+          "period": "fy2024",
+          "value": 112350996.78,
+          "unit": "tCO2e"
+        }
       ],
       "reason": "CATL discloses a Scope 3 total but not a category split, and gives no underlying activity quantities. There is no honest way to turn a bare tCO2e total into activity rows, so it lives in disclosed_totals only.",
       "locator": "ESG 数据表 · 集团排放总量 脚注 3, p.139"
-    },
-    {
-      "item": "天然气单位换算 / Natural gas unit conversion",
-      "reason": "PRODUCT GAP: gas disclosed in MWh cannot be converted to m3 by the app. fuel_property.natural_gas has lower_heating_value_MJ_per_m3 = 35.9 but lower_heating_value_MJ_per_kg = NULL, and UnitConversionService.convertWithFuel's energy -> volume path needs mass as the intermediate. Any user importing a gas figure in MWh/GJ hits 'Cannot derive volume from MWh via fuel natural_gas'. Pre-converted here; see activities[].provenance.derivation."
     }
   ],
   "notes": [

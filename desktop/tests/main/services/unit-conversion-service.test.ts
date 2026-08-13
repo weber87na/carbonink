@@ -101,6 +101,37 @@ describe('UnitConversionService.convertWithFuel', () => {
   });
 });
 
+// Migration 022 filled two fuel_property holes that blocked the energy-
+// denominated fuel figures sustainability reports actually publish. Both
+// conversions below threw before it. See src/main/data/demo/README.md.
+describe('UnitConversionService.convertWithFuel — energy-denominated fuel (migration 022)', () => {
+  it('natural_gas MWh → m3, the unit gas is actually disclosed in', () => {
+    // 1 MWh = 3600 MJ; at 35.9 MJ/m3 that is 100.28 m3.
+    expect(svc.convertWithFuel(1, 'MWh', 'm3', 'natural_gas')).toBeCloseTo(100.28, 1);
+  });
+
+  it('natural_gas reaches the same m3 whether it goes via mass or via volumetric LHV', () => {
+    // The per-kg and per-L values in migration 022 are derived from the row's
+    // own m3 figures precisely so these two paths agree. If someone later
+    // replaces 50.0697 MJ/kg with a quoted IPCC default (48.0), the ratio
+    // moves ~4% and this fails — which is the point. Compared as a ratio
+    // because the quantities are ~1e5, where an absolute tolerance says
+    // nothing useful.
+    const viaMass = svc.convertWithFuel(1000, 'MWh', 'm3', 'natural_gas');
+    const direct = (1000 * 3600) / 35.9;
+    expect(viaMass / direct).toBeCloseTo(1, 5);
+  });
+
+  it('jet_a MWh → L (NCV 44.1 MJ/kg, density 0.800 kg/L)', () => {
+    // 3600 MJ / 44.1 MJ/kg = 81.63 kg; / 0.800 kg/L = 102.04 L.
+    expect(svc.convertWithFuel(1, 'MWh', 'L', 'jet_a')).toBeCloseTo(102.04, 1);
+  });
+
+  it('jet_a L → kg (density 0.800)', () => {
+    expect(svc.convertWithFuel(100, 'L', 'kg', 'jet_a')).toBeCloseTo(80, 1);
+  });
+});
+
 describe('UnitConversionService.listAll', () => {
   it('returns at least the canonical units (kWh, L, kg, km)', () => {
     const all = svc.listAll();

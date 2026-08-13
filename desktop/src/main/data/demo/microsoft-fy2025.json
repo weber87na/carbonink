@@ -322,24 +322,19 @@
       "period": "fy2024",
       "occurred_at_start": "2023-07-01T00:00:00Z",
       "occurred_at_end": "2024-06-30T23:59:59Z",
-      "amount": 7875476.32,
-      "unit": "m3",
+      "amount": 78536.0,
+      "unit": "MWh",
       "fuel_code": "natural_gas",
       "ef": "fuel.natural_gas.combustion.global.2024",
       "provenance": {
-        "kind": "derived",
+        "kind": "disclosed",
         "source_ref": "msft-datafact-2026",
         "locator": "Table 5 - Energy consumption within the organization (MWh), p.7",
         "disclosed": {
           "value": 78536.0,
           "unit": "MWh"
         },
-        "derivation": {
-          "op": "energy_to_volume_via_lhv_per_m3",
-          "lhv_mj_per_m3": 35.9,
-          "lhv_source": "fuel_property.natural_gas (migration 007_seed_units.sql)",
-          "why": "fuel_property.natural_gas has no lower_heating_value_MJ_per_kg, so the app's energy -> volume path cannot run. See gaps[]."
-        }
+        "note": "Entered verbatim in MWh; the app converts energy -> volume in-flight via fuel_property (migration 022)."
       }
     },
     {
@@ -347,24 +342,19 @@
       "period": "fy2025",
       "occurred_at_start": "2024-07-01T00:00:00Z",
       "occurred_at_end": "2025-06-30T23:59:59Z",
-      "amount": 7364958.22,
-      "unit": "m3",
+      "amount": 73445.0,
+      "unit": "MWh",
       "fuel_code": "natural_gas",
       "ef": "fuel.natural_gas.combustion.global.2024",
       "provenance": {
-        "kind": "derived",
+        "kind": "disclosed",
         "source_ref": "msft-datafact-2026",
         "locator": "Table 5 - Energy consumption within the organization (MWh), p.7",
         "disclosed": {
           "value": 73445.0,
           "unit": "MWh"
         },
-        "derivation": {
-          "op": "energy_to_volume_via_lhv_per_m3",
-          "lhv_mj_per_m3": 35.9,
-          "lhv_source": "fuel_property.natural_gas (migration 007_seed_units.sql)",
-          "why": "fuel_property.natural_gas has no lower_heating_value_MJ_per_kg, so the app's energy -> volume path cannot run. See gaps[]."
-        }
+        "note": "Entered verbatim in MWh; the app converts energy -> volume in-flight via fuel_property (migration 022)."
       }
     },
     {

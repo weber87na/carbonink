@@ -364,8 +364,8 @@
       "period": "fy2023",
       "occurred_at_start": "2023-01-01T00:00:00Z",
       "occurred_at_end": "2023-12-31T23:59:59Z",
-      "amount": 7555788.3,
-      "unit": "m3",
+      "amount": 75348.0,
+      "unit": "MWh",
       "fuel_code": "natural_gas",
       "ef": "fuel.natural_gas.combustion.global.2024",
       "provenance": {
@@ -376,12 +376,8 @@
           "value": 75348.0,
           "unit": "kWh in 000s (= MWh)"
         },
-        "derivation": {
-          "op": "energy_to_volume_via_lhv_per_m3",
-          "lhv_mj_per_m3": 35.9,
-          "lhv_source": "fuel_property.natural_gas (migration 007_seed_units.sql)"
-        },
-        "assumption": "The source line is 'Primary fuel sources (gas, oil, diesel etc.)' with no split. Modeled entirely as natural gas — the dominant heating fuel across HSBC's office and branch estate. Both a fuel assumption and a unit derivation, so it is marked modeled rather than derived."
+        "assumption": "The source line is 'Primary fuel sources (gas, oil, diesel etc.)' with no split. Modeled entirely as natural gas — the dominant heating fuel across HSBC's office and branch estate. Both a fuel assumption and a unit derivation, so it is marked modeled rather than derived.",
+        "note": "Entered verbatim in MWh; the app converts energy -> volume in-flight via fuel_property (migration 022)."
       }
     },
     {
@@ -409,8 +405,8 @@
       "period": "fy2024",
       "occurred_at_start": "2024-01-01T00:00:00Z",
       "occurred_at_end": "2024-12-31T23:59:59Z",
-      "amount": 6444501.39,
-      "unit": "m3",
+      "amount": 64266.0,
+      "unit": "MWh",
       "fuel_code": "natural_gas",
       "ef": "fuel.natural_gas.combustion.global.2024",
       "provenance": {
@@ -421,12 +417,8 @@
           "value": 64266.0,
           "unit": "kWh in 000s (= MWh)"
         },
-        "derivation": {
-          "op": "energy_to_volume_via_lhv_per_m3",
-          "lhv_mj_per_m3": 35.9,
-          "lhv_source": "fuel_property.natural_gas (migration 007_seed_units.sql)"
-        },
-        "assumption": "The source line is 'Primary fuel sources (gas, oil, diesel etc.)' with no split. Modeled entirely as natural gas — the dominant heating fuel across HSBC's office and branch estate. Both a fuel assumption and a unit derivation, so it is marked modeled rather than derived."
+        "assumption": "The source line is 'Primary fuel sources (gas, oil, diesel etc.)' with no split. Modeled entirely as natural gas — the dominant heating fuel across HSBC's office and branch estate. Both a fuel assumption and a unit derivation, so it is marked modeled rather than derived.",
+        "note": "Entered verbatim in MWh; the app converts energy -> volume in-flight via fuel_property (migration 022)."
       }
     },
     {
@@ -454,8 +446,8 @@
       "period": "fy2025",
       "occurred_at_start": "2025-01-01T00:00:00Z",
       "occurred_at_end": "2025-12-31T23:59:59Z",
-      "amount": 5407019.5,
-      "unit": "m3",
+      "amount": 53920.0,
+      "unit": "MWh",
       "fuel_code": "natural_gas",
       "ef": "fuel.natural_gas.combustion.global.2024",
       "provenance": {
@@ -466,12 +458,8 @@
           "value": 53920.0,
           "unit": "kWh in 000s (= MWh)"
         },
-        "derivation": {
-          "op": "energy_to_volume_via_lhv_per_m3",
-          "lhv_mj_per_m3": 35.9,
-          "lhv_source": "fuel_property.natural_gas (migration 007_seed_units.sql)"
-        },
-        "assumption": "The source line is 'Primary fuel sources (gas, oil, diesel etc.)' with no split. Modeled entirely as natural gas — the dominant heating fuel across HSBC's office and branch estate. Both a fuel assumption and a unit derivation, so it is marked modeled rather than derived."
+        "assumption": "The source line is 'Primary fuel sources (gas, oil, diesel etc.)' with no split. Modeled entirely as natural gas — the dominant heating fuel across HSBC's office and branch estate. Both a fuel assumption and a unit derivation, so it is marked modeled rather than derived.",
+        "note": "Entered verbatim in MWh; the app converts energy -> volume in-flight via fuel_property (migration 022)."
       }
     },
     {

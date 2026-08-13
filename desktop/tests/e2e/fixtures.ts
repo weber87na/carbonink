@@ -772,7 +772,7 @@ export const FIXTURE_SOURCES_REAL = [
 export const FIXTURE_SOURCES_WITH_STATS_REAL = FIXTURE_SOURCES_REAL.map((s, i) => ({
   ...s,
   activity_count: 1,
-  total_co2e_kg: [232_721_647.3, 10_159_789.64, 18_774_000, 15_484_000][i] ?? 0,
+  total_co2e_kg: [232_721_647.3, 10_159_796.74, 18_774_000, 15_484_000][i] ?? 0,
   last_activity_at: '2026-02-25T00:00:00Z',
 }));
 
@@ -809,17 +809,17 @@ export const FIXTURE_ACTIVITIES_REAL = [
     reporting_period_id: FIXTURE_PERIOD_REAL.id,
     occurred_at_start: '2025-01-01T00:00:00Z',
     occurred_at_end: '2025-12-31T23:59:59Z',
-    amount: 5_407_019.5,
-    unit: 'm3',
+    amount: 53_920,
+    unit: 'MWh',
     ef_factor_code: 'fuel.natural_gas.combustion.global.2024',
     ef_year: 2024,
     ef_source: 'IPCC_AR6',
     ef_geography: 'GLOBAL',
     ef_dataset_version: '2024.v1',
-    computed_co2e_kg: 10_159_789.64,
+    computed_co2e_kg: 10_159_796.74,
     computed_at: '2026-02-25T00:00:00Z',
     extraction_id: null,
-    notes: 'ESG Data Pack FY2025 p.11 · 由 53,920 MWh 按 35.9 MJ/m³ 换算',
+    notes: 'ESG Data Pack FY2025 p.11 · 按披露口径以兆瓦时录入，单位换算由应用完成',
     created_at: '2026-02-25T00:00:00Z',
     updated_at: '2026-02-25T00:00:00Z',
     source_document_id: null,
@@ -874,8 +874,8 @@ export const FIXTURE_ACTIVITIES_REAL = [
 ];
 
 export const FIXTURE_TOTALS_REAL = {
-  total_co2e_kg: 277_139_436.94,
-  scope1_kg: 10_159_789.64,
+  total_co2e_kg: 277_139_444.04,
+  scope1_kg: 10_159_796.74,
   scope2_kg: 232_721_647.3,
   scope3_kg: 34_258_000,
 };
@@ -889,7 +889,7 @@ const SOURCE_NAME_EN_REAL: Record<string, string> = {
 
 const ACTIVITY_NOTES_EN_REAL: Record<string, string> = {
   act_real_001: 'ESG Data Pack FY2025 p.11 · proxy factor: no regional grid factor available',
-  act_real_002: 'ESG Data Pack FY2025 p.11 · derived from 53,920 MWh at 35.9 MJ/m³',
+  act_real_002: 'ESG Data Pack FY2025 p.11 · entered in MWh as disclosed; the app converts units',
   act_real_003: 'ESG Data Pack FY2025 p.11 · 126 million km',
   act_real_004: 'ESG Data Pack FY2025 p.11 · 98 million km',
 };

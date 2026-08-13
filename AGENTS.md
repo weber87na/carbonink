@@ -18,9 +18,8 @@ read on demand.
 - **Git: commit freely without asking; push only when explicitly allowed.**
   Never force-push, never run destructive git. If on the default branch, branch
   first.
-- **Tests must not regress.** `pnpm desktop:test` is at **1289/1289** (2026-08-13,
-  after the real-company demo packs landed). Don't land a commit that drops the
-  count.
+- **Tests must not regress.** `pnpm desktop:test` is at **1293/1293** (2026-08-13,
+  after the fuel_property gap fix). Don't land a commit that drops the count.
 - **No licensing.** CarbonInk is free & open-source (MIT) — there is no license
   gate, activation, account, or payment. Don't reintroduce one.
 - **Biome errors stay at ZERO.** The historic ~940-error debt was cleared

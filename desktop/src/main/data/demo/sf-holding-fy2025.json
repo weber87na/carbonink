@@ -401,25 +401,19 @@
       "period": "fy2023",
       "occurred_at_start": "2023-01-01T00:00:00Z",
       "occurred_at_end": "2023-12-31T23:59:59Z",
-      "amount": 568286215.12,
-      "unit": "L",
-      "fuel_code": null,
+      "amount": 5430290.5,
+      "unit": "MWh",
+      "fuel_code": "jet_a",
       "ef": "fuel.jet_a.combustion",
       "provenance": {
-        "kind": "derived",
+        "kind": "disclosed",
         "source_ref": "sf-esg-2025",
         "locator": "Environmental Key Performance Indicators - Energy consumption, p.137-138",
         "disclosed": {
           "value": 5430290.5,
           "unit": "MWh"
         },
-        "derivation": {
-          "op": "energy_to_volume_via_lhv_and_density",
-          "lhv_mj_per_kg": 43.0,
-          "density_kg_per_l": 0.8,
-          "lhv_source": "IPCC AR6 Vol.2 jet kerosene default; ASTM D1655 nominal density",
-          "why": "The app ships no fuel_property row for jet kerosene, so MWh -> L cannot be done in-flight. See gaps[]."
-        }
+        "note": "Entered verbatim in MWh; the app converts energy -> volume in-flight via fuel_property (migration 022)."
       }
     },
     {
@@ -427,25 +421,19 @@
       "period": "fy2024",
       "occurred_at_start": "2024-01-01T00:00:00Z",
       "occurred_at_end": "2024-12-31T23:59:59Z",
-      "amount": 703002265.12,
-      "unit": "L",
-      "fuel_code": null,
+      "amount": 6717577.2,
+      "unit": "MWh",
+      "fuel_code": "jet_a",
       "ef": "fuel.jet_a.combustion",
       "provenance": {
-        "kind": "derived",
+        "kind": "disclosed",
         "source_ref": "sf-esg-2025",
         "locator": "Environmental Key Performance Indicators - Energy consumption, p.137-138",
         "disclosed": {
           "value": 6717577.2,
           "unit": "MWh"
         },
-        "derivation": {
-          "op": "energy_to_volume_via_lhv_and_density",
-          "lhv_mj_per_kg": 43.0,
-          "density_kg_per_l": 0.8,
-          "lhv_source": "IPCC AR6 Vol.2 jet kerosene default; ASTM D1655 nominal density",
-          "why": "The app ships no fuel_property row for jet kerosene, so MWh -> L cannot be done in-flight. See gaps[]."
-        }
+        "note": "Entered verbatim in MWh; the app converts energy -> volume in-flight via fuel_property (migration 022)."
       }
     },
     {
@@ -453,25 +441,19 @@
       "period": "fy2025",
       "occurred_at_start": "2025-01-01T00:00:00Z",
       "occurred_at_end": "2025-12-31T23:59:59Z",
-      "amount": 826138276.74,
-      "unit": "L",
-      "fuel_code": null,
+      "amount": 7894210.2,
+      "unit": "MWh",
+      "fuel_code": "jet_a",
       "ef": "fuel.jet_a.combustion",
       "provenance": {
-        "kind": "derived",
+        "kind": "disclosed",
         "source_ref": "sf-esg-2025",
         "locator": "Environmental Key Performance Indicators - Energy consumption, p.137-138",
         "disclosed": {
           "value": 7894210.2,
           "unit": "MWh"
         },
-        "derivation": {
-          "op": "energy_to_volume_via_lhv_and_density",
-          "lhv_mj_per_kg": 43.0,
-          "density_kg_per_l": 0.8,
-          "lhv_source": "IPCC AR6 Vol.2 jet kerosene default; ASTM D1655 nominal density",
-          "why": "The app ships no fuel_property row for jet kerosene, so MWh -> L cannot be done in-flight. See gaps[]."
-        }
+        "note": "Entered verbatim in MWh; the app converts energy -> volume in-flight via fuel_property (migration 022)."
       }
     },
     {
@@ -479,24 +461,19 @@
       "period": "fy2023",
       "occurred_at_start": "2023-01-01T00:00:00Z",
       "occurred_at_end": "2023-12-31T23:59:59Z",
-      "amount": 91153.2,
-      "unit": "m3",
+      "amount": 909.0,
+      "unit": "MWh",
       "fuel_code": "natural_gas",
       "ef": "fuel.natural_gas.combustion.global.2024",
       "provenance": {
-        "kind": "derived",
+        "kind": "disclosed",
         "source_ref": "sf-esg-2025",
         "locator": "Environmental Key Performance Indicators - Energy consumption, p.137-138",
         "disclosed": {
           "value": 909.0,
           "unit": "MWh"
         },
-        "derivation": {
-          "op": "energy_to_volume_via_lhv_per_m3",
-          "lhv_mj_per_m3": 35.9,
-          "lhv_source": "fuel_property.natural_gas (migration 007_seed_units.sql)",
-          "why": "fuel_property.natural_gas has no lower_heating_value_MJ_per_kg, so the app's energy -> volume path cannot run. See gaps[]."
-        }
+        "note": "Entered verbatim in MWh; the app converts energy -> volume in-flight via fuel_property (migration 022)."
       }
     },
     {
@@ -504,24 +481,19 @@
       "period": "fy2024",
       "occurred_at_start": "2024-01-01T00:00:00Z",
       "occurred_at_end": "2024-12-31T23:59:59Z",
-      "amount": 140289.69,
-      "unit": "m3",
+      "amount": 1399.0,
+      "unit": "MWh",
       "fuel_code": "natural_gas",
       "ef": "fuel.natural_gas.combustion.global.2024",
       "provenance": {
-        "kind": "derived",
+        "kind": "disclosed",
         "source_ref": "sf-esg-2025",
         "locator": "Environmental Key Performance Indicators - Energy consumption, p.137-138",
         "disclosed": {
           "value": 1399.0,
           "unit": "MWh"
         },
-        "derivation": {
-          "op": "energy_to_volume_via_lhv_per_m3",
-          "lhv_mj_per_m3": 35.9,
-          "lhv_source": "fuel_property.natural_gas (migration 007_seed_units.sql)",
-          "why": "fuel_property.natural_gas has no lower_heating_value_MJ_per_kg, so the app's energy -> volume path cannot run. See gaps[]."
-        }
+        "note": "Entered verbatim in MWh; the app converts energy -> volume in-flight via fuel_property (migration 022)."
       }
     },
     {
@@ -529,24 +501,19 @@
       "period": "fy2025",
       "occurred_at_start": "2025-01-01T00:00:00Z",
       "occurred_at_end": "2025-12-31T23:59:59Z",
-      "amount": 116924.79,
-      "unit": "m3",
+      "amount": 1166.0,
+      "unit": "MWh",
       "fuel_code": "natural_gas",
       "ef": "fuel.natural_gas.combustion.global.2024",
       "provenance": {
-        "kind": "derived",
+        "kind": "disclosed",
         "source_ref": "sf-esg-2025",
         "locator": "Environmental Key Performance Indicators - Energy consumption, p.137-138",
         "disclosed": {
           "value": 1166.0,
           "unit": "MWh"
         },
-        "derivation": {
-          "op": "energy_to_volume_via_lhv_per_m3",
-          "lhv_mj_per_m3": 35.9,
-          "lhv_source": "fuel_property.natural_gas (migration 007_seed_units.sql)",
-          "why": "fuel_property.natural_gas has no lower_heating_value_MJ_per_kg, so the app's energy -> volume path cannot run. See gaps[]."
-        }
+        "note": "Entered verbatim in MWh; the app converts energy -> volume in-flight via fuel_property (migration 022)."
       }
     },
     {
@@ -970,7 +937,7 @@
       "compare_to": "scope1_tco2e",
       "expect_within_pct": 15,
       "expect_direction": "below",
-      "why": "Fuel-derived Scope 1 lands near 2.97 MtCO2e (SF ex-KLN) against a disclosed 3.36 Mt. The residual is refrigerants and fuels outside the seven disclosed carriers. Aviation kerosene is ~71% of the computed figure, so the jet-fuel density/LHV assumption dominates the error bar — vary it first when the number looks wrong."
+      "why": "Fuel-derived Scope 1 lands at 3,019,696 tCO2e against a disclosed 3,430,954 t (-12.0%, both segments combined). The residual is refrigerants and fuels outside the seven disclosed carriers. Aviation kerosene alone is ~68% of the computed figure, so fuel_property.jet_a (44.1 MJ/kg, 0.800 kg/L, migration 022) dominates the error bar — vary those two constants first when this number looks wrong."
     }
   ],
   "gaps": [
@@ -1012,14 +979,11 @@
       "item": "范围三活动量 / Scope 3 activity quantities",
       "reason": "Scope 3 is disclosed in tCO2e across ten categories (1,2,3,4,5,6,7,8,12,15) but with no underlying activity quantities — no tonne-km, no passenger-km. Category totals are carried in disclosed_totals[].scope3_by_category_tco2e; they cannot become activity rows without inventing the denominator.",
       "locator": "Environmental Key Performance Indicators - GHG emissions, p.137"
-    },
-    {
-      "item": "航空煤油单位换算 / Jet kerosene unit conversion",
-      "reason": "PRODUCT GAP: fuel_property ships rows for gasoline, diesel, natural_gas, lpg and coal_anthracite only. There is no jet-kerosene row, so an MWh-denominated aviation fuel figure cannot be converted to the litres that fuel.jet_a.combustion expects. Pre-converted here."
     }
   ],
   "notes": [
     "SF's own Scope 3 Category 4 (upstream transport, 5.69 MtCO2e in FY2025) is larger than its entire Scope 1. For a logistics client that is the headline, and this pack carries it as a disclosed total the report layer can cite.",
-    "Gasoline swings hard year to year (40,871 -> 87,992 -> 22,102 MWh). That is in the source, not a transcription error — useful for exercising year-over-year variance UI."
+    "Gasoline swings hard year to year (40,871 -> 87,992 -> 22,102 MWh). That is in the source, not a transcription error — useful for exercising year-over-year variance UI.",
+    "Every fuel line here is now entered in MWh exactly as SF publishes it; migration 022 added the jet_a fuel property and the natural gas per-kg/per-L values that let the app do the conversion itself. Before that the pack had to pre-convert, and switching the jet NCV from an assumed 43.0 to the IPCC 44.1 MJ/kg default moved group Scope 1 by 1.5 percentage points — a fair illustration of how much a single fuel constant is worth in a fuel-heavy inventory."
   ]
 }

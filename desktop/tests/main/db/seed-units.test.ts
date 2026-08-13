@@ -33,12 +33,14 @@ describe('Migration 007: seed units', () => {
     expect(n.n).toBe(79);
   });
 
-  it('inserts 5 fuel_property rows', () => {
+  // 5 from this migration, plus jet_a from migration 022. The count runs
+  // after the full migration chain, so it is really "every seeded fuel".
+  it('inserts 6 fuel_property rows', () => {
     const db = new Database(':memory:');
     db.pragma('foreign_keys = ON');
     runMigrations(db);
     const n = db.prepare('SELECT COUNT(*) AS n FROM fuel_property').get() as { n: number };
-    expect(n.n).toBe(5);
+    expect(n.n).toBe(6);
   });
 
   it('all aliases reference existing units', () => {

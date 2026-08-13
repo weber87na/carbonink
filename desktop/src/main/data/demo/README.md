@@ -49,7 +49,7 @@ in `expected_reconciliation[]` what gap to expect **and why**. Current state:
 | Pack | Scope 1 | Scope 2 (location) | Note |
 |---|---|---|---|
 | CATL FY2025 | −32.0% | **−2.1%** | Scope 1 residual is process + fugitive emissions |
-| SF FY2025 | −10.5% | −9.4% | Residual is refrigerants + undisclosed carriers |
+| SF FY2025 | −12.0% | −9.4% | Residual is refrigerants + undisclosed carriers |
 | Microsoft FY2025 | −38.9% | +22.3% | Scope 1 is 41% HFC leakage; Scope 2 uses proxy grids |
 | HSBC FY2025 | −39.2% | −10.2% | Cat 6 travel −39.5% (no RF uplift, no cabin weighting) |
 
@@ -64,19 +64,26 @@ refrigerant leakage, because those are not in an energy table.
 
 ## Product gaps these packs surfaced
 
-Two conversions had to be pre-computed because the app cannot do them:
+Two conversions originally had to be pre-computed in the packs, because the app
+could not do them. **Migration 022 closed both**, and those rows are now plain
+`disclosed` MWh that the app converts in flight:
 
-1. **Natural gas in MWh → m³ fails.** `fuel_property.natural_gas` carries
-   `lower_heating_value_MJ_per_m3` (35.9) but no `lower_heating_value_MJ_per_kg`,
-   and `UnitConversionService.convertWithFuel`'s energy → volume path routes
-   through mass. Users hit `Cannot derive volume from MWh via fuel natural_gas`.
-   Every pack here hits it — MWh is the standard disclosure unit for gas.
-2. **No jet-kerosene fuel property.** `fuel_property` ships gasoline, diesel,
-   natural_gas, lpg and coal_anthracite only, so aviation fuel in MWh cannot
-   reach the litres `fuel.jet_a.combustion` expects. Blocks the single largest
-   line in the SF pack.
+1. **Natural gas in MWh → m³ threw.** `fuel_property.natural_gas` carried
+   `lower_heating_value_MJ_per_m3` (35.9) and `density_kg_per_m3` (0.717) but
+   neither per-kg nor per-L value, and `convertWithFuel`'s energy → volume path
+   needs both (it derives mass first, then divides by `density_kg_per_L`).
+   Users hit `Cannot derive volume from MWh via fuel natural_gas`. Every pack
+   here hit it — MWh is the standard disclosure unit for gas.
+2. **No jet-kerosene fuel property.** Aviation fuel in MWh could not reach the
+   litres `fuel.jet_a.combustion` expects, blocking the single largest line in
+   the SF pack.
 
-Also missing from the EF library, which is why `gaps[]` exists at all:
+Migration 022's natural gas values are derived from that row's own m³ figures
+so every conversion path agrees; see the migration header for why quoting the
+IPCC per-kg default instead would have been worse. A `cng` row is the obvious
+next one — the SF pack still pre-converts compressed natural gas.
+
+Still missing from the EF library, which is why `gaps[]` exists at all:
 purchased steam/heat, purchased cooling, water, waste, refrigerants, and grid
 factors outside CN and US (forcing the proxies in the Microsoft and HSBC packs).
 
