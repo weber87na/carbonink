@@ -1,11 +1,18 @@
 import type { ReportNarrative } from '@main/llm/report-narrative';
 import type { TcfdNarrative } from '@main/llm/tcfd-narrative';
 import type { InventoryReportData } from '@main/services/report-data-service';
+import {
+  detail,
+  READINESS_CHECK_COUNT,
+  severityLabel,
+  title,
+} from '@renderer/components/readiness/copy';
 import { ReadinessSection } from '@renderer/components/readiness/ReadinessSection';
 import { ReportPreview } from '@renderer/components/report/ReportPreview';
 import { TcfdReportPreview } from '@renderer/components/report/TcfdReportPreview';
 import { toast } from '@renderer/components/toast';
 import { GuidedTour } from '@renderer/features/guidance';
+import { readinessApi } from '@renderer/lib/api/readiness';
 import { reportApi } from '@renderer/lib/api/report';
 import { subscribe } from '@renderer/lib/ipc';
 import * as m from '@renderer/paraglide/messages';
@@ -149,11 +156,30 @@ function ReportDetail() {
   const exportDeliverable = useMutation({
     mutationFn: async () => {
       if (!generated) throw new Error('no report');
+      // Run the readiness sweep as part of the export rather than reusing a
+      // possibly-stale earlier run: the bundle states what was true at the
+      // moment it was produced. An audit event here is legitimate -- unlike on
+      // page load, exporting is an explicit user action.
+      const report = await readinessApi.run(id);
+      const readiness = {
+        checked_at: report.checked_at,
+        counts: report.counts,
+        check_count: READINESS_CHECK_COUNT,
+        rows: report.findings.map((f) => ({
+          severity: severityLabel(f.severity),
+          check_id: f.check_id,
+          title: title(f),
+          detail: detail(f),
+          entity_type: f.entity.type,
+          entity_id: f.entity.id,
+        })),
+      };
       const result = await reportApi.exportDeliverable({
         data: generated.data,
         narrative: generated.narrative,
         language,
         kind: generated.kind,
+        readiness,
       });
       if ('canceled' in result && result.canceled) return;
       if ('ok' in result && result.ok) {

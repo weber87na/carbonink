@@ -215,6 +215,100 @@ describe('buildDeliverableBundle', () => {
     }
   });
 
+  it('includes readiness.csv, listed in the manifest with a verifying sha256', async () => {
+    const act = makeActivity(1000);
+    const zipPath = join(outDir, 'readiness.zip');
+
+    await buildDeliverableBundle({
+      db,
+      periodId,
+      activities: [{ id: act.id, source_name: 'Grid meter' }],
+      reportPdf: { name: 'r.pdf', bytes: REPORT_PDF },
+      appendixXlsx: { name: 'a.xlsx', bytes: APPENDIX_XLSX },
+      readiness: {
+        checked_at: '2026-02-01T00:00:00.000Z',
+        counts: { blocker: 1, warning: 0, info: 0 },
+        check_count: 14,
+        rows: [
+          {
+            severity: 'Blocker',
+            check_id: 'N1',
+            title: 'Unit does not match the emission factor',
+            detail: 'Grid meter: 100 L applied to a factor measured per kWh',
+            entity_type: 'activity_data',
+            entity_id: act.id,
+          },
+        ],
+      },
+      outPath: zipPath,
+    });
+
+    const zip = await loadZip(zipPath);
+    const csv = await zip.file('readiness.csv')?.async('string');
+    expect(csv).toBeDefined();
+    const text = stripBom(csv ?? '');
+    // Summary line first so the file reads on its own.
+    expect(text).toContain('checked_at,checks_run,blockers,warnings,notes');
+    expect(text).toContain('"2026-02-01T00:00:00.000Z","14","1","0","0"');
+    // Then the findings, carrying the copy the renderer produced.
+    expect(text).toContain('Unit does not match the emission factor');
+    expect(text).toContain(act.id);
+
+    // Verifiable like every other bundle entry.
+    const { rows } = await readManifest(zip);
+    const row = rows.find((r) => r[0] === 'readiness.csv');
+    expect(row?.[1]).toBe('readiness');
+    const bytes = await zip.file('readiness.csv')?.async('nodebuffer');
+    expect(row?.[2]).toBe(
+      createHash('sha256')
+        .update(bytes ?? Buffer.alloc(0))
+        .digest('hex'),
+    );
+  });
+
+  it('still writes readiness.csv when the sweep found nothing', async () => {
+    const act = makeActivity(1000);
+    const zipPath = join(outDir, 'readiness-clean.zip');
+
+    await buildDeliverableBundle({
+      db,
+      periodId,
+      activities: [{ id: act.id, source_name: 'Grid meter' }],
+      reportPdf: { name: 'r.pdf', bytes: REPORT_PDF },
+      appendixXlsx: { name: 'a.xlsx', bytes: APPENDIX_XLSX },
+      readiness: {
+        checked_at: '2026-02-01T00:00:00.000Z',
+        counts: { blocker: 0, warning: 0, info: 0 },
+        check_count: 14,
+        rows: [],
+      },
+      outPath: zipPath,
+    });
+
+    // "We ran 14 checks and none fired" is the statement a reviewer wants;
+    // omitting the file would make its absence ambiguous.
+    const zip = await loadZip(zipPath);
+    const text = stripBom((await zip.file('readiness.csv')?.async('string')) ?? '');
+    expect(text).toContain('"14","0","0","0"');
+  });
+
+  it('omits readiness.csv entirely when no sweep was supplied', async () => {
+    const act = makeActivity(1000);
+    const zipPath = join(outDir, 'no-readiness.zip');
+
+    await buildDeliverableBundle({
+      db,
+      periodId,
+      activities: [{ id: act.id, source_name: 'Grid meter' }],
+      reportPdf: { name: 'r.pdf', bytes: REPORT_PDF },
+      appendixXlsx: { name: 'a.xlsx', bytes: APPENDIX_XLSX },
+      outPath: zipPath,
+    });
+
+    const zip = await loadZip(zipPath);
+    expect(zip.file('readiness.csv')).toBeNull();
+  });
+
   it('flags missing evidence files in the manifest instead of failing', async () => {
     const act1 = makeActivity(1000);
     attach(act1.id, 'kept.pdf', '%PDF kept');

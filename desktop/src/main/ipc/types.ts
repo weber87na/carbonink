@@ -577,6 +577,12 @@ export type IpcTypeMap = {
       | import('@main/llm/tcfd-narrative').TcfdNarrative;
     language: 'zh-CN' | 'en';
     kind: 'iso' | 'tcfd';
+    /**
+     * Rendered readiness sweep, optional. Supplied by the renderer because
+     * the copy lives in paraglide; the bundle omits `readiness.csv` when it
+     * is absent rather than inventing an empty one.
+     */
+    readiness?: import('@main/services/deliverable-export-service').DeliverableReadiness;
   }) => Promise<
     | { canceled: true }
     | { ok: true; path: string; evidence_count: number; missing_count: number }

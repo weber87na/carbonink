@@ -302,6 +302,7 @@ export function reportHandlers(ctx: IpcContext): {
               : defaultExportFilename({ ...nameArgs, kind: 'pdf' }),
             bytes: pdfBytes,
           },
+          ...(input.readiness ? { readiness: input.readiness } : {}),
           appendixXlsx: {
             name: isTcfd
               ? tcfdExportFilename({ ...nameArgs, kind: 'xlsx' })

@@ -24,5 +24,20 @@ export const reportApi = {
     narrative: unknown;
     language: 'zh-CN' | 'en';
     kind: 'iso' | 'tcfd';
+    // Rendered readiness sweep -- copy is built renderer-side, see
+    // components/readiness/copy.ts.
+    readiness?: {
+      checked_at: string;
+      counts: { blocker: number; warning: number; info: number };
+      check_count: number;
+      rows: ReadonlyArray<{
+        severity: string;
+        check_id: string;
+        title: string;
+        detail: string;
+        entity_type: string;
+        entity_id: string;
+      }>;
+    };
   }) => invoke('report:export-deliverable', input as never),
 };

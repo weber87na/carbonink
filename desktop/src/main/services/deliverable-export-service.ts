@@ -34,6 +34,28 @@ export interface DeliverableActivityRef {
   source_name: string;
 }
 
+/**
+ * The readiness sweep, already rendered to localized strings.
+ *
+ * Copy is supplied by the renderer rather than built here: paraglide lives on
+ * that side, the service layer stays locale-free, and the deliverable flow is
+ * already renderer-driven (it hands over the narrative and the assembled
+ * report data the same way).
+ */
+export interface DeliverableReadiness {
+  checked_at: string;
+  counts: { blocker: number; warning: number; info: number };
+  check_count: number;
+  rows: ReadonlyArray<{
+    severity: string;
+    check_id: string;
+    title: string;
+    detail: string;
+    entity_type: string;
+    entity_id: string;
+  }>;
+}
+
 export interface BuildDeliverableArgs {
   db: Database;
   /** Reporting period whose evidence gets bundled. */
@@ -46,6 +68,13 @@ export interface BuildDeliverableArgs {
   activities: readonly DeliverableActivityRef[];
   reportPdf: { name: string; bytes: Buffer };
   appendixXlsx: { name: string; bytes: Buffer };
+  /**
+   * Optional. When present a `readiness.csv` joins the bundle even if it found
+   * nothing — "we ran N checks and none fired" is the statement a reviewer
+   * wants, and omitting the file on a clean sweep would make its absence
+   * ambiguous.
+   */
+  readiness?: DeliverableReadiness;
   outPath: string;
 }
 
@@ -239,6 +268,20 @@ export async function buildDeliverableBundle(
       }),
     );
 
+    if (args.readiness) {
+      const bytes = renderReadinessCsv(args.readiness);
+      archive.append(bytes, { name: 'readiness.csv' });
+      manifest.push(
+        manifestRow({
+          file: 'readiness.csv',
+          type: 'readiness',
+          sha256: sha256Hex(bytes),
+          size_bytes: bytes.length,
+          status: 'included',
+        }),
+      );
+    }
+
     const usedNames = new Set<string>();
     for (const row of evidence) {
       const activityNo = activityNoById.get(row.activity_data_id) ?? 0;
@@ -271,4 +314,43 @@ export async function buildDeliverableBundle(
 
     void archive.finalize();
   });
+}
+
+/**
+ * The readiness sweep as a spreadsheet a reviewer can filter.
+ *
+ * CSV rather than a rendered page: the bundle already carries `manifest.csv`
+ * for offline verification, both open on a double-click in Excel, and a
+ * second PDF would mean driving the print pipeline for one table. The summary
+ * row above the findings makes the file readable on its own — including on a
+ * clean sweep, where it is the only content.
+ */
+function renderReadinessCsv(r: DeliverableReadiness): Buffer {
+  const lines: string[] = [
+    ['checked_at', 'checks_run', 'blockers', 'warnings', 'notes'].join(','),
+    [
+      csvField(r.checked_at),
+      csvField(r.check_count),
+      csvField(r.counts.blocker),
+      csvField(r.counts.warning),
+      csvField(r.counts.info),
+    ].join(','),
+    '',
+    ['severity', 'check', 'finding', 'detail', 'entity_type', 'entity_id'].join(','),
+  ];
+  for (const row of r.rows) {
+    lines.push(
+      [
+        csvField(row.severity),
+        csvField(row.check_id),
+        csvField(row.title),
+        csvField(row.detail),
+        csvField(row.entity_type),
+        csvField(row.entity_id),
+      ].join(','),
+    );
+  }
+  // Same BOM rationale as manifest.csv: Excel needs it to read CJK correctly.
+  const bom = String.fromCharCode(0xfeff);
+  return Buffer.from(`${bom}${lines.join('\n')}\n`, 'utf8');
 }
