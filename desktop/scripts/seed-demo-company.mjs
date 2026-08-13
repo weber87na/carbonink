@@ -15,7 +15,10 @@
  *
  * Flags:
  *   --pack <id>    pack to load (see --list)
- *   --db <path>    target sqlite (default: the macOS app database)
+ *   --db <path>    target sqlite. Defaults to the ACTIVE workspace (账套) as
+ *                  named in userData/workspaces.json — not a hardcoded
+ *                  app.sqlite, which would write to a database the app is not
+ *                  showing as soon as a second workspace exists.
  *   --init         create + migrate the database if it does not exist.
  *                  Required for scratch databases; refuses to touch an
  *                  existing file's schema.
@@ -43,7 +46,36 @@ import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
+
 import Database from 'better-sqlite3';
+
+/**
+ * Opens a database, reporting the ABI mutex as an instruction rather than a
+ * dlopen stack trace.
+ *
+ * Note the native binding is NOT loaded at import time — better-sqlite3 calls
+ * `bindings()` lazily inside the Database constructor — so the guard has to sit
+ * here rather than around the import. `pnpm dev` and `pnpm build` rebuild the
+ * binding for Electron in their pre-hooks, and that is the state you are in
+ * most of the time you reach for a seed, so this is the common path, not an
+ * edge case.
+ */
+function openDatabase(path) {
+  try {
+    return new Database(path);
+  } catch (err) {
+    if (String(err?.message ?? '').includes('NODE_MODULE_VERSION')) {
+      console.error('\n✗ better-sqlite3 is currently built for Electron, not node.');
+      console.error('  `pnpm dev` and `pnpm build` rebuild it for Electron in their pre-hooks.');
+      console.error('  This script runs on plain node. Rebuild once:\n');
+      console.error('    pnpm --filter carbonink run rebuild:node\n');
+      console.error('  then re-run this command. Starting `pnpm dev` again flips it back');
+      console.error('  automatically, so there is nothing to undo.\n');
+      process.exit(1);
+    }
+    throw err;
+  }
+}
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PACK_DIR = join(HERE, '..', 'src', 'main', 'data', 'demo');
@@ -99,9 +131,33 @@ if (!pack) {
 
 // ---------------------------------------------------------------------------
 // Database
+//
+// The app is multi-workspace (账套): one workspace = one standalone .sqlite in
+// userData, and `workspaces.json` says which is active. Seeding a hardcoded
+// app.sqlite is right only until someone creates a second workspace, after
+// which it silently writes to a database the app is not showing. Resolve the
+// active workspace the same way WorkspaceService.activeDbPath() does.
 // ---------------------------------------------------------------------------
-const DB_PATH =
-  values.db ?? join(homedir(), 'Library', 'Application Support', 'CarbonInk', 'app.sqlite');
+const USER_DATA = join(homedir(), 'Library', 'Application Support', 'CarbonInk');
+
+function activeWorkspaceDb() {
+  const registryPath = join(USER_DATA, 'workspaces.json');
+  if (!existsSync(registryPath)) return { path: join(USER_DATA, 'app.sqlite'), name: null };
+  try {
+    const reg = JSON.parse(readFileSync(registryPath, 'utf8'));
+    const active =
+      reg.workspaces?.find((w) => w.id === reg.active_id) ?? reg.workspaces?.[0] ?? null;
+    if (!active) return { path: join(USER_DATA, 'app.sqlite'), name: null };
+    return { path: join(USER_DATA, active.file), name: active.name };
+  } catch {
+    // A corrupt registry should not stop a dev seed — fall back to the
+    // pre-workspace filename, same as the app's own degradation path.
+    return { path: join(USER_DATA, 'app.sqlite'), name: null };
+  }
+}
+
+const workspace = values.db ? { path: values.db, name: null } : activeWorkspaceDb();
+const DB_PATH = workspace.path;
 
 const dbExisted = existsSync(DB_PATH);
 if (!dbExisted && !values.init) {
@@ -111,7 +167,7 @@ if (!dbExisted && !values.init) {
   process.exit(1);
 }
 
-const db = new Database(DB_PATH);
+const db = openDatabase(DB_PATH);
 db.pragma('foreign_keys = ON');
 
 /**
@@ -268,7 +324,11 @@ function computeCo2eKg(amount, unit, ef, fuelCode) {
 const now = new Date().toISOString();
 console.log(`\n${pack.label.en}`);
 console.log(`  pack   ${pack.pack_id}`);
-console.log(`  db     ${DB_PATH}${DRY ? '  (dry run — nothing will be written)' : ''}`);
+console.log(
+  `  db     ${DB_PATH}${workspace.name ? `  (active workspace: ${workspace.name})` : ''}${
+    DRY ? '  (dry run — nothing will be written)' : ''
+  }`,
+);
 console.log(`  source ${pack.sources[0].publisher}`);
 console.log(
   pack.fictional
