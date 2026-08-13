@@ -145,14 +145,14 @@ export class ActivityDataService {
             amount, unit,
             ef_factor_code, ef_year, ef_source, ef_geography, ef_dataset_version,
             computed_co2e_kg, computed_at,
-            extraction_id, notes, created_at, updated_at
+            fuel_code, extraction_id, notes, created_at, updated_at
           ) VALUES (
             ?, ?, ?, ?,
             ?, ?,
             ?, ?,
             ?, ?, ?, ?, ?,
             ?, ?,
-            ?, ?, ?, ?
+            ?, ?, ?, ?, ?
           )`,
         )
         .run(
@@ -171,6 +171,10 @@ export class ActivityDataService {
           parsed.ef_dataset_version,
           computed.co2e_kg,
           ts,
+          // The fuel binding is a calculation INPUT (it is what lets a volume
+          // amount meet a per-mass factor). Persisted so the row can be
+          // recomputed from the ledger alone -- migration 021.
+          parsed.fuel_code ?? null,
           // extraction_id wires the activity row back to the extraction
           // it was confirmed from (set by ExtractionReview via the
           // ActivityForm's matcherHint). NULL for hand-typed entries.
@@ -191,6 +195,7 @@ export class ActivityDataService {
         unit: parsed.unit,
         ef: efPk,
         computed_co2e_kg: computed.co2e_kg,
+        fuel_code: parsed.fuel_code ?? null,
         provenance: parsed.extraction_id ? 'extraction' : 'manual',
         extraction_id: parsed.extraction_id ?? null,
       });

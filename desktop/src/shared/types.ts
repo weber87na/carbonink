@@ -1296,3 +1296,76 @@ export type SkillRemoveResult = {
   removed: string[];
   backupPath: string | null;
 };
+
+// ---------------------------------------------------------------------------
+// Inventory readiness checks (spec 2026-08-13-inventory-readiness-rules)
+// ---------------------------------------------------------------------------
+
+/**
+ * Deliberately a closed union rather than a free string: the renderer looks up
+ * a paraglide message per id, so an unhandled id would render blank. Adding a
+ * check means adding a case here and the i18n keys in both locales.
+ */
+export type ReadinessCheckId =
+  | 'C1' // active emission source with no activity data in the period
+  | 'C3' // activity row dated outside its reporting period
+  | 'C5' // question with no answer row
+  | 'N1' // activity unit and pinned EF unit are in different families
+  | 'N2' // amount far from its group median
+  | 'N3' // suspected duplicate activity row
+  | 'N5' // AR5 and AR6 factors mixed in one period
+  | 'T1' // activity row with no evidence of any kind
+  | 'T2' // activity row with an empty audit timeline
+  | 'T3' // pinned EF year far from the reporting year
+  | 'T4' // pinned to a factor from a deleted user library
+  | 'D1' // no base year set
+  | 'D2' // finalized answer whose frozen snapshot no longer matches the ledger
+  | 'D3'; // supplier disclosure past its due date
+
+/**
+ * `blocker` means "an auditor would stop here", `warning` means "explain it",
+ * `info` means "worth a look". Nothing in the app is gated on these — they
+ * inform, they never block a save or an export.
+ */
+export type ReadinessSeverity = 'blocker' | 'warning' | 'info';
+
+export type ReadinessEntityType =
+  | 'activity_data'
+  | 'emission_source'
+  | 'question'
+  | 'questionnaire'
+  | 'period'
+  | 'organization';
+
+export type ReadinessFinding = {
+  check_id: ReadinessCheckId;
+  severity: ReadinessSeverity;
+  entity: { type: ReadinessEntityType; id: string };
+  /**
+   * The raw values behind the finding, for the renderer to interpolate and for
+   * the (later) agent layer to cite. Layer 2 may quote these numbers; it may
+   * not invent others — the same guardrail `report-narrative.ts` uses.
+   */
+  facts: Record<string, string | number>;
+};
+
+export type ReadinessReport = {
+  findings: ReadinessFinding[];
+  counts: { blocker: number; warning: number; info: number };
+  /** Findings suppressed by a dismissal, excluded from `findings`. */
+  dismissed_count: number;
+  checked_at: string;
+};
+
+/**
+ * Stable identity of a finding across runs, used as the dismissal key. Built
+ * from the check + the entity rather than from the facts, so re-running after
+ * the underlying number changes does not resurrect a dismissal the user
+ * already made.
+ */
+export function readinessFindingKey(f: {
+  check_id: ReadinessCheckId;
+  entity: { type: ReadinessEntityType; id: string };
+}): string {
+  return `${f.check_id}:${f.entity.type}:${f.entity.id}`;
+}
