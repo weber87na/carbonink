@@ -657,3 +657,274 @@ export function baselineIpcMocks(locale: Locale = 'zh-CN'): Record<string, unkno
     },
   };
 }
+
+// ---------------------------------------------------------------------------
+// Real-company variant — HSBC Holdings FY2025
+//
+// Every number below is transcribed from HSBC's published ESG Data Pack FY2025
+// (p.9 and p.11), or computed from it by the same calculation chain the app
+// uses. The pack, its provenance notes and the loader live in
+// src/main/data/demo/ — see hsbc-fy2025.json.
+//
+// Why HSBC and not one of the other three packs: it is the only one whose
+// disclosed activity data spans all three scopes, which is the shape these
+// fixtures need (dashboard scope split, /activities table, /sources list).
+// CATL and SF Holding publish no Scope 3 activity quantities at all.
+//
+// Why this is a separate composer rather than a replacement for
+// baselineIpcMocks(): screenshots taken from these specs end up in docs and
+// marketing, and a real bank's name and footprint sitting inside product
+// chrome reads as a customer relationship that does not exist. Opting in is a
+// per-spec decision, not a default. To flip the default, have a spec call
+// `realCompanyIpcMocks()` where it currently calls `baselineIpcMocks()`.
+//
+// Magnitudes here are group-scale (hundreds of thousands of tonnes), which is
+// the real value of this variant: it exercises number formatting, axis
+// scaling and column widths that four-digit synthetic data never reaches.
+// ---------------------------------------------------------------------------
+
+export const FIXTURE_ORG_REAL = {
+  id: 'org_e2e_hsbc',
+  name_zh: '汇丰控股有限公司',
+  name_en: 'HSBC Holdings plc',
+  industry: '银行与金融服务',
+  country_code: 'GB',
+  boundary_kind: 'operational_control',
+  responsible_person_name: null,
+  responsible_person_role: null,
+  base_year_period_id: null,
+  recalc_threshold_pct: 5,
+  created_at: '2026-01-01T00:00:00.000Z',
+  updated_at: '2026-02-25T00:00:00.000Z',
+} satisfies Organization;
+
+export const FIXTURE_PERIOD_REAL = {
+  id: 'period_2025_annual',
+  organization_id: FIXTURE_ORG_REAL.id,
+  year: 2025,
+  granularity: 'annual',
+  starts_at: '2025-01-01T00:00:00Z',
+  ends_at: '2025-12-31T23:59:59Z',
+  is_active: 1,
+  created_at: '2025-01-01T00:00:00Z',
+  significant_changes_text: null,
+  recalculation_reason: null,
+};
+
+export const FIXTURE_SITE_REAL = {
+  id: 'site_group',
+  organization_id: FIXTURE_ORG_REAL.id,
+  name_zh: '集团自身运营',
+  name_en: 'Group own operations',
+  address: '8 Canada Square, London E14 5HQ',
+  country_code: 'GB',
+  is_active: 1,
+  created_at: '2025-01-01T00:00:00Z',
+};
+
+export const FIXTURE_SOURCES_REAL = [
+  {
+    id: 'src_real_electricity',
+    site_id: FIXTURE_SITE_REAL.id,
+    name: '外购电力',
+    scope: 2,
+    category: 'electricity.grid',
+    ghg_protocol_path: 'scope2.location',
+    default_ef_query: null,
+    template_origin: 'demo:hsbc-fy2025',
+    is_active: true,
+  },
+  {
+    id: 'src_real_fuel',
+    site_id: FIXTURE_SITE_REAL.id,
+    name: '自有燃料（燃气、燃油、柴油等）',
+    scope: 1,
+    category: 'fuel.stationary',
+    ghg_protocol_path: 'scope1.stationary_combustion',
+    default_ef_query: null,
+    template_origin: 'demo:hsbc-fy2025',
+    is_active: true,
+  },
+  {
+    id: 'src_real_air_long',
+    site_id: FIXTURE_SITE_REAL.id,
+    name: '长途航空差旅',
+    scope: 3,
+    category: 'business_travel',
+    ghg_protocol_path: 'scope3.cat6_business_travel',
+    default_ef_query: null,
+    template_origin: 'demo:hsbc-fy2025',
+    is_active: true,
+  },
+  {
+    id: 'src_real_air_short',
+    site_id: FIXTURE_SITE_REAL.id,
+    name: '短途航空差旅',
+    scope: 3,
+    category: 'business_travel',
+    ghg_protocol_path: 'scope3.cat6_business_travel',
+    default_ef_query: null,
+    template_origin: 'demo:hsbc-fy2025',
+    is_active: true,
+  },
+];
+
+export const FIXTURE_SOURCES_WITH_STATS_REAL = FIXTURE_SOURCES_REAL.map((s, i) => ({
+  ...s,
+  activity_count: 1,
+  total_co2e_kg: [232_721_647.3, 10_159_789.64, 18_774_000, 15_484_000][i] ?? 0,
+  last_activity_at: '2026-02-25T00:00:00Z',
+}));
+
+// Amounts are the disclosed figures verbatim; computed_co2e_kg is what
+// CalculationService returns for them against the seeded factor library.
+export const FIXTURE_ACTIVITIES_REAL = [
+  {
+    id: 'act_real_001',
+    site_id: FIXTURE_SITE_REAL.id,
+    emission_source_id: 'src_real_electricity',
+    reporting_period_id: FIXTURE_PERIOD_REAL.id,
+    occurred_at_start: '2025-01-01T00:00:00Z',
+    occurred_at_end: '2025-12-31T23:59:59Z',
+    amount: 633_601,
+    unit: 'MWh',
+    ef_factor_code: 'electricity.grid.us.average.2024',
+    ef_year: 2024,
+    ef_source: 'EPA_eGRID',
+    ef_geography: 'US',
+    ef_dataset_version: '2024.annual',
+    computed_co2e_kg: 232_721_647.3,
+    computed_at: '2026-02-25T00:00:00Z',
+    extraction_id: null,
+    notes: 'ESG Data Pack FY2025 p.11 · 代理因子：无对应区域电网因子',
+    created_at: '2026-02-25T00:00:00Z',
+    updated_at: '2026-02-25T00:00:00Z',
+    source_document_id: null,
+    source_document_filename: null,
+  },
+  {
+    id: 'act_real_002',
+    site_id: FIXTURE_SITE_REAL.id,
+    emission_source_id: 'src_real_fuel',
+    reporting_period_id: FIXTURE_PERIOD_REAL.id,
+    occurred_at_start: '2025-01-01T00:00:00Z',
+    occurred_at_end: '2025-12-31T23:59:59Z',
+    amount: 5_407_019.5,
+    unit: 'm3',
+    ef_factor_code: 'fuel.natural_gas.combustion.global.2024',
+    ef_year: 2024,
+    ef_source: 'IPCC_AR6',
+    ef_geography: 'GLOBAL',
+    ef_dataset_version: '2024.v1',
+    computed_co2e_kg: 10_159_789.64,
+    computed_at: '2026-02-25T00:00:00Z',
+    extraction_id: null,
+    notes: 'ESG Data Pack FY2025 p.11 · 由 53,920 MWh 按 35.9 MJ/m³ 换算',
+    created_at: '2026-02-25T00:00:00Z',
+    updated_at: '2026-02-25T00:00:00Z',
+    source_document_id: null,
+    source_document_filename: null,
+  },
+  {
+    id: 'act_real_003',
+    site_id: FIXTURE_SITE_REAL.id,
+    emission_source_id: 'src_real_air_long',
+    reporting_period_id: FIXTURE_PERIOD_REAL.id,
+    occurred_at_start: '2025-01-01T00:00:00Z',
+    occurred_at_end: '2025-12-31T23:59:59Z',
+    amount: 126_000_000,
+    unit: 'passenger_km',
+    ef_factor_code: 'travel.air.economy.longhaul',
+    ef_year: 2024,
+    ef_source: 'DEFRA',
+    ef_geography: 'GLOBAL',
+    ef_dataset_version: '2024.annual',
+    computed_co2e_kg: 18_774_000,
+    computed_at: '2026-02-25T00:00:00Z',
+    extraction_id: null,
+    notes: 'ESG Data Pack FY2025 p.11 · 126 百万公里',
+    created_at: '2026-02-25T00:00:00Z',
+    updated_at: '2026-02-25T00:00:00Z',
+    source_document_id: null,
+    source_document_filename: null,
+  },
+  {
+    id: 'act_real_004',
+    site_id: FIXTURE_SITE_REAL.id,
+    emission_source_id: 'src_real_air_short',
+    reporting_period_id: FIXTURE_PERIOD_REAL.id,
+    occurred_at_start: '2025-01-01T00:00:00Z',
+    occurred_at_end: '2025-12-31T23:59:59Z',
+    amount: 98_000_000,
+    unit: 'passenger_km',
+    ef_factor_code: 'travel.air.economy.shorthaul',
+    ef_year: 2024,
+    ef_source: 'DEFRA',
+    ef_geography: 'GLOBAL',
+    ef_dataset_version: '2024.annual',
+    computed_co2e_kg: 15_484_000,
+    computed_at: '2026-02-25T00:00:00Z',
+    extraction_id: null,
+    notes: 'ESG Data Pack FY2025 p.11 · 98 百万公里',
+    created_at: '2026-02-25T00:00:00Z',
+    updated_at: '2026-02-25T00:00:00Z',
+    source_document_id: null,
+    source_document_filename: null,
+  },
+];
+
+export const FIXTURE_TOTALS_REAL = {
+  total_co2e_kg: 277_139_436.94,
+  scope1_kg: 10_159_789.64,
+  scope2_kg: 232_721_647.3,
+  scope3_kg: 34_258_000,
+};
+
+const SOURCE_NAME_EN_REAL: Record<string, string> = {
+  src_real_electricity: 'Purchased electricity',
+  src_real_fuel: 'Primary fuel sources',
+  src_real_air_long: 'Long haul air travel',
+  src_real_air_short: 'Short haul air travel',
+};
+
+const ACTIVITY_NOTES_EN_REAL: Record<string, string> = {
+  act_real_001: 'ESG Data Pack FY2025 p.11 · proxy factor: no regional grid factor available',
+  act_real_002: 'ESG Data Pack FY2025 p.11 · derived from 53,920 MWh at 35.9 MJ/m³',
+  act_real_003: 'ESG Data Pack FY2025 p.11 · 126 million km',
+  act_real_004: 'ESG Data Pack FY2025 p.11 · 98 million km',
+};
+
+/**
+ * Baseline mocks with the demo org, site, period, sources and activities
+ * swapped for HSBC's published FY2025 figures. Everything else (documents,
+ * questionnaires, audit, settings) stays on the synthetic baseline.
+ */
+export function realCompanyIpcMocks(locale: Locale = 'zh-CN'): Record<string, unknown> {
+  const en = locale === 'en';
+  const sources = en
+    ? FIXTURE_SOURCES_REAL.map((s) => ({ ...s, name: SOURCE_NAME_EN_REAL[s.id] ?? s.name }))
+    : FIXTURE_SOURCES_REAL;
+  const sourcesWithStats = en
+    ? FIXTURE_SOURCES_WITH_STATS_REAL.map((s) => ({
+        ...s,
+        name: SOURCE_NAME_EN_REAL[s.id] ?? s.name,
+      }))
+    : FIXTURE_SOURCES_WITH_STATS_REAL;
+  const activities = en
+    ? FIXTURE_ACTIVITIES_REAL.map((a) => ({
+        ...a,
+        notes: ACTIVITY_NOTES_EN_REAL[a.id] ?? a.notes,
+      }))
+    : FIXTURE_ACTIVITIES_REAL;
+
+  return {
+    ...baselineIpcMocks(locale),
+    'org:get-current': FIXTURE_ORG_REAL,
+    'org:list-sites': [FIXTURE_SITE_REAL],
+    'org:list-reporting-periods': [FIXTURE_PERIOD_REAL],
+    'source:list-by-org': sources,
+    'source:list-by-org-with-stats': sourcesWithStats,
+    'activity:list-by-period': activities,
+    'activity:totals-by-period': FIXTURE_TOTALS_REAL,
+  };
+}
