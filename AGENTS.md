@@ -8,6 +8,13 @@ read on demand.
 
 ## Non-negotiables (read before any change)
 
+- **English is the written language of this repo.** Docs (everything under
+  `docs/**`, including local-only specs/plans/research), code comments, and git
+  commit messages MUST be English. Conversation with the user may be Chinese.
+  Product-facing strings are exempt — those go through paraglide with en +
+  zh-CN parity (see the i18n rule below). Note the inconsistency: artifacts
+  predating 2026-08-13 (existing specs, `docs/ROADMAP.md`, older commit
+  subjects) are largely Chinese — they are not the model to copy.
 - **Git: commit freely without asking; push only when explicitly allowed.**
   Never force-push, never run destructive git. If on the default branch, branch
   first.

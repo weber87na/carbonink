@@ -19,7 +19,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
   tools: [
     {
       name: 'list_questionnaires',
-      description: '列出所有问卷（customer / reporting_year / status / question_count）',
+      description: 'List all questionnaires (customer / reporting_year / status / question_count).',
       inputSchema: {
         type: 'object',
         properties: {},
@@ -28,7 +28,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: 'get_questionnaire',
-      description: '查询单份问卷的完整详情（含 customer / document / questions[]）',
+      description:
+        'Get the full detail of one questionnaire (includes customer / document / questions[]).',
       inputSchema: {
         type: 'object',
         properties: {
@@ -40,7 +41,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: 'list_questions',
-      description: '列出某问卷下的所有问题',
+      description: 'List every question in a questionnaire.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -52,7 +53,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: 'get_answer',
-      description: '获取某道问题的答案（若未填写则返回 null）',
+      description: 'Get the answer to a question (returns null when unanswered).',
       inputSchema: {
         type: 'object',
         properties: {
@@ -64,7 +65,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: 'list_activities',
-      description: '列出活动数据（可按 reporting_period_id 或 year 过滤）',
+      description: 'List activity data, optionally filtered by reporting_period_id or year.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -76,7 +77,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: 'list_emission_sources',
-      description: '列出排放源（可按 organization_id 过滤）',
+      description: 'List emission sources, optionally filtered by organization_id.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -87,14 +88,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: 'set_answer',
-      description: '新增或更新某道问题的答案（source_kind 固定为 manual）',
+      description: 'Create or update the answer to a question (source_kind is fixed to manual).',
       inputSchema: {
         type: 'object',
         properties: {
           question_id: { type: 'string', description: 'question id' },
-          value: { type: 'string', description: '答案文本' },
-          unit: { type: 'string', description: '单位（可选）', nullable: true },
-          finalize: { type: 'boolean', description: '是否标记为已完成（设置 finalized_at）' },
+          value: { type: 'string', description: 'answer text' },
+          unit: { type: 'string', description: 'unit (optional)', nullable: true },
+          finalize: {
+            type: 'boolean',
+            description: 'mark the answer finalized (sets finalized_at)',
+          },
         },
         required: ['question_id', 'value'],
         additionalProperties: false,
@@ -103,7 +107,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     {
       name: 'create_activity',
       description:
-        '新增一条活动数据，通过已钉选的排放因子自动计算 co2e。若 EF 未钉选请先在 GUI 中使用一次。',
+        'Create an activity data row; co2e is computed from the pinned emission factor. ' +
+        'If the EF has not been pinned yet, use it once in the CarbonInk GUI first.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -140,7 +145,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: 'create_emission_source',
-      description: '新增一个排放源',
+      description: 'Create an emission source.',
       inputSchema: {
         type: 'object',
         properties: {
