@@ -27,11 +27,17 @@ import type { Organization } from '../../src/shared/schemas/organization.js';
 // Exception to the `unknown` rule above: the org also feeds the harness's
 // typed `cannedOrg` slot (not just the JSON `cannedIpc` map), so it must
 // satisfy the real schema type — e.g. `boundary_kind` as the literal union.
+// The invented company. Its canonical, complete profile — three sites, two
+// years, ten sources, 112 activity rows — lives in
+// src/main/data/demo/carbonink-demo-co.json; load that pack when you need the
+// whole inventory in a real database. These fixtures are the trimmed subset
+// the screenshot specs need, and the identifying fields are kept in sync with
+// the pack so the two never describe different companies.
 export const FIXTURE_ORG = {
   id: 'org_e2e_demo',
-  name_zh: '碳墨示例公司',
-  name_en: 'CarbonInk Demo Co.',
-  industry: 'Technology',
+  name_zh: '碳墨示例科技有限公司',
+  name_en: 'CarbonInk Demo Co., Ltd.',
+  industry: '电子元器件制造',
   country_code: 'CN',
   boundary_kind: 'operational_control',
   responsible_person_name: '张三',
@@ -58,9 +64,9 @@ export const FIXTURE_PERIOD = {
 export const FIXTURE_SITE = {
   id: 'site_hq',
   organization_id: FIXTURE_ORG.id,
-  name_zh: '总部',
-  name_en: 'HQ',
-  address: '北京市朝阳区某某路 1 号',
+  name_zh: '上海总部',
+  name_en: 'Shanghai headquarters',
+  address: '上海市浦东新区张江路 88 号 3 号楼',
   country_code: 'CN',
   is_active: 1,
   created_at: '2026-01-01T00:00:00Z',
@@ -590,7 +596,7 @@ function localizeOrg(locale: Locale) {
 
 function localizeSite(locale: Locale) {
   if (locale === 'zh-CN') return FIXTURE_SITE;
-  return { ...FIXTURE_SITE, address: '1 Example Rd, Chaoyang District, Beijing' };
+  return { ...FIXTURE_SITE, address: 'Building 3, 88 Zhangjiang Road, Pudong, Shanghai' };
 }
 
 // ---------------------------------------------------------------------------

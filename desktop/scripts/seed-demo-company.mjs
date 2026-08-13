@@ -270,7 +270,11 @@ console.log(`\n${pack.label.en}`);
 console.log(`  pack   ${pack.pack_id}`);
 console.log(`  db     ${DB_PATH}${DRY ? '  (dry run — nothing will be written)' : ''}`);
 console.log(`  source ${pack.sources[0].publisher}`);
-console.log(`         ${pack.sources[0].url}\n`);
+console.log(
+  pack.fictional
+    ? '         every figure in this pack is invented — see notes[]\n'
+    : `         ${pack.sources[0].url}\n`,
+);
 
 // Organization (hard singleton).
 let org = db.prepare('SELECT id, name_zh, name_en FROM organization LIMIT 1').get();
@@ -525,9 +529,27 @@ console.log(`  + ${inserted} activity row(s)${skipped ? `, ${skipped} already pr
 // ---------------------------------------------------------------------------
 // Reconciliation against what the company actually published
 // ---------------------------------------------------------------------------
-console.log('\n  Computed vs disclosed (tCO2e)');
-console.log('  ' + '-'.repeat(78));
 const fmtT = (v) => (v == null ? '—' : v.toLocaleString('en-US', { maximumFractionDigits: 0 }));
+
+// A fictional pack has nothing to reconcile against, so show the computed
+// totals on their own instead of an empty comparison table.
+if (pack.fictional) {
+  console.log(
+    '\n  Computed totals (tCO2e) — nothing to reconcile against, the figures are invented',
+  );
+  console.log('  ' + '-'.repeat(78));
+  for (const p of pack.reporting_periods) {
+    const got = tally[p.key] ?? {};
+    const parts = [1, 2, 3]
+      .filter((s) => got[s] != null)
+      .map((s) => `Scope ${s} ${fmtT(got[s] / 1000).padStart(6)}`);
+    const total = [1, 2, 3].reduce((sum, s) => sum + (got[s] ?? 0), 0);
+    console.log(`    ${p.key} (${p.year})   ${parts.join('   ')}   total ${fmtT(total / 1000)}`);
+  }
+} else {
+  console.log('\n  Computed vs disclosed (tCO2e)');
+  console.log('  ' + '-'.repeat(78));
+}
 
 for (const p of pack.reporting_periods) {
   const disclosed = pack.disclosed_totals.find((d) => d.period === p.key);

@@ -23,11 +23,17 @@
  * you don't need to undo this manually.
  *
  * What this script ensures (all idempotent):
- *   1. Inventory data via `scripts/seed-test-data.mjs` (spawned, not imported):
- *        - reporting_period 2025 annual
- *        - 5 emission_source rows (scopes 1/1/1/2/3)
- *        - 3 pinned_emission_factor rows
- *        - 8 activity_data rows across 2025
+ *   1. Inventory data via `scripts/seed-test-data.mjs` (spawned, not imported).
+ *      That script now loads a real-company pack from src/main/data/demo/
+ *      rather than the synthetic rows it used to carry. By default that is
+ *      hsbc-fy2025:
+ *        - reporting_period 2023, 2024, 2025 annual
+ *        - 6 emission_source rows (scopes 1/2/3/3/3/3)
+ *        - 5 pinned_emission_factor rows
+ *        - 18 activity_data rows across the three years
+ *      Pass --pack to seed-test-data.mjs for a different company. What this
+ *      smoke needs from it is only that all three scopes are populated, which
+ *      every default here satisfies.
  *   2. Questionnaire fixture (added here):
  *        - 1 customer  "Item4 Smoke 客户"
  *        - 1 document  (synthetic, no file on disk needed — the FK is what

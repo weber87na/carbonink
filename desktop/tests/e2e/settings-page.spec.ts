@@ -38,9 +38,9 @@ test('settings page renders + screenshots each tab', async () => {
     cannedRecommendations: {},
     cannedOrg: {
       id: 'org_e2e_screenshot',
-      name_zh: '碳墨示例公司',
-      name_en: 'CarbonInk Demo Co.',
-      industry: 'Technology',
+      name_zh: '碳墨示例科技有限公司',
+      name_en: 'CarbonInk Demo Co., Ltd.',
+      industry: '电子元器件制造',
       country_code: 'CN',
       boundary_kind: 'operational_control',
       responsible_person_name: 'Zhang San',

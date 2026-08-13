@@ -1,8 +1,8 @@
-# Real-company demo packs
+# Demo packs
 
-Four inventories built from published sustainability reports. Used for local
-demos, screenshots and tests — anywhere synthetic numbers would be less
-convincing or would hide a real modelling problem.
+Four inventories built from published sustainability reports, plus one invented
+company. Used for local debugging, screenshots and tests — anywhere synthetic
+numbers would be less convincing or would hide a real modelling problem.
 
 | Pack | Archetype | Years | Why it's here |
 |---|---|---|---|
@@ -10,13 +10,26 @@ convincing or would hide a real modelling problem.
 | `sf-holding-fy2025` | CN express logistics, 2 segments | 2023–2025 | Seven fuel carriers disclosed separately; aviation kerosene dominates |
 | `microsoft-fy2025` | Global hyperscale datacenters | FY2024–FY2025 | Non-calendar FY; 11 Scope 3 categories; regional electricity |
 | `hsbc-fy2025` | Global bank, office estate | 2023–2025 | Closest to an SME consulting client; travel lands as real activity rows |
+| `carbonink-demo-co` | **Invented** CN electronics SME | 2024–2025 | 112 rows, monthly plant electricity, two regional grids, all three scopes |
+
+**Which one to reach for.** Real packs for local debugging and for anything
+where the numbers need to survive checking. `carbonink-demo-co` for anything
+outward-facing — screenshots, docs, marketing — because a real company's name
+and audited footprint sitting inside product chrome reads as a customer
+relationship that does not exist. It is also the densest pack, so it is the
+better choice for exercising charts, pagination and month-over-month trends.
 
 ```bash
 node scripts/seed-demo-company.mjs --list
 node scripts/seed-demo-company.mjs --pack catl-fy2025                          # into the app DB
 node scripts/seed-demo-company.mjs --pack hsbc-fy2025 --db /tmp/x.sqlite --init # scratch DB
-node scripts/seed-demo-company.mjs --pack sf-holding-fy2025 --dry-run
+node scripts/seed-demo-company.mjs --pack carbonink-demo-co --dry-run
 ```
+
+`scripts/seed-test-data.mjs` — the dev-database seed that `reset-dev-db.mjs`
+and `seed-item4-smoke.mjs` call — is now a thin wrapper over the above. It
+defaults to `hsbc-fy2025`, the only pack with activity rows in all three
+scopes, and attaches to whatever organization onboarding created.
 
 ## The one rule
 
@@ -32,6 +45,16 @@ not being that.** Every activity row carries `provenance.kind`:
 - **`modeled`** — an analyst assumption sits on top of the number: a merged
   fuel line split one way, or a proxy emission factor from the wrong geography.
   `provenance.assumption` says what was assumed and how wrong it could be.
+- **`illustrative`** — the number is invented. Only legal in a pack marked
+  `"fictional": true`, and it must carry `provenance.basis` explaining what
+  real-world pattern the figure is modelled on. Such a row may not carry a
+  `disclosed` block at all.
+
+The separation is enforced both ways: a fictional pack must be *entirely*
+illustrative and may publish no `disclosed_totals`, and a real pack may contain
+no illustrative rows. Mixing them would destroy the one property that makes
+these packs worth having — that a reader can tell which numbers a company
+actually published.
 
 Every row also carries `source_ref` and a `locator` naming the table and page.
 `disclosed.value` and `disclosed.unit` always hold the original figure, so a

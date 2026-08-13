@@ -1,8 +1,19 @@
 {
   "schema_version": 1,
   "generated_at": "2026-08-13",
-  "note": "Registry of real-company demo packs. See README.md for the provenance rules. Keep this file in sync when adding a pack — tests/main/demo-packs.test.ts asserts that it matches the directory contents.",
+  "note": "Registry of demo packs. See README.md for the provenance rules. Keep this file in sync when adding a pack — tests/main/demo-packs.test.ts asserts that it matches the directory contents.",
   "packs": [
+    {
+      "pack_id": "carbonink-demo-co",
+      "file": "carbonink-demo-co.json",
+      "archetype": "fictional.electronics_manufacturing.sme_cn",
+      "label_en": "CarbonInk Demo Co. — FY2024–FY2025",
+      "label_zh": "碳墨示例科技 · 2024–2025 年度",
+      "country_code": "CN",
+      "years": [2024, 2025],
+      "fictional": true,
+      "best_for": "Anything outward-facing — screenshots, docs, demos — where a real company's name inside product chrome would imply a customer relationship. Also the densest pack: 112 activity rows, monthly plant electricity, two regional grid factors, all three scopes."
+    },
     {
       "pack_id": "catl-fy2025",
       "file": "catl-fy2025.json",

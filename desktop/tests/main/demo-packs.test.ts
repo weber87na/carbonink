@@ -1,9 +1,11 @@
 /**
- * Integrity tests for the real-company demo packs in src/main/data/demo/.
+ * Integrity tests for the demo packs in src/main/data/demo/ — four built from
+ * published sustainability reports, one invented company for outward-facing
+ * use.
  *
- * These packs carry figures transcribed from published sustainability reports,
- * so the tests here are less about code behaviour than about keeping the data
- * honest as it is edited:
+ * These packs carry figures transcribed from real reports, so the tests here
+ * are less about code behaviour than about keeping the data honest as it is
+ * edited:
  *
  *   - every factor_code, unit and fuel_code still exists in the seeded library;
  *   - every activity row still converts (a pack row that cannot reach its EF's
@@ -36,10 +38,13 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 const DEMO_DIR = fileURLToPath(new URL('../../src/main/data/demo', import.meta.url));
 
 type Provenance = {
-  kind: 'disclosed' | 'derived' | 'modeled';
+  kind: 'disclosed' | 'derived' | 'modeled' | 'illustrative';
   source_ref: string;
   locator: string;
+  /** Absent on `illustrative` rows — an invented figure has nothing to cite. */
   disclosed?: { value: number; unit: string };
+  /** Required on `illustrative` rows: what the invented number is modelled on. */
+  basis?: string;
   derivation?: {
     op: string;
     lhv_mj_per_m3?: number;
@@ -53,9 +58,11 @@ type Provenance = {
 type Pack = {
   pack_id: string;
   schema_version: number;
+  /** True for the invented company. Real packs omit it. */
+  fictional?: boolean;
   label: { zh: string; en: string };
   archetype: string;
-  sources: Array<{ ref: string; publisher: string; title: string; url: string }>;
+  sources: Array<{ ref: string; publisher: string; title: string; url?: string }>;
   organization: { country_code: string; boundary_kind: string };
   sites: Array<{ key: string; country_code: string; carries_activity?: boolean }>;
   reporting_periods: Array<{ key: string; year: number; granularity: string }>;
@@ -133,10 +140,14 @@ describe('demo pack registry', () => {
     expect(index.packs.map((p) => p.pack_id).sort()).toEqual(packs.map((p) => p.pack_id).sort());
   });
 
-  it('ships at least the four archetypes the demos rely on', () => {
-    expect(packs.length).toBeGreaterThanOrEqual(4);
+  it('ships distinct archetypes plus exactly one fictional pack', () => {
+    expect(packs.length).toBeGreaterThanOrEqual(5);
     const archetypes = packs.map((p) => p.archetype);
-    expect(new Set(archetypes).size).toBe(archetypes.length);
+    expect(new Set(archetypes).size, 'archetypes must be distinct').toBe(archetypes.length);
+    // More than one invented company means it is ambiguous which to reach for
+    // when something is going in front of an audience; none means the only
+    // option is a real company's name inside product chrome.
+    expect(packs.filter((p) => p.fictional).length).toBe(1);
   });
 });
 
@@ -147,7 +158,8 @@ describe.each(packs.map((p) => [p.pack_id, p] as const))('demo pack %s', (_id, p
     expect(pack.label.zh).toBeTruthy();
     expect(pack.sources.length).toBeGreaterThan(0);
     for (const s of pack.sources) {
-      expect(s.url).toMatch(/^https:\/\//);
+      // A fictional pack has no report to link. Everything else must.
+      if (!pack.fictional) expect(s.url).toMatch(/^https:\/\//);
       expect(s.publisher).toBeTruthy();
     }
     expect(['equity_share', 'financial_control', 'operational_control']).toContain(
@@ -205,9 +217,20 @@ describe.each(packs.map((p) => [p.pack_id, p] as const))('demo pack %s', (_id, p
     const refs = new Set(pack.sources.map((s) => s.ref));
     for (const a of pack.activities) {
       const p = a.provenance;
-      expect(['disclosed', 'derived', 'modeled']).toContain(p.kind);
+      expect(['disclosed', 'derived', 'modeled', 'illustrative']).toContain(p.kind);
       expect(refs, `provenance.source_ref ${p.source_ref}`).toContain(p.source_ref);
       expect(p.locator, `${a.source} ${a.period} locator`).toBeTruthy();
+
+      // An invented figure cites nothing and must say what it is modelled on.
+      // Everything else must carry the published figure it came from.
+      if (p.kind === 'illustrative') {
+        expect(p.basis, `${a.source} ${a.period} must state its basis`).toBeTruthy();
+        expect(
+          p.disclosed,
+          `${a.source} ${a.period} must not claim a disclosed figure`,
+        ).toBeUndefined();
+        continue;
+      }
       expect(p.disclosed?.value, `${a.source} ${a.period} disclosed value`).toBeTypeOf('number');
       expect(p.disclosed?.unit).toBeTruthy();
       // A modeled row without a stated assumption is just an unlabelled guess.
@@ -218,6 +241,22 @@ describe.each(packs.map((p) => [p.pack_id, p] as const))('demo pack %s', (_id, p
       if (p.kind === 'derived') {
         expect(p.derivation, `${a.source} ${a.period} must carry its derivation`).toBeTruthy();
       }
+    }
+  });
+
+  it('keeps invented and published figures strictly apart', () => {
+    // The whole value of these packs is that a reader can tell which numbers a
+    // company actually published. A real pack containing an invented row, or a
+    // fictional pack claiming a disclosure, destroys that in both directions.
+    const illustrative = pack.activities.filter((a) => a.provenance.kind === 'illustrative');
+    if (pack.fictional) {
+      expect(illustrative.length, `${pack.pack_id} must be entirely illustrative`).toBe(
+        pack.activities.length,
+      );
+      expect(pack.disclosed_totals, `${pack.pack_id} cannot disclose anything`).toEqual([]);
+    } else {
+      expect(illustrative, `${pack.pack_id} must contain no invented rows`).toEqual([]);
+      expect(pack.disclosed_totals.length).toBeGreaterThan(0);
     }
   });
 
