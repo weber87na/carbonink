@@ -62,6 +62,10 @@ export function title(f: ReadinessFinding): string {
       return m.readiness_check_D2_title();
     case 'D3':
       return m.readiness_check_D3_title();
+    case 'C6':
+      return m.readiness_check_C6_title();
+    case 'N6':
+      return m.readiness_check_N6_title();
   }
 }
 
@@ -150,5 +154,11 @@ export function detail(f: ReadinessFinding): string {
         supplier_name: s(f, 'supplier_name'),
         due_date: s(f, 'due_date'),
       });
+    // The agent checks carry the model's own sentence, so the copy is a frame
+    // around it rather than a template it has to fill.
+    case 'C6':
+      return m.readiness_check_C6_detail({ observation: s(f, 'observation') });
+    case 'N6':
+      return m.readiness_check_N6_detail({ observation: s(f, 'observation') });
   }
 }

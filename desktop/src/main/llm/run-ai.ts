@@ -78,9 +78,20 @@ export async function runAiAgent<T>(
     tools: AgentTool[];
     maxTurns?: number;
     timeoutMs?: number;
+    /**
+     * Test-only, forwarded to {@link buildAiAgentLayer}'s existing hook: a
+     * faux `Model` from pi-ai's `registerFauxProvider()` so a suite can drive
+     * the real turn loop without a network or a key. Production callers leave
+     * it undefined and the layer resolves the model from the registry.
+     */
+    model?: Parameters<typeof buildAiAgentLayer>[0]['model'];
   },
 ): Promise<{ result: T; trace: AgentTrace }> {
-  const layer = buildAiAgentLayer({ config, credentials });
+  const layer = buildAiAgentLayer({
+    config,
+    credentials,
+    ...(args.model !== undefined ? { model: args.model } : {}),
+  });
   const program = Effect.gen(function* () {
     const agent = yield* AiAgentTag;
     return yield* agent.run(args);

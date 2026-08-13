@@ -1168,5 +1168,13 @@
   "readiness_check_D2_detail_deleted": "{source_name}：交付时为 {frozen_co2e_kg} kg CO2e，对应的活动行已被删除。",
   "readiness_check_D3_title": "供应商披露已逾期",
   "readiness_check_D3_detail": "{supplier_name} 的截止日为 {due_date}，仍未回收。",
-  "readiness_home_card_cta": "体检当前报告期"
+  "readiness_home_card_cta": "体检当前报告期",
+  "readiness_review_agent": "深度复核（AI）",
+  "readiness_reviewing_agent": "复核中…",
+  "readiness_agent_hint": "调用你配置的 AI 供应商，寻找规则无法表达的分类问题。",
+  "readiness_agent_unavailable": "尚未配置 AI 供应商 —— 上方的确定性检查已照常完成。",
+  "readiness_check_C6_title": "可能缺少某个应有的排放源",
+  "readiness_check_C6_detail": "{observation}",
+  "readiness_check_N6_title": "排放源的分类与其名称不一致",
+  "readiness_check_N6_detail": "{observation}"
 }

@@ -1,4 +1,9 @@
-import { detail, severityLabel, title } from '@renderer/components/readiness/copy';
+import {
+  detail,
+  READINESS_CHECK_COUNT,
+  severityLabel,
+  title,
+} from '@renderer/components/readiness/copy';
 import { Button } from '@renderer/components/ui/button';
 import { readinessApi } from '@renderer/lib/api/readiness';
 import * as m from '@renderer/paraglide/messages';
@@ -7,6 +12,7 @@ import { readinessFindingKey } from '@shared/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { AlertTriangle, CheckCircle2, Info, OctagonAlert } from 'lucide-react';
+import { useState } from 'react';
 
 /**
  * The readiness checklist for one reporting period (spec
@@ -105,6 +111,19 @@ export function ReadinessSection({ reportingPeriodId }: { reportingPeriodId: str
     staleTime: Number.POSITIVE_INFINITY,
   });
 
+  // Layer 2 lives in its own mutation, not folded into the sweep: the rules
+  // are free and instant, the review spends the user's tokens. Pressing the
+  // button is the authorization, as with batch extraction.
+  const [agentFindings, setAgentFindings] = useState<ReadinessFinding[]>([]);
+  const [agentRan, setAgentRan] = useState(false);
+  const reviewMutation = useMutation({
+    mutationFn: () => readinessApi.review(reportingPeriodId),
+    onSuccess: (result) => {
+      setAgentFindings(result.findings);
+      setAgentRan(true);
+    },
+  });
+
   const dismissMutation = useMutation({
     mutationFn: (key: string) => readinessApi.dismiss(key),
     onSuccess: () => {
@@ -113,6 +132,10 @@ export function ReadinessSection({ reportingPeriodId }: { reportingPeriodId: str
     },
   });
 
+  // Agent findings are always `info`, so appending keeps the blocker-first
+  // order the service established.
+  const shown: ReadinessFinding[] = data ? [...data.findings, ...agentFindings] : agentFindings;
+
   return (
     <section className="flex flex-col gap-3" data-testid="readiness-section">
       <div className="flex items-start justify-between gap-3">
@@ -120,25 +143,38 @@ export function ReadinessSection({ reportingPeriodId }: { reportingPeriodId: str
           <h2 className="text-sm font-semibold">{m.readiness_title()}</h2>
           <p className="text-xs text-muted-foreground">{m.readiness_description()}</p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => void refetch()}
-          disabled={isFetching}
-          className="shrink-0"
-        >
-          {isFetching ? m.readiness_running() : data ? m.readiness_rerun() : m.readiness_run()}
-        </Button>
+        <div className="flex shrink-0 items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => void refetch()} disabled={isFetching}>
+            {isFetching ? m.readiness_running() : data ? m.readiness_rerun() : m.readiness_run()}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => reviewMutation.mutate()}
+            disabled={reviewMutation.isPending}
+            title={m.readiness_agent_hint()}
+          >
+            {reviewMutation.isPending ? m.readiness_reviewing_agent() : m.readiness_review_agent()}
+          </Button>
+        </div>
       </div>
 
+      {/* An empty result is indistinguishable from "no provider configured"
+       * by design -- the channel never errors -- so say so once the review has
+       * run and produced nothing, rather than leaving the button looking
+       * broken. */}
+      {agentRan && agentFindings.length === 0 ? (
+        <p className="text-xs text-muted-foreground">{m.readiness_agent_unavailable()}</p>
+      ) : null}
+
       {data ? (
-        data.findings.length === 0 ? (
+        shown.length === 0 ? (
           <div className="flex items-start gap-3 rounded-md border border-border bg-card px-4 py-3">
             <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
             <div className="min-w-0">
               <p className="text-sm font-medium">{m.readiness_all_clear_title()}</p>
               <p className="text-xs text-muted-foreground">
-                {m.readiness_all_clear_body({ count: String(14) })}
+                {m.readiness_all_clear_body({ count: String(READINESS_CHECK_COUNT) })}
               </p>
             </div>
           </div>
@@ -155,7 +191,7 @@ export function ReadinessSection({ reportingPeriodId }: { reportingPeriodId: str
                 : ''}
             </p>
             <ul className="divide-y divide-border rounded-md border border-border bg-card">
-              {data.findings.map((f) => {
+              {shown.map((f) => {
                 const Icon = SEVERITY_ICON[f.severity];
                 const key = readinessFindingKey(f);
                 return (

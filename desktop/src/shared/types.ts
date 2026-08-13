@@ -1320,7 +1320,11 @@ export type ReadinessCheckId =
   | 'T4' // pinned to a factor from a deleted user library
   | 'D1' // no base year set
   | 'D2' // finalized answer whose frozen snapshot no longer matches the ledger
-  | 'D3'; // supplier disclosure past its due date
+  | 'D3' // supplier disclosure past its due date
+  // Agent-only checks (spec 2026-08-13-readiness-agent-review). Judgements a
+  // query cannot express, so they arrive from the model rather than a rule.
+  | 'C6' // an emission source this industry would normally have is absent
+  | 'N6'; // a source's scope/category does not match what its name describes
 
 /**
  * `blocker` means "an auditor would stop here", `warning` means "explain it",

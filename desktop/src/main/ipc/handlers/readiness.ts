@@ -19,6 +19,9 @@ export function readinessHandlers(ctx: IpcContext): {
 } {
   return {
     'readiness:run': (input) => ctx.readinessService.run(runInput.parse(input).reporting_period_id),
+    'readiness:review': async (input) => ({
+      findings: await ctx.readinessAgentService.review(runInput.parse(input).reporting_period_id),
+    }),
     'readiness:dismiss': (input) => ctx.readinessService.dismiss(keyInput.parse(input).key),
     'readiness:undismiss': (input) => ctx.readinessService.undismiss(keyInput.parse(input).key),
   };

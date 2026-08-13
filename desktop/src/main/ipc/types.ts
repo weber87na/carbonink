@@ -657,6 +657,14 @@ export type IpcTypeMap = {
   'readiness:run': (input: {
     reporting_period_id: string;
   }) => import('@shared/types.js').ReadinessReport;
+  /**
+   * Layer 2. Returns findings only — never an error shape: an empty array IS
+   * the failure signal, matching `recommendForText`'s never-throws contract,
+   * so a missing provider degrades instead of gating.
+   */
+  'readiness:review': (input: {
+    reporting_period_id: string;
+  }) => Promise<{ findings: import('@shared/types.js').ReadinessFinding[] }>;
   'readiness:dismiss': (input: { key: string }) => void;
   'readiness:undismiss': (input: { key: string }) => void;
 

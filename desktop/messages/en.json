@@ -1168,5 +1168,13 @@
   "readiness_check_D2_detail_deleted": "{source_name}: delivered as {frozen_co2e_kg} kg CO2e; the underlying row has been deleted.",
   "readiness_check_D3_title": "Supplier disclosure is overdue",
   "readiness_check_D3_detail": "{supplier_name} was due {due_date} and has not come back.",
-  "readiness_home_card_cta": "Review this period"
+  "readiness_home_card_cta": "Review this period",
+  "readiness_review_agent": "Deeper review (AI)",
+  "readiness_reviewing_agent": "Reviewing…",
+  "readiness_agent_hint": "Uses your configured AI provider to look for classification problems no rule can express.",
+  "readiness_agent_unavailable": "No AI provider configured — the deterministic checks above still ran.",
+  "readiness_check_C6_title": "An expected emission source may be missing",
+  "readiness_check_C6_detail": "{observation}",
+  "readiness_check_N6_title": "Source classification looks inconsistent with its name",
+  "readiness_check_N6_detail": "{observation}"
 }
