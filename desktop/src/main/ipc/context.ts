@@ -12,7 +12,12 @@ import { ActivityDataService } from '@main/services/activity-data-service.js';
 import { ActivityImportService } from '@main/services/activity-import-service.js';
 import { AgentSkillService, type SkillResolver } from '@main/services/agent-skill-service.js';
 import type { AnswerR } from '@main/services/answer-generation/tags.js';
-import { AnswerToolsTag, buildAnswerLayer } from '@main/services/answer-generation/tags.js';
+import {
+  AnswerToolsTag,
+  buildAnswerLayer,
+  DbTag,
+  NowTag,
+} from '@main/services/answer-generation/tags.js';
 import { buildAnswerTools } from '@main/services/answer-generation/tools.js';
 import { AuditEventService } from '@main/services/audit-event-service.js';
 import type { ServiceContext } from '@main/services/base.js';
@@ -96,6 +101,15 @@ export interface IpcContext {
   inboundQuestionnaireService: InboundQuestionnaireService;
   // Phase 2.2b → Step 2 — answer generation via Effect Layer.
   answerLayer: Layer.Layer<AnswerR>;
+  /**
+   * Db + clock only, for the answer operations that never call a model
+   * (`save` / `unfinalize` / `listByQuestionnaire` all declare exactly
+   * `DbTag | NowTag`). `answerLayer` throws when no AI provider is configured,
+   * which would otherwise make a plain SQL update unreachable — a coupling the
+   * agent bridge exposed, since an agent can legitimately save an answer on an
+   * install that has no provider set up.
+   */
+  answerDbLayer: Layer.Layer<DbTag | NowTag>;
   providerConfig: ProviderConfigV2 | null;
   // Routing API — distance lookup via AMap or haversine.
   routingLayer: Layer.Layer<RoutingR>;
@@ -462,6 +476,10 @@ export function createIpcContext(
       }
       return questionnaireServiceInstance;
     },
+    answerDbLayer: Layer.mergeAll(
+      Layer.succeed(DbTag, svc.db),
+      Layer.succeed(NowTag, () => svc.now()),
+    ),
     get answerLayer() {
       if (!answerLayerInstance) {
         // Provider config is required to build the AiClient + AiAgent layers

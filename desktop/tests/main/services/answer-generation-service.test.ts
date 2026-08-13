@@ -539,14 +539,17 @@ describe('answer-generation.save', () => {
     expect(row.finalized_at).toBe('2026-05-15T12:00:00Z');
   });
 
-  it('AnswerNotFound for unknown question_id', async () => {
+  // save() upserts, so an id with no question row is the only failure mode
+  // left -- it must not create an orphan answer (spec
+  // 2026-08-13-mcp-write-path-integrity).
+  it('QuestionNotFound for unknown question_id', async () => {
     const { testLayer } = setup({});
     const exit = await Effect.runPromiseExit(
       answerSvc
         .save({ question_id: 'not-real', value: 'v', unit: null, finalize: false })
         .pipe(Effect.provide(testLayer)),
     );
-    expect(failureTag(exit)).toBe('AnswerNotFound');
+    expect(failureTag(exit)).toBe('QuestionNotFound');
   });
 });
 

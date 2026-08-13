@@ -1,12 +1,14 @@
+import { startAgentBridge, stopAgentBridge } from '@main/agent-bridge/server.js';
 import { closeAppDb, openAppDb } from '@main/db/connection.js';
 import { runMigrations } from '@main/db/migrate.js';
-import { cleanupIpc, setupIpc } from '@main/ipc/setup.js';
+import { cleanupIpc, getDispatchMap, setupIpc } from '@main/ipc/setup.js';
 import { runAutoBackupIfDue } from '@main/services/auto-backup-service.js';
 import { installLogger } from '@main/services/logger-service.js';
 import { notifyOverdueDisclosures } from '@main/services/overdue-notify-service.js';
 import { WorkspaceService } from '@main/services/workspace-service.js';
 import { initAutoUpdater } from '@main/updater/auto-updater.js';
 import { configureWorkspaceSwitch } from '@main/workspace-switch.js';
+import { agentBridgeAddress } from '@shared/agent-bridge/socket-path.js';
 import { app, BrowserWindow, Menu, nativeImage } from 'electron';
 import { buildAppMenu } from './menu.js';
 import { createMainWindow, devIconPath, getMainWindow } from './window.js';
@@ -39,12 +41,25 @@ app.whenReady().then(() => {
   }
 
   // Client workspaces (spec 2026-07-22): the registry decides which
-  // SQLite file is active; first run bootstraps app.sqlite as 默认账套.
+  // SQLite file is active; first run bootstraps app.sqlite as the default
+  // workspace.
   const workspaceService = new WorkspaceService(app.getPath('userData'));
   const db = openAppDb(workspaceService.activeDbPath());
   runMigrations(db);
 
   setupIpc();
+
+  // Agent bridge (spec 2026-08-13-mcp-write-path-integrity): lets the MCP
+  // server route writes through these same IPC handlers instead of writing
+  // SQLite behind the service layer's back. Started after setupIpc so the
+  // dispatch table exists; takes the getter, not the table, so a workspace
+  // switch is picked up on the next request.
+  const bridgeAddress = agentBridgeAddress(app.getPath('userData'));
+  const agentBridge = startAgentBridge({
+    address: bridgeAddress,
+    getDispatch: getDispatchMap,
+  });
+  app.on('will-quit', () => stopAgentBridge(agentBridge, bridgeAddress));
 
   // Wire the workspace-switch orchestration (reply → teardown → reopen →
   // rebuild IPC → reload renderer). Lives outside the IPC layer because

@@ -49,6 +49,7 @@ const fakeAnswer = {
 function makeCtx() {
   return {
     answerLayer: Layer.empty,
+      answerDbLayer: Layer.empty,
     providerConfig: { provider: 'openai' as const, model: 'gpt-4o', apiKey: 'test-key' },
     // Minimum stub of questionnaireService — the inbound-guard in
     // answer:generate calls `getQuestionDirection`. Returning null
@@ -92,6 +93,7 @@ describe('answer:* handlers', () => {
   it('answer:generate throws when providerConfig is null', async () => {
     const ctx = {
       answerLayer: Layer.empty,
+      answerDbLayer: Layer.empty,
       providerConfig: null,
       questionnaireService: { getQuestionDirection: () => null },
     } as never;

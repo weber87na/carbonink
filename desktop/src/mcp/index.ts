@@ -7,6 +7,7 @@ import {
   ListToolsRequestSchema,
   ReadResourceRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
+import { callBridge } from './bridge-client.js';
 import { openAppDb } from './db.js';
 import * as q from './queries.js';
 
@@ -88,7 +89,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: 'set_answer',
-      description: 'Create or update the answer to a question (source_kind is fixed to manual).',
+      description:
+        'Create or update the answer to a question. Recorded as ai_suggested, not manual. ' +
+        'Requires the CarbonInk desktop app to be running.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -107,12 +110,14 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     {
       name: 'create_activity',
       description:
-        'Create an activity data row; co2e is computed from the pinned emission factor. ' +
-        'If the EF has not been pinned yet, use it once in the CarbonInk GUI first.',
+        'Create an activity data row. co2e is computed from the pinned emission factor, ' +
+        "converting the given unit into the factor's unit; a cross-family unit (e.g. " +
+        'litres against a per-kg factor) fails unless fuel_code is supplied. If the EF ' +
+        'has not been pinned yet, use it once in the CarbonInk GUI first. Requires the ' +
+        'CarbonInk desktop app to be running.',
       inputSchema: {
         type: 'object',
         properties: {
-          site_id: { type: 'string' },
           emission_source_id: { type: 'string' },
           reporting_period_id: { type: 'string' },
           occurred_at_start: { type: 'string', description: 'ISO date string, e.g. 2024-01-01' },
@@ -124,10 +129,16 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
           ef_source: { type: 'string' },
           ef_geography: { type: 'string' },
           ef_dataset_version: { type: 'string' },
+          fuel_code: {
+            type: 'string',
+            description:
+              'Fuel binding for cross-family conversion (e.g. litres of diesel against a ' +
+              'per-kg factor). Only needed when unit and the factor unit differ in family.',
+            nullable: true,
+          },
           notes: { type: 'string', nullable: true },
         },
         required: [
-          'site_id',
           'emission_source_id',
           'reporting_period_id',
           'occurred_at_start',
@@ -145,7 +156,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: 'create_emission_source',
-      description: 'Create an emission source.',
+      description: 'Create an emission source. Requires the CarbonInk desktop app to be running.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -163,10 +174,36 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
 }));
 
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  const args = (request.params.arguments ?? {}) as Record<string, unknown>;
+
+  // Writes never touch this process's SQLite handle — they go over the agent
+  // bridge into the app's own IPC handlers, so an agent's change gets the same
+  // EF pinning, unit conversion, CO2e computation, audit event and undo entry
+  // as an edit made in the UI (spec 2026-08-13-mcp-write-path-integrity).
+  // Handled before openAppDb() so a write attempt with the app closed reports
+  // "start CarbonInk" rather than a database error.
+  switch (request.params.name) {
+    case 'set_answer':
+      return ok(
+        await callBridge('answer:save', {
+          question_id: String(args['question_id']),
+          value: String(args['value']),
+          unit: args['unit'] === undefined ? null : (args['unit'] as string | null),
+          finalize: args['finalize'] === true,
+          source_kind: 'ai_suggested',
+        }),
+      );
+
+    case 'create_activity':
+      return ok(await callBridge('activity:create', args));
+
+    case 'create_emission_source':
+      return ok(await callBridge('source:create', args));
+  }
+
   const rawDb = openAppDb();
   const db = rawDb as unknown as q.DbLike;
   try {
-    const args = (request.params.arguments ?? {}) as Record<string, unknown>;
     switch (request.params.name) {
       case 'list_questionnaires':
         return ok(q.listQuestionnaires(db));
@@ -194,15 +231,6 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           opts.organization_id = String(args['organization_id']);
         return ok(q.listEmissionSources(db, opts));
       }
-
-      case 'set_answer':
-        return ok(q.setAnswer(db, args as never));
-
-      case 'create_activity':
-        return ok(q.createActivity(db, args as never));
-
-      case 'create_emission_source':
-        return ok(q.createEmissionSource(db, args as never));
 
       default:
         throw new Error(`Unknown tool: ${request.params.name}`);

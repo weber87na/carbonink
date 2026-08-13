@@ -1,10 +1,10 @@
-import { randomUUID } from 'node:crypto';
 import type { AgentTool, AgentTrace, AiAgentTag } from '@main/llm/ai-agent.js';
 import type { AiClientTag } from '@main/llm/ai-client.js';
 import type { AiErr } from '@main/llm/errors.js';
 import type { ActivityDataService } from '@main/services/activity-data-service';
 import type { OrganizationService } from '@main/services/organization-service';
 import type { Answer, ProviderConfigV2, Question, Questionnaire } from '@shared/types';
+import { newId } from '@shared/ulid.js';
 import type { Database } from 'better-sqlite3';
 import { Effect, type Either } from 'effect';
 import { runAgent } from './agent-loop.js';
@@ -110,7 +110,7 @@ export function generate(
       : output.source_summary;
 
     return yield* insertAnswer(db, {
-      id: randomUUID(),
+      id: newId(),
       question_id: questionId,
       value: output.value,
       unit,
@@ -202,19 +202,61 @@ export function generateAllUnanswered(
   });
 }
 
+/**
+ * Upsert the answer to a question.
+ *
+ * Two callers with different provenance share this one path (spec
+ * 2026-08-13-mcp-write-path-integrity): the renderer's AnswerReviewCard, which
+ * omits `source_kind` and so records `'manual'`, and the agent bridge, which
+ * passes `'ai_suggested'`. Recording an agent's write as a human keystroke was
+ * the A4 divergence — the fix has to live here, because the old MCP path is not
+ * the only place that hardcoded `'manual'`.
+ *
+ * Insert-when-absent (rather than failing `AnswerNotFound`) exists for the same
+ * reason: the renderer only ever saves rows `generate()` already created, but an
+ * agent can legitimately answer a question nobody has touched. `AnswerNotFound`
+ * is consequently unreachable today and kept only so `SaveErr` stays a superset
+ * for callers that still narrow on it.
+ */
 export function save(input: SaveInput): Effect.Effect<Answer, SaveErr, DbTag | NowTag> {
   return Effect.gen(function* () {
     const db = yield* DbTag;
     const nowFn = yield* NowTag;
+    const sourceKind = input.source_kind ?? 'manual';
     const existing = yield* readAnswerByQuestion(db, input.question_id);
-    if (!existing)
-      return yield* Effect.fail(new AnswerNotFound({ question_id: input.question_id }));
-    const finalizedAt = input.finalize ? nowFn() : existing.finalized_at;
-    yield* Effect.sync(() => {
-      db.prepare(
-        `UPDATE answer SET value = ?, unit = ?, source_kind = 'manual', finalized_at = ? WHERE question_id = ?`,
-      ).run(input.value, input.unit, finalizedAt, input.question_id);
-    });
+
+    if (existing) {
+      const finalizedAt = input.finalize ? nowFn() : existing.finalized_at;
+      yield* Effect.sync(() => {
+        db.prepare(
+          `UPDATE answer SET value = ?, unit = ?, source_kind = ?, finalized_at = ? WHERE question_id = ?`,
+        ).run(input.value, input.unit, sourceKind, finalizedAt, input.question_id);
+      });
+    } else {
+      // Check the FK ourselves so a bogus question_id surfaces as a typed
+      // error the IPC layer can localize, not a raw SQLite constraint string.
+      const question = yield* Effect.sync(
+        () =>
+          db.prepare('SELECT id FROM question WHERE id = ?').get(input.question_id) as
+            | { id: string }
+            | undefined,
+      );
+      if (!question) return yield* Effect.fail(new QuestionNotFound({ id: input.question_id }));
+      yield* Effect.sync(() => {
+        db.prepare(
+          `INSERT INTO answer (id, question_id, value, unit, source_kind, source_summary, finalized_at)
+           VALUES (?, ?, ?, ?, ?, NULL, ?)`,
+        ).run(
+          newId(),
+          input.question_id,
+          input.value,
+          input.unit,
+          sourceKind,
+          input.finalize ? nowFn() : null,
+        );
+      });
+    }
+
     return yield* Effect.sync(
       () =>
         db.prepare(`SELECT * FROM answer WHERE question_id = ?`).get(input.question_id) as Answer,

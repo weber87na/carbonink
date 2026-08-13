@@ -32,6 +32,9 @@ const saveInput = z.object({
   value: z.string(),
   unit: z.string().nullable(),
   finalize: z.boolean(),
+  // Omitted by the renderer (a human typing) and so defaulted to 'manual' in
+  // the service; the agent bridge passes 'ai_suggested'.
+  source_kind: z.union([z.literal('manual'), z.literal('ai_suggested')]).optional(),
 });
 const listInput = z.object({ questionnaire_id: z.string().min(1) });
 
@@ -113,12 +116,12 @@ export function answerHandlers(ctx: IpcContext): {
     },
     'answer:save': async (input) => {
       const parsed = saveInput.parse(input);
-      return Effect.runPromise(answerSvc.save(parsed).pipe(Effect.provide(ctx.answerLayer)));
+      return Effect.runPromise(answerSvc.save(parsed).pipe(Effect.provide(ctx.answerDbLayer)));
     },
     'answer:unfinalize': async (input) => {
       const parsed = generateInput.parse(input);
       return Effect.runPromise(
-        answerSvc.unfinalize(parsed.question_id).pipe(Effect.provide(ctx.answerLayer)),
+        answerSvc.unfinalize(parsed.question_id).pipe(Effect.provide(ctx.answerDbLayer)),
       );
     },
     'answer:list-by-questionnaire': async (input) => {
@@ -126,7 +129,7 @@ export function answerHandlers(ctx: IpcContext): {
       return Effect.runPromise(
         answerSvc
           .listByQuestionnaire(parsed.questionnaire_id)
-          .pipe(Effect.provide(ctx.answerLayer)),
+          .pipe(Effect.provide(ctx.answerDbLayer)),
       );
     },
     'answer:generate-all-unanswered': async (input) => {
@@ -165,7 +168,7 @@ export function answerHandlers(ctx: IpcContext): {
       const answers = await Effect.runPromise(
         answerSvc
           .listByQuestionnaire(parsed.questionnaire_id)
-          .pipe(Effect.provide(ctx.answerLayer)),
+          .pipe(Effect.provide(ctx.answerDbLayer)),
       );
       const questions = ctx.questionnaireService.listQuestions(parsed.questionnaire_id);
       const questionById = new Map(questions.map((q) => [q.id, q]));

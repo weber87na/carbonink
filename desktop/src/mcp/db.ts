@@ -8,7 +8,7 @@ import { DatabaseSync } from 'node:sqlite';
  * this module runs in the standalone MCP server process (plain Node via
  * ELECTRON_RUN_AS_NODE), where the `electron` module is unavailable.
  */
-function userDataDir(): string {
+export function userDataDir(): string {
   const home = homedir();
   if (process.platform === 'darwin') {
     return join(home, 'Library', 'Application Support', 'CarbonInk');
