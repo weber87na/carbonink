@@ -73,6 +73,26 @@ sticky-bottom action-bar pattern. Centralized padding also makes
 children's `h-full` overshoot by the padding amount and trigger an
 unintended outer scrollbar.
 
+### Popovers inside a drawer or dialog
+
+A popover portaled to `document.body` **cannot scroll** while a vaul drawer
+or Radix dialog is open. Both mount `react-remove-scroll` with their own
+content element as its only shard, and it cancels `wheel` / `touchmove`
+events targeting anything outside that subtree. Clicks still work, so the
+symptom is "the list is stuck", not "the popover is dead" — and it only
+shows up once a list is long enough to overflow.
+
+`Combobox` handles this: on open it resolves the nearest
+`[data-vaul-drawer]` / `[data-slot="dialog-content"]` / `[data-slot="sheet-content"]`
+ancestor and portals there. Any *other* popover-like surface opened inside
+a drawer needs the same treatment — `PopoverContent` takes a `container`
+prop for it. Radix positions content `fixed`, so re-parenting doesn't
+change where it lands on screen.
+
+Only an e2e spec can catch a regression here (happy-dom has no
+wheel-to-scroll behaviour to cancel) — see
+`tests/e2e/category-picker-scroll.spec.ts`.
+
 ## List item layout (preferred over HTML tables for data pages)
 
 Reach for a vertical card-row list before reaching for a `<table>`.
