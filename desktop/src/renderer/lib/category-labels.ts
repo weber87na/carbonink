@@ -1,4 +1,5 @@
 import { currentLocale } from '@renderer/lib/i18n';
+import { emissionCategoryLabel, findEmissionCategory } from '@shared/emission-categories';
 
 /**
  * Localized labels for `emission_source.category` values.
@@ -175,24 +176,51 @@ const LEGACY_EN: Record<string, string> = {
 };
 
 /**
+ * Coarse EF-catalog prefixes the category picker derives from a standard
+ * taxonomy code (see `shared/emission-categories.ts`). These are a join
+ * key rather than a user choice, but they still reach the /sources filter
+ * chip row, so they need labels. Deliberately broader than the standard
+ * category they came from — `travel` covers air/rail/taxi factors, which
+ * is exactly why it's the prefix cat 6 maps to.
+ */
+const DERIVED_ZH: Record<string, string> = {
+  electricity: '电力',
+  freight: '货运',
+  purchase: '采购',
+  travel: '差旅',
+};
+
+const DERIVED_EN: Record<string, string> = {
+  electricity: 'Electricity',
+  freight: 'Freight',
+  purchase: 'Purchased goods and services',
+  travel: 'Travel',
+};
+
+/**
  * Look up the localized label for a category string. Falls back to the
  * raw input when no translation exists — preserving custom user input
  * (e.g. "data_center_PUE") and any new Climatiq categories that ship
  * before this map is updated.
  *
  * Callers: /sources card, SourceCatalogDrawer row, SourceFilterHeader
- * chip row, and the filter hook's `getSearchExtras` (so Chinese-only
- * search terms like "燃料" still match English-stored rows).
+ * chip row, the category picker's non-standard rows, and the filter
+ * hook's `getSearchExtras` (so Chinese-only search terms like "燃料"
+ * still match English-stored rows).
  */
 export function categoryLabel(raw: string | null | undefined): string {
   if (!raw) return '';
   const locale = currentLocale();
+  // A standard taxonomy code can reach here from a legacy `category` that
+  // happened to be one, or from the picker's "current value" row.
+  const standard = findEmissionCategory(raw);
+  if (standard) return emissionCategoryLabel(standard, locale);
   if (locale === 'zh-CN') {
-    return CLIMATIQ_ZH[raw] ?? LEGACY_ZH[raw] ?? raw;
+    return CLIMATIQ_ZH[raw] ?? LEGACY_ZH[raw] ?? DERIVED_ZH[raw] ?? raw;
   }
   // en: Climatiq strings are already idiomatic English; only humanize
   // the dotted-legacy forms.
-  return LEGACY_EN[raw] ?? raw;
+  return LEGACY_EN[raw] ?? DERIVED_EN[raw] ?? raw;
 }
 
 /**
@@ -227,6 +255,19 @@ const SCOPE2_METHOD_EN: Record<string, string> = {
 export function pathLabel(raw: string | null | undefined): string {
   if (!raw) return '';
   const locale = currentLocale();
+
+  // Codes the picker writes resolve straight from the taxonomy. Scope 3
+  // entries already carry their standard number ("3.6 商务差旅"), which
+  // states the scope more precisely than a "范围 3 · " prefix would — so
+  // they render bare rather than going through `scopeShort`.
+  const standard = findEmissionCategory(raw);
+  if (standard) {
+    const label = emissionCategoryLabel(standard, locale);
+    return standard.ghgpNumber
+      ? label
+      : `${scopeShort(`scope${standard.scope}`, locale)} · ${label}`;
+  }
+
   // "scope1.foo" → ["scope1", "foo"]; anything without a "." passes
   // through `categoryLabel` directly.
   const dotIdx = raw.indexOf('.');
@@ -287,4 +328,31 @@ export function isPathRedundantWithCategory(
   const stripped = path.replace(/^scope\d+\./, '').toLowerCase();
   const cat = category.toLowerCase().replace(/\s+/g, '_');
   return stripped === cat;
+}
+
+/**
+ * The one label a source's category should render as.
+ *
+ * Rows written by the category picker store the standard code in
+ * `ghg_protocol_path` and a coarse EF-catalog prefix in `category`; the
+ * standard code is the one the user chose and the one worth showing.
+ * Rows predating the picker only have `category`, so that's the fallback.
+ *
+ * Returns '' when the source has neither — callers hide the chip.
+ */
+export function sourceCategoryLabel(src: {
+  category: string | null;
+  ghg_protocol_path: string | null;
+}): string {
+  if (findEmissionCategory(src.ghg_protocol_path)) return pathLabel(src.ghg_protocol_path);
+  return categoryLabel(src.category) || pathLabel(src.ghg_protocol_path);
+}
+
+/**
+ * Does this path come from the standard taxonomy? Surfaces where a card
+ * needs to know whether `sourceCategoryLabel` already spoke for the path,
+ * so it doesn't render it a second time.
+ */
+export function isStandardCategoryPath(path: string | null | undefined): boolean {
+  return findEmissionCategory(path) !== null;
 }

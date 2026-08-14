@@ -1,3 +1,4 @@
+import { EmissionCategoryPicker } from '@renderer/components/EmissionCategoryPicker';
 import { toast } from '@renderer/components/toast';
 import { Button } from '@renderer/components/ui/button';
 import { Input } from '@renderer/components/ui/input';
@@ -6,6 +7,7 @@ import { sourceApi } from '@renderer/lib/api/emission-source';
 import { orgApi } from '@renderer/lib/api/organization';
 import { friendlyErrorDescription } from '@renderer/lib/error-message';
 import * as m from '@renderer/paraglide/messages';
+import { findEmissionCategory } from '@shared/emission-categories';
 import type { Site } from '@shared/types';
 import { useForm, useStore } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -16,6 +18,14 @@ import { useEffect } from 'react';
  *
  * Follows the StepCompanyInfo TanStack Form pattern (children-prop render
  * style — we calibrated Biome's `noChildrenProp` off for that hook).
+ *
+ * Category: one picker over the standard taxonomy, two stored columns.
+ * `ghg_protocol_path` takes the standard code; `category` takes the
+ * EF-catalog prefix it maps to, which is what narrows the emission-factor
+ * candidate pool. Values outside the taxonomy (the picker's custom-value
+ * row) keep the historical meaning — they go to `category` alone, leaving
+ * `ghg_protocol_path` for standard codes only. See
+ * shared/emission-categories.ts.
  *
  * Site picker: Phase 1a always has exactly 1 site (created during onboarding),
  * so the dominant path renders a read-only label. The dropdown branch is
@@ -64,15 +74,18 @@ export function SourceForm({ organizationId, onCancel, onSuccess }: SourceFormPr
     defaultValues: {
       name: '',
       scope: 1 as 1 | 2 | 3,
-      category: '',
+      // One user-facing field, two stored columns — see the header note.
+      category_code: '',
       site_id: defaultSiteId,
     },
     onSubmit: async ({ value }) => {
+      const known = findEmissionCategory(value.category_code);
       await createSource.mutateAsync({
         site_id: value.site_id,
         name: value.name,
         scope: value.scope,
-        category: value.category || undefined,
+        category: (known ? known.efCategory : value.category_code) || undefined,
+        ...(known ? { ghg_protocol_path: known.code } : {}),
       });
     },
   });
@@ -143,7 +156,13 @@ export function SourceForm({ organizationId, onCancel, onSuccess }: SourceFormPr
                     name="scope"
                     value={s}
                     checked={field.state.value === s}
-                    onChange={() => field.handleChange(s)}
+                    onChange={() => {
+                      field.handleChange(s);
+                      // Categories are scope-specific; keeping a scope-1
+                      // code selected under scope 3 would submit a
+                      // contradiction. Drop it and let the user re-pick.
+                      form.setFieldValue('category_code', '');
+                    }}
                   />
                   <span>
                     {s === 1
@@ -159,18 +178,24 @@ export function SourceForm({ organizationId, onCancel, onSuccess }: SourceFormPr
         )}
       />
 
-      <form.Field
-        name="category"
-        children={(field) => (
-          <div className="space-y-1">
-            <Label htmlFor="source-category">{m.sources_form_category()}</Label>
-            <Input
-              id="source-category"
-              value={field.state.value}
-              placeholder={m.sources_form_category_placeholder()}
-              onChange={(e) => field.handleChange(e.target.value)}
-            />
-          </div>
+      <form.Subscribe
+        selector={(s) => s.values.scope}
+        children={(scope) => (
+          <form.Field
+            name="category_code"
+            children={(field) => (
+              <div className="space-y-1">
+                <Label htmlFor="source-category">{m.sources_form_category()}</Label>
+                <EmissionCategoryPicker
+                  id="source-category"
+                  scope={scope}
+                  value={field.state.value}
+                  onChange={(next) => field.handleChange(next)}
+                />
+                <p className="text-xs text-muted-foreground">{m.sources_form_category_hint()}</p>
+              </div>
+            )}
+          />
         )}
       />
 

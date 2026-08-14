@@ -21,3 +21,27 @@ export function optionalString(opts: { max: number }) {
     return val;
   }, z.string().min(1).max(opts.max).optional());
 }
+
+/**
+ * Like `optionalString`, but keeps "not provided" and "explicitly cleared"
+ * apart: `undefined` means leave the column alone, `null` means write NULL.
+ *
+ * Patch-shaped update inputs need that distinction. With `optionalString`
+ * a field can be set and changed but never emptied again — the '' → undefined
+ * coercion makes the clear a silent no-op, which also breaks undo (restoring
+ * a row whose column was NULL can't put the NULL back).
+ *
+ * Empty / whitespace-only strings normalize to `null`: a form submitting ''
+ * is asking to clear.
+ */
+export function clearableString(opts: { max: number }) {
+  return z.preprocess((val) => {
+    if (val === undefined) return undefined;
+    if (val === null) return null;
+    if (typeof val === 'string') {
+      const trimmed = val.trim();
+      return trimmed === '' ? null : trimmed;
+    }
+    return val;
+  }, z.string().min(1).max(opts.max).nullable().optional());
+}

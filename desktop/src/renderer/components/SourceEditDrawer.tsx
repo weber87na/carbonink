@@ -1,7 +1,9 @@
+import { EmissionCategoryPicker } from '@renderer/components/EmissionCategoryPicker';
 import { sourceApi } from '@renderer/lib/api/emission-source';
 import { friendlyErrorDescription } from '@renderer/lib/error-message';
 import { cn } from '@renderer/lib/utils';
 import * as m from '@renderer/paraglide/messages';
+import { findEmissionCategory } from '@shared/emission-categories';
 import type { EmissionSource } from '@shared/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { type CSSProperties, useEffect, useState } from 'react';
@@ -33,15 +35,33 @@ export interface SourceEditDrawerProps {
 type FormState = {
   name: string;
   scope: 1 | 2 | 3;
-  category: string;
+  /**
+   * What the category picker holds — a standard taxonomy code, or a
+   * legacy/custom string. Neither DB column is edited directly; both are
+   * derived from this on save (see `buildPatch`).
+   */
+  category_code: string;
   is_active: boolean;
 };
+
+/**
+ * What the picker should show for an existing row. New-style rows carry
+ * the standard code in `ghg_protocol_path`; older ones only ever had
+ * `category` (a Climatiq Title Case string, a dotted-lowercase code, or
+ * whatever the user typed into the old free-text field). Prefer the
+ * standard code when it's one the taxonomy knows, otherwise show what the
+ * row actually stores — the picker badges it non-standard.
+ */
+function initialCategoryCode(src: EmissionSource): string {
+  if (findEmissionCategory(src.ghg_protocol_path)) return src.ghg_protocol_path as string;
+  return src.category ?? src.ghg_protocol_path ?? '';
+}
 
 function fromSource(src: EmissionSource): FormState {
   return {
     name: src.name,
     scope: src.scope,
-    category: src.category ?? '',
+    category_code: initialCategoryCode(src),
     is_active: src.is_active,
   };
 }
@@ -87,8 +107,21 @@ export function SourceEditDrawer({ source, open, onClose }: SourceEditDrawerProp
     const patch: Parameters<typeof sourceApi.update>[0] = { id: source.id };
     if (form.name !== source.name) patch.name = form.name;
     if (form.scope !== source.scope) patch.scope = form.scope;
-    if ((form.category || null) !== (source.category ?? null)) {
-      patch.category = form.category || undefined;
+    if (form.category_code !== initialCategoryCode(source)) {
+      const known = findEmissionCategory(form.category_code);
+      if (known) {
+        patch.ghg_protocol_path = known.code;
+        // null (not undefined) where the taxonomy has no EF coverage:
+        // clearing the join key leaves the matcher its scope-wide pool,
+        // which beats filtering on a stale category from before the edit.
+        patch.category = known.efCategory ?? null;
+      } else {
+        // Custom or cleared. Free text keeps its historical meaning — it
+        // IS the category — so only standard codes ever reach
+        // ghg_protocol_path.
+        patch.ghg_protocol_path = null;
+        patch.category = form.category_code || null;
+      }
     }
     if (form.is_active !== source.is_active) patch.is_active = form.is_active;
     return patch;
@@ -157,7 +190,10 @@ export function SourceEditDrawer({ source, open, onClose }: SourceEditDrawerProp
                       name="source-edit-scope"
                       value={s}
                       checked={form.scope === s}
-                      onChange={() => setForm({ ...form, scope: s })}
+                      // Categories are scope-specific — a scope-1 code
+                      // under scope 3 is a contradiction, so re-scoping
+                      // resets the pick rather than carrying it over.
+                      onChange={() => setForm({ ...form, scope: s, category_code: '' })}
                     />
                     <span>
                       {s === 1
@@ -178,14 +214,13 @@ export function SourceEditDrawer({ source, open, onClose }: SourceEditDrawerProp
               >
                 {m.sources_form_category()}
               </label>
-              <input
+              <EmissionCategoryPicker
                 id="source-edit-category"
-                type="text"
-                value={form.category}
-                placeholder={m.sources_form_category_placeholder()}
-                onChange={(e) => setForm({ ...form, category: e.target.value })}
-                className="flex h-9 w-full rounded-md border border-border bg-background px-3 py-1 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                scope={form.scope}
+                value={form.category_code}
+                onChange={(next) => setForm({ ...form, category_code: next })}
               />
+              <p className="text-xs text-muted-foreground">{m.sources_form_category_hint()}</p>
             </div>
 
             {/*

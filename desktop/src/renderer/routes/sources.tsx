@@ -15,7 +15,9 @@ import { orgApi } from '@renderer/lib/api/organization';
 import {
   categoryLabel,
   isPathRedundantWithCategory,
+  isStandardCategoryPath,
   pathLabel,
+  sourceCategoryLabel,
 } from '@renderer/lib/category-labels';
 import { formatCo2e, formatInteger } from '@renderer/lib/format';
 import { cn } from '@renderer/lib/utils';
@@ -98,14 +100,19 @@ function scopeShortLabel(scope: 1 | 2 | 3): string {
 const SOURCE_EXTRACTORS: SourceFilterExtractors<EmissionSourceWithStats> = {
   getName: (s) => s.name,
   getScope: (s) => s.scope,
-  getCategory: (s) => s.category ?? '',
+  // Chips group by the standard code where a row has one, so the filter
+  // row reads the same as the card ("3.6 Business travel", not the coarse
+  // EF join key "travel" that sits in `category` on those rows).
+  getCategory: (s) =>
+    (isStandardCategoryPath(s.ghg_protocol_path) ? s.ghg_protocol_path : s.category) ?? '',
   // Power users can paste a ghg_protocol_path or the preset id stamped
-  // into template_origin and find their source. We also fold in the
-  // localized category label so Chinese searches like "燃料" / "差旅"
-  // hit Climatiq-tagged rows whose stored category is the English
-  // original.
+  // into template_origin and find their source. We also fold in both
+  // localized category labels — the raw one, so Chinese searches like
+  // "燃料" hit Climatiq-tagged rows whose stored category is the English
+  // original, and the standard one, so "商务差旅" hits rows whose stored
+  // category is the coarse EF key ("travel").
   getSearchExtras: (s) =>
-    `${s.ghg_protocol_path ?? ''} ${s.template_origin ?? ''} ${categoryLabel(s.category)}`,
+    `${s.ghg_protocol_path ?? ''} ${s.template_origin ?? ''} ${categoryLabel(s.category)} ${sourceCategoryLabel(s)}`,
 };
 
 function SourcesList({
@@ -285,18 +292,24 @@ function SourcesList({
                       )}
                     </div>
 
-                    {/* Row 2 — scope · category · ghg_protocol_path */}
+                    {/* Row 2 — scope · category · ghg_protocol_path.
+                        The category slot shows the standard taxonomy label
+                        when the row has one; `category` is a derived EF
+                        join key on those rows, not something to display. */}
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
                       <span className="rounded-md bg-secondary px-1.5 py-0.5 font-medium text-foreground/80">
                         {scopeShortLabel(src.scope)}
                       </span>
-                      {src.category && (
+                      {sourceCategoryLabel(src) && (
                         <>
                           <span>·</span>
-                          <span title={src.category}>{categoryLabel(src.category)}</span>
+                          <span title={src.ghg_protocol_path ?? src.category ?? ''}>
+                            {sourceCategoryLabel(src)}
+                          </span>
                         </>
                       )}
                       {src.ghg_protocol_path &&
+                        !isStandardCategoryPath(src.ghg_protocol_path) &&
                         !isPathRedundantWithCategory(src.ghg_protocol_path, src.category) && (
                           <>
                             <span>·</span>

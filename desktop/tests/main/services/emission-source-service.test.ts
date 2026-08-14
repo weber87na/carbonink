@@ -166,6 +166,44 @@ describe('EmissionSourceService.update', () => {
     expect(back.is_active).toBe(true);
   });
 
+  it('updates ghg_protocol_path — the category picker writes it alongside category', () => {
+    const created = svc.create({ site_id: site1.id, name: 'Fleet', scope: 1 });
+    const updated = svc.update({
+      id: created.id,
+      ghg_protocol_path: 'scope1.mobile_combustion',
+      category: 'fuel.mobile',
+    });
+    expect(updated.ghg_protocol_path).toBe('scope1.mobile_combustion');
+    expect(updated.category).toBe('fuel.mobile');
+  });
+
+  it('clears category / ghg_protocol_path on an explicit null', () => {
+    // `clearableString` keeps "absent" and "cleared" apart: without that,
+    // a category could be set and changed but never emptied, and undo
+    // couldn't restore a row whose columns were NULL.
+    const created = svc.create({
+      site_id: site1.id,
+      name: 'Clearable',
+      scope: 1,
+      category: 'cat_A',
+      ghg_protocol_path: 'scope1.stationary_combustion',
+    });
+
+    const cleared = svc.update({ id: created.id, category: null, ghg_protocol_path: null });
+    expect(cleared.category).toBeNull();
+    expect(cleared.ghg_protocol_path).toBeNull();
+  });
+
+  it('treats an empty string as a clear, not as an empty value', () => {
+    const created = svc.create({
+      site_id: site1.id,
+      name: 'Blankable',
+      scope: 1,
+      category: 'cat_A',
+    });
+    expect(svc.update({ id: created.id, category: '   ' }).category).toBeNull();
+  });
+
   it('throws when the id does not exist', () => {
     expect(() => svc.update({ id: 'does_not_exist', name: 'X' })).toThrow(
       /emission_source not found/,

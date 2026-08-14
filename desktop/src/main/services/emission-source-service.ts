@@ -237,9 +237,15 @@ export class EmissionSourceService {
       sets.push('scope = ?');
       params.push(patch.scope);
     }
+    // `category` / `ghg_protocol_path` are `clearableString`: present-and-null
+    // means "clear the column", absent means "leave it alone".
     if (patch.category !== undefined) {
       sets.push('category = ?');
-      params.push(patch.category ?? null);
+      params.push(patch.category);
+    }
+    if (patch.ghg_protocol_path !== undefined) {
+      sets.push('ghg_protocol_path = ?');
+      params.push(patch.ghg_protocol_path);
     }
     if (patch.is_active !== undefined) {
       sets.push('is_active = ?');

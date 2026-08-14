@@ -133,4 +133,30 @@ describe('emission-source IPC handlers', () => {
     const afterDelete = handlers['source:get-by-id']?.({ id: created.id });
     expect(afterDelete?.is_active).toBe(false);
   });
+
+  it('undo restores the category columns a picker edit overwrote', () => {
+    const created = handlers['source:create']?.({
+      site_id: site.id,
+      name: 'Warehouse forklift diesel',
+      scope: 1,
+      category: 'fuel.mobile',
+    });
+    if (!created) throw new Error('handler returned undefined');
+    expect(created.ghg_protocol_path).toBeNull();
+
+    handlers['source:update']?.({
+      id: created.id,
+      ghg_protocol_path: 'scope1.mobile_combustion',
+      category: 'fuel.mobile',
+    });
+
+    ctx.undoManager.runUndo();
+
+    // The pre-edit row had a NULL path. Restoring it requires the update
+    // schema to carry an explicit null through — dropping the field would
+    // leave the picker's write in place and make undo a partial lie.
+    const restored = handlers['source:get-by-id']?.({ id: created.id });
+    expect(restored?.ghg_protocol_path).toBeNull();
+    expect(restored?.category).toBe('fuel.mobile');
+  });
 });

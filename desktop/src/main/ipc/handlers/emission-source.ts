@@ -82,14 +82,16 @@ export function emissionSourceHandlers(ctx: IpcContext): {
         undo: () => {
           if (!oldRow) return;
           // The update schema only accepts a subset of mutable fields
-          // (`site_id` is fixed at creation). `category` is optionalString
-          // — null on the DB row, but the zod schema wants string|undefined,
-          // so coerce explicitly here.
+          // (`site_id` is fixed at creation). `category` and
+          // `ghg_protocol_path` pass through as-is — they're
+          // `clearableString`, so a NULL on the snapshot row restores as a
+          // NULL instead of being dropped from the patch.
           svc.update({
             id: oldRow.id,
             name: oldRow.name,
             scope: oldRow.scope,
-            category: oldRow.category ?? undefined,
+            category: oldRow.category,
+            ghg_protocol_path: oldRow.ghg_protocol_path,
           });
         },
         redo: () => {
@@ -97,7 +99,8 @@ export function emissionSourceHandlers(ctx: IpcContext): {
             id: newRow.id,
             name: newRow.name,
             scope: newRow.scope,
-            category: newRow.category ?? undefined,
+            category: newRow.category,
+            ghg_protocol_path: newRow.ghg_protocol_path,
           });
         },
       }),

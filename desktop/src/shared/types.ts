@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { optionalString } from './schemas/_helpers.js';
+import { clearableString, optionalString } from './schemas/_helpers.js';
 
 export * from './schemas/complete-onboarding.js';
 export * from './schemas/organization.js';
@@ -711,7 +711,15 @@ export const emissionSourceUpdateInput = z.object({
   id: z.string().min(1),
   name: z.string().min(1).max(200).optional(),
   scope: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional(),
-  category: optionalString({ max: 255 }),
+  // `clearableString`, not `optionalString`: the category picker can take
+  // a source back to "no category", and undo has to be able to restore a
+  // row whose columns were NULL. See schemas/_helpers.ts.
+  category: clearableString({ max: 255 }),
+  // The picker writes the standard code here and derives `category` (the
+  // EF-catalog join key) from it — see shared/emission-categories.ts.
+  // Create has always accepted this field; update needs it too now that
+  // the field is user-editable.
+  ghg_protocol_path: clearableString({ max: 500 }),
   is_active: z.boolean().optional(),
 });
 
