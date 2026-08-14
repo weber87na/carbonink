@@ -10,7 +10,32 @@ import { Popover, PopoverContent, PopoverTrigger } from '@renderer/components/ui
 import { cn } from '@renderer/lib/utils';
 import { CheckIcon, ChevronsUpDownIcon } from 'lucide-react';
 import type * as React from 'react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+
+/**
+ * The dialog/drawer content element the trigger sits inside, or null when
+ * it's on a plain page.
+ *
+ * Radix portals popover content to `document.body`. Inside a vaul drawer
+ * or a Radix dialog that silently breaks scrolling: both mount
+ * `react-remove-scroll` with their own content element as the *only*
+ * shard, and it cancels wheel / touchmove events targeting anything
+ * outside that subtree. Clicks are untouched, so the failure reads as "the
+ * option list won't scroll" rather than "the popover is dead" — which is
+ * exactly how it surfaced, on the first list long enough to overflow (the
+ * 15 Scope 3 categories).
+ *
+ * Re-parenting the portal into that content element puts the list back
+ * inside the allowed subtree. Radix positions the content `fixed`, so
+ * moving it deeper in the tree doesn't change where it lands on screen.
+ */
+function findScrollableHost(trigger: HTMLElement | null): HTMLElement | null {
+  return (
+    trigger?.closest<HTMLElement>(
+      '[data-vaul-drawer], [data-slot="dialog-content"], [data-slot="sheet-content"]',
+    ) ?? null
+  );
+}
 
 /**
  * Searchable single-select built from Popover + cmdk. This is the
@@ -88,6 +113,8 @@ export function Combobox({
   // Controlled so the custom-value row can mirror the query; reset on
   // every open so each visit starts unfiltered.
   const [search, setSearch] = useState('');
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
 
   const handleSelect = (next: string) => {
     onValueChange(next);
@@ -105,11 +132,15 @@ export function Combobox({
       open={open}
       onOpenChange={(next) => {
         setOpen(next);
-        if (next) setSearch('');
+        if (next) {
+          setSearch('');
+          setPortalContainer(findScrollableHost(triggerRef.current));
+        }
       }}
     >
       <PopoverTrigger asChild>
         <button
+          ref={triggerRef}
           type="button"
           id={id}
           role="combobox"
@@ -128,7 +159,11 @@ export function Combobox({
           <ChevronsUpDownIcon className="size-4 shrink-0 text-muted-foreground" />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-(--radix-popover-trigger-width) p-0">
+      <PopoverContent
+        align="start"
+        container={portalContainer}
+        className="w-(--radix-popover-trigger-width) p-0"
+      >
         {/* defaultValue pre-highlights the current selection so cmdk
             scrolls it into view on open — native-select behavior. */}
         <Command {...(value !== '' ? { defaultValue: value } : {})}>

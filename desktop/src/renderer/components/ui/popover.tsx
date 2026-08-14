@@ -14,10 +14,20 @@ function PopoverContent({
   className,
   align = 'center',
   sideOffset = 4,
+  container,
   ...props
-}: React.ComponentProps<typeof PopoverPrimitive.Content>) {
+}: React.ComponentProps<typeof PopoverPrimitive.Content> & {
+  /**
+   * Where the portal mounts. Defaults to `document.body`; pass the
+   * surrounding dialog/drawer content when the popover opens inside one,
+   * or react-remove-scroll (which those mount with the content element as
+   * its only shard) will cancel wheel events over the popover. See
+   * `Combobox` for the automatic version.
+   */
+  container?: HTMLElement | null;
+}) {
   return (
-    <PopoverPrimitive.Portal>
+    <PopoverPrimitive.Portal {...(container ? { container } : {})}>
       <PopoverPrimitive.Content
         data-slot="popover-content"
         align={align}

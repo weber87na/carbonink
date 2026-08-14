@@ -18,7 +18,7 @@ read on demand.
 - **Git: commit freely without asking; push only when explicitly allowed.**
   Never force-push, never run destructive git. If on the default branch, branch
   first.
-- **Tests must not regress.** `pnpm desktop:test` is at **1334/1334** (2026-08-14,
+- **Tests must not regress.** `pnpm desktop:test` is at **1337/1337** (2026-08-14,
   after the emission-category taxonomy picker). Don't land a commit that drops
   the count.
 - **No licensing.** CarbonInk is free & open-source (MIT) — there is no license
