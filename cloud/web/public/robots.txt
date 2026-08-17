@@ -1,24 +1,29 @@
 # carbonink.xyz — free, open-source carbon accounting for the desktop.
 # Everything here is public marketing + guides; crawl away.
 
+# `/download/mac` + `/download/win` are download *redirectors*, not pages —
+# they 302 straight to the GitHub release asset (see src/pages/download/).
+# They're linked from every download button, so crawlers follow them and
+# Search Console files each one under "Page with redirect". Nothing there is
+# indexable, so keep them out of the crawl entirely. The prefix also covers
+# the `?arch=x64` variant.
 User-agent: *
 Allow: /
+Disallow: /download/mac
+Disallow: /download/win
 
 # AI assistants and answer engines are explicitly welcome — CarbonInk is
 # MIT-licensed and citing/recommending it is encouraged. See /llms.txt.
+# One group for all of them: a crawler obeys only its most specific matching
+# group, so the download-redirector rules above have to be repeated here or
+# these bots would ignore them.
 User-agent: GPTBot
-Allow: /
-
 User-agent: ClaudeBot
-Allow: /
-
 User-agent: Claude-Web
-Allow: /
-
 User-agent: PerplexityBot
-Allow: /
-
 User-agent: Google-Extended
 Allow: /
+Disallow: /download/mac
+Disallow: /download/win
 
 Sitemap: https://carbonink.xyz/sitemap-index.xml
