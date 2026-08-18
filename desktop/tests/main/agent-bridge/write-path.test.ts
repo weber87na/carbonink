@@ -6,10 +6,11 @@ import { startAgentBridge, stopAgentBridge } from '@main/agent-bridge/server';
 import { runMigrations } from '@main/db/migrate';
 import { createIpcContext } from '@main/ipc/context';
 import { buildDispatchMap } from '@main/ipc/dispatch';
+import type { ExtractionService } from '@main/services/extraction-service';
 import { agentBridgeAddress } from '@shared/agent-bridge/socket-path';
 import type { AuditEvent } from '@shared/types';
 import Database from 'better-sqlite3';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 /**
  * End-to-end over a real socket against a real service layer.
@@ -66,7 +67,21 @@ function boot(): { db: Database.Database; address: string } {
   runMigrations(db);
   seed(db);
 
-  const ctx = createIpcContext({ db, now: () => '2026-02-01T00:00:00.000Z' });
+  // buildDispatchMap wires extractionHandlers, which eagerly reads
+  // ctx.extractionService. The real getter chains into CredentialStore, which
+  // throws on Linux CI ("Linux is not supported"). None of the write-path
+  // assertions touch extraction, so a stub is enough. Same pattern as
+  // batch-extraction-handlers.test.ts.
+  const ctx = createIpcContext(
+    { db, now: () => '2026-02-01T00:00:00.000Z' },
+    {
+      extractionService: {
+        run: vi.fn(),
+        discard: vi.fn(),
+        listByDocument: vi.fn(),
+      } as unknown as ExtractionService,
+    },
+  );
   const dispatch = buildDispatchMap(ctx);
 
   const dir = mkdtempSync(join(tmpdir(), 'carbonink-bridge-e2e-'));
