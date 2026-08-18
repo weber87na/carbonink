@@ -1,6 +1,7 @@
 import { runMigrations } from '@main/db/migrate';
 import { createIpcContext, type IpcContext } from '@main/ipc/context';
 import { readinessHandlers } from '@main/ipc/handlers/readiness';
+import type { CredentialService } from '@main/services/credential-service';
 import type { ReadinessReport } from '@shared/types';
 import Database from 'better-sqlite3';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -11,6 +12,22 @@ import { beforeEach, describe, expect, it } from 'vitest';
  * running a review needs no AI provider, which is the whole reason the rule
  * layer exists separately from the agent layer.
  */
+
+/**
+ * The readiness service getter chains into SettingsService -> CredentialService,
+ * whose default construction builds a real CredentialStore -- and that throws on
+ * Linux, where CI runs. Nothing here needs a real keychain: `get` returning null
+ * IS the "no AI provider configured" case these tests assert.
+ */
+function noCredentials(): CredentialService {
+  return {
+    get: () => null,
+    getMasked: () => null,
+    set: () => {},
+    delete: () => {},
+    isAvailable: () => false,
+  } as unknown as CredentialService;
+}
 
 const NOW = '2026-02-01T00:00:00.000Z';
 
@@ -30,7 +47,7 @@ beforeEach(() => {
     `INSERT INTO reporting_period (id, organization_id, year, granularity, starts_at, ends_at, created_at)
      VALUES ('rp-1', 'org-1', 2024, 'annual', '2024-01-01', '2024-12-31', ?)`,
   ).run(NOW);
-  ctx = createIpcContext({ db, now: () => NOW });
+  ctx = createIpcContext({ db, now: () => NOW }, { credentialService: noCredentials() });
   handlers = readinessHandlers(ctx);
 });
 

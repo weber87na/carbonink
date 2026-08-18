@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { runMigrations } from '@main/db/migrate';
 import { createIpcContext, type IpcContext } from '@main/ipc/context';
 import { activityImportHandlers } from '@main/ipc/handlers/activity-import';
+import type { CredentialService } from '@main/services/credential-service';
 import type { ActivityImportEfChoice } from '@shared/types';
 import Database from 'better-sqlite3';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -29,6 +30,22 @@ const CSV = [
   'Grid meter,电网电力,1200,kWh',
 ].join('\n');
 
+/**
+ * The activityImportService getter chains into SettingsService ->
+ * CredentialService, whose default construction builds a real CredentialStore --
+ * and that throws on Linux, where CI runs. The import wizard never reads a
+ * credential, so a null-returning stub is enough.
+ */
+function noCredentials(): CredentialService {
+  return {
+    get: () => null,
+    getMasked: () => null,
+    set: () => {},
+    delete: () => {},
+    isAvailable: () => false,
+  } as unknown as CredentialService;
+}
+
 let db: Database.Database;
 let tmp: string;
 let ctx: IpcContext;
@@ -43,7 +60,7 @@ beforeEach(() => {
   tmp = mkdtempSync(join(tmpdir(), 'carbonink-activity-import-ipc-'));
   ctx = createIpcContext(
     { db, now: () => '2026-07-21T00:00:00.000Z' },
-    { uploadsDir: join(tmp, 'uploads') },
+    { uploadsDir: join(tmp, 'uploads'), credentialService: noCredentials() },
   );
   handlers = activityImportHandlers(ctx);
   showOpenDialog.mockReset();
