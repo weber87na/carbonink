@@ -62,6 +62,12 @@ export default defineConfig({
         if (path.startsWith('/zh/activate')) return false;
         if (path.startsWith('/zh/account')) return false;
         if (path.includes('/zh/login')) return false;
+        // `/download/mac` + `/download/win` are 302 redirectors to
+        // GitHub release assets (see src/pages/download/). They're
+        // blocked by robots.txt and must never be indexed — exclude
+        // them from the sitemap so they don't leak in.
+        if (path === '/download/mac' || path === '/download/win') return false;
+        if (path === '/zh/download/mac' || path === '/zh/download/win') return false;
         return true;
       },
       // `lastmod` (= build time) + `changefreq` tells Google how
