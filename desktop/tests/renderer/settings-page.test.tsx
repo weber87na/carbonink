@@ -17,6 +17,7 @@ vi.mock('@renderer/lib/api/settings', () => ({
   settingsApi: {
     available: vi.fn(),
     getProvider: vi.fn(),
+    getKeyStatus: vi.fn(),
     saveProvider: vi.fn(),
     clearProvider: vi.fn(),
     pingProvider: vi.fn(),
@@ -24,6 +25,20 @@ vi.mock('@renderer/lib/api/settings', () => ({
     setAmapKey: vi.fn(),
     listProviders: vi.fn(),
     listModels: vi.fn(),
+    fetchModels: vi.fn(),
+    getProviderGuidance: vi.fn(),
+    clearAiCache: vi.fn(),
+  },
+}));
+vi.mock('@renderer/lib/api/app', () => ({
+  appApi: {
+    getInfo: vi.fn(),
+    openDataDir: vi.fn(),
+    openLogDir: vi.fn(),
+    openAutoBackupDir: vi.fn(),
+    openUrl: vi.fn().mockResolvedValue({ ok: true }),
+    getAutoBackupEnabled: vi.fn(),
+    setAutoBackupEnabled: vi.fn(),
   },
 }));
 
@@ -43,6 +58,7 @@ vi.mock('@renderer/lib/ipc', () => ({
   subscribe: vi.fn(() => () => {}),
 }));
 
+import { appApi } from '@renderer/lib/api/app';
 import { settingsApi } from '@renderer/lib/api/settings';
 
 function harness(ui: React.ReactElement) {
@@ -62,7 +78,7 @@ function harness(ui: React.ReactElement) {
  * zh ("AI 提供方") and en ("AI provider") label variants.
  */
 function gotoAiSection() {
-  const aiNav = screen.getByRole('button', { name: /ai|llm/i });
+  const aiNav = screen.getByRole('button', { name: /ai provider|ai 服务/i });
   fireEvent.click(aiNav);
 }
 
@@ -85,9 +101,12 @@ const TEST_MODELS: Record<string, Array<{ id: string; name: string }>> = {
 
 function mockModelCatalog() {
   vi.mocked(settingsApi.listProviders).mockResolvedValue(TEST_PROVIDERS);
+  // Guidance overlay: empty by default so the provider card path stays
+  // inert; individual tests seed entries when they exercise the card.
+  vi.mocked(settingsApi.getProviderGuidance).mockResolvedValue([]);
   vi.mocked(settingsApi.listModels).mockImplementation((provider: string) =>
-    Promise.resolve(
-      (TEST_MODELS[provider] ?? []).map((m) => ({
+    Promise.resolve({
+      models: (TEST_MODELS[provider] ?? []).map((m) => ({
         id: m.id,
         name: m.name,
         api: 'openai-completions',
@@ -98,7 +117,8 @@ function mockModelCatalog() {
         contextWindow: 8192,
         maxTokens: 4096,
       })),
-    ),
+      checkedAt: null,
+    }),
   );
 }
 
@@ -107,7 +127,7 @@ describe('SettingsPage', () => {
     vi.mocked(settingsApi.getProvider).mockResolvedValue(null);
     vi.mocked(settingsApi.saveProvider).mockResolvedValue(undefined);
     vi.mocked(settingsApi.pingProvider).mockResolvedValue({ ok: true });
-    vi.mocked(settingsApi.getAmapKey).mockResolvedValue(null);
+    vi.mocked(settingsApi.getKeyStatus).mockResolvedValue({ apiKeyMasked: null });
     vi.mocked(settingsApi.setAmapKey).mockResolvedValue(undefined);
     mockModelCatalog();
   });
@@ -184,6 +204,8 @@ describe('SettingsPage', () => {
       model: 'gpt-4o-mini',
       apiKeyMasked: 'sk-...abcd',
     });
+    // Key display follows the selected provider via get-key-status.
+    vi.mocked(settingsApi.getKeyStatus).mockResolvedValue({ apiKeyMasked: 'sk-...abcd' });
 
     render(harness(<SettingsPage />));
     gotoAiSection();
@@ -204,6 +226,7 @@ describe('SettingsPage', () => {
       model: 'gpt-4o-mini',
       apiKeyMasked: 'sk-...abcd',
     });
+    vi.mocked(settingsApi.getKeyStatus).mockResolvedValue({ apiKeyMasked: 'sk-...abcd' });
 
     render(harness(<SettingsPage />));
     gotoAiSection();
@@ -257,6 +280,37 @@ describe('SettingsPage', () => {
       apiKey: 'sk-test-key',
     });
   });
+  it('Save with an existing key allows model change without re-typing API key', async () => {
+    vi.mocked(settingsApi.getProvider).mockResolvedValue({
+      provider: 'openai',
+      model: 'gpt-4o-mini',
+      apiKeyMasked: 'sk-...abcd',
+    });
+    vi.mocked(settingsApi.getKeyStatus).mockResolvedValue({ apiKeyMasked: 'sk-...abcd' });
+
+    render(harness(<SettingsPage />));
+    gotoAiSection();
+
+    // Wait for hydration and ensure Save button is enabled even without typing API key
+    const saveBtn = (await screen.findByRole('button', { name: /^Save$/i })) as HTMLButtonElement;
+    await waitFor(() => expect(saveBtn.disabled).toBe(false));
+
+    // Change the model
+    const modelTrigger = screen.getByRole('combobox', { name: /^Model$/i });
+    fireEvent.click(modelTrigger);
+    fireEvent.click(await screen.findByRole('option', { name: 'gpt-4o GPT-4o' }));
+
+    fireEvent.click(saveBtn);
+
+    await waitFor(() => {
+      expect(vi.mocked(settingsApi.saveProvider).mock.calls[0]?.[0]).toEqual({
+        config: {
+          provider: 'openai',
+          model: 'gpt-4o',
+        },
+      });
+    });
+  });
 
   it('typing an uncatalogued model id offers the custom-id escape hatch', async () => {
     render(harness(<SettingsPage />));
@@ -305,5 +359,69 @@ describe('SettingsPage', () => {
       expect(modelTrigger.textContent).toContain('brand-new-model:free');
       expect(screen.getByText(/Custom id: not in the bundled catalog/i)).toBeTruthy();
     });
+  });
+
+  it('renders provider guidance with referral link and dispatches appApi.openUrl on click', async () => {
+    vi.mocked(settingsApi.getProviderGuidance).mockResolvedValue([
+      {
+        id: 'openai',
+        name: 'OpenAI',
+        latencyHintKey: 'provider_guidance_openai_latency',
+        noteKey: 'provider_guidance_openai_note',
+        recommendedFor: ['global'],
+        referralUrl: 'https://platform.openai.com/signup',
+      },
+    ]);
+
+    render(harness(<SettingsPage />));
+    gotoAiSection();
+
+    const trigger = (await screen.findByRole('combobox', {
+      name: /Provider/i,
+    })) as HTMLButtonElement;
+    await waitFor(() => expect(trigger.disabled).toBe(false));
+    fireEvent.click(trigger);
+    fireEvent.click(await screen.findByRole('option', { name: /^openai/i }));
+
+    const referralLink = await screen.findByRole('link', { name: /Get an account/i });
+    expect(referralLink).toBeTruthy();
+    expect(referralLink.getAttribute('href')).toBe('https://platform.openai.com/signup');
+
+    fireEvent.click(referralLink);
+    expect(appApi.openUrl).toHaveBeenCalledWith('https://platform.openai.com/signup');
+  });
+  it('switching providers flips the key display to the new provider (no stale mask)', async () => {
+    // Saved config + key belong to openai; the key-status channel reports
+    // per selected provider — anthropic has no key saved.
+    vi.mocked(settingsApi.getProvider).mockResolvedValue({
+      provider: 'openai',
+      model: 'gpt-4o-mini',
+      apiKeyMasked: 'sk-...abcd',
+    });
+    vi.mocked(settingsApi.getKeyStatus).mockImplementation((provider: string) =>
+      Promise.resolve(
+        provider === 'openai' ? { apiKeyMasked: 'sk-...abcd' } : { apiKeyMasked: null },
+      ),
+    );
+
+    render(harness(<SettingsPage />));
+    gotoAiSection();
+
+    await waitFor(() => {
+      expect(screen.getByText('sk-...abcd')).toBeTruthy();
+    });
+
+    const trigger = (await screen.findByRole('combobox', {
+      name: /Provider/i,
+    })) as HTMLButtonElement;
+    await waitFor(() => expect(trigger.disabled).toBe(false));
+    fireEvent.click(trigger);
+    fireEvent.click(await screen.findByRole('option', { name: 'anthropic' }));
+
+    // The openai mask is gone; the password input is back for anthropic.
+    await waitFor(() => {
+      expect(screen.queryByText('sk-...abcd')).toBeNull();
+    });
+    expect(document.querySelector('input[type="password"]')).not.toBeNull();
   });
 });

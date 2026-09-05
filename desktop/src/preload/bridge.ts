@@ -60,6 +60,7 @@ export const allowedChannels: ReadonlyArray<keyof IpcTypeMap> = [
   // settings domain (Phase 1b — LLM provider config)
   'settings:available',
   'settings:get-provider',
+  'settings:get-key-status',
   'settings:save-provider',
   'settings:clear-provider',
   'settings:ping-provider',
@@ -73,6 +74,10 @@ export const allowedChannels: ReadonlyArray<keyof IpcTypeMap> = [
   'settings:set-import-outlier-ratio',
   'settings:list-providers',
   'settings:list-models',
+  'settings:fetch-models',
+  // LLM provider guidance + deterministic cache (spec 2026-09-02)
+  'settings:get-provider-guidance',
+  'settings:clear-ai-cache',
   // document domain (Phase 1b — uploaded source files)
   'document:upload',
   'document:list',
@@ -170,6 +175,7 @@ export const allowedChannels: ReadonlyArray<keyof IpcTypeMap> = [
   // Phase 5.3 — log dir + auto-backup dir
   'app:open-log-dir',
   'app:open-auto-backup-dir',
+  'app:open-url',
   'app:get-auto-backup-enabled',
   'app:set-auto-backup-enabled',
   // Undo/Redo (post-launch)

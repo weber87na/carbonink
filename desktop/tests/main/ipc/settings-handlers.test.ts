@@ -112,6 +112,21 @@ describe('settings IPC handlers', () => {
     const fetched = handlers['settings:get-provider']?.();
     expect(fetched).toEqual({ ...config, apiKeyMasked: 'sk-...2345' });
   });
+  it('settings:save-provider accepts omitted apiKey when key already exists', () => {
+    const config: ProviderConfigV2 = {
+      provider: 'openai',
+      model: 'gpt-4o-mini',
+    };
+    handlers['settings:save-provider']?.({ config, apiKey: 'sk-test-12345' });
+    expect(credentials.set).toHaveBeenCalledTimes(1);
+
+    // Update only the model without passing apiKey
+    handlers['settings:save-provider']?.({ config: { ...config, model: 'gpt-4o' } });
+    expect(credentials.set).toHaveBeenCalledTimes(1);
+
+    const fetched = handlers['settings:get-provider']?.();
+    expect(fetched).toEqual({ provider: 'openai', model: 'gpt-4o', apiKeyMasked: 'sk-...2345' });
+  });
 
   it('settings:save-provider rejects V1 shape (V2-only after Task 10b)', () => {
     // The handler now zod-parses against `providerConfigV2`, which has no
@@ -212,15 +227,42 @@ describe('settings IPC handlers', () => {
     expect(handlers['settings:get-provider']?.()).toBeNull();
   });
 
-  it('settings:ping-provider maps AiAuthError to { ok: false, error: "auth_failed: <provider>" }', async () => {
-    pingSpy.mockReturnValue(Effect.fail(new AiAuthError({ provider: 'openai' })));
+  it('settings:ping-provider maps rejected AiAuthError to key-rejected copy', async () => {
+    pingSpy.mockReturnValue(
+      Effect.fail(new AiAuthError({ provider: 'openai', reason: 'rejected' })),
+    );
     const config: ProviderConfigV2 = {
       provider: 'openai',
       model: 'gpt-4o-mini',
     };
 
     const result = await handlers['settings:ping-provider']?.({ config, apiKey: 'sk-bad' });
-    expect(result).toEqual({ ok: false, error: 'auth_failed: openai' });
+    expect(result).toEqual({
+      ok: false,
+      error: 'auth_failed: openai (key rejected — check the key and retry)',
+    });
+  });
+  it('settings:ping-provider maps missing-key AiAuthError to no-key copy', async () => {
+    pingSpy.mockReturnValue(
+      Effect.fail(new AiAuthError({ provider: 'opencode', reason: 'missing_key' })),
+    );
+    const config: ProviderConfigV2 = { provider: 'opencode', model: 'claude-fable-5' };
+    const result = await handlers['settings:ping-provider']?.({ config });
+    expect(result).toEqual({
+      ok: false,
+      error: 'auth_failed: opencode (no key saved — enter one and retry)',
+    });
+  });
+
+  it('settings:get-key-status returns the mask for the requested provider only', () => {
+    credentials.set('llm.opencode-go.apikey', 'sk-opencode-go-key');
+    expect(handlers['settings:get-key-status']?.({ provider: 'opencode-go' })).toEqual({
+      apiKeyMasked: 'sk-...-key',
+    });
+    // opencode shares no keychain entry with opencode-go — per-provider keys.
+    expect(handlers['settings:get-key-status']?.({ provider: 'opencode' })).toEqual({
+      apiKeyMasked: null,
+    });
   });
 
   it('settings:ping-provider maps AiProviderError to { ok: false, error: "provider_error: <cause>" }', async () => {
@@ -287,8 +329,9 @@ describe('settings IPC handlers', () => {
   });
 
   it('settings:list-models returns deepseek-v4-pro for the deepseek provider', () => {
-    const models = handlers['settings:list-models']?.({ provider: 'deepseek' }) ?? [];
-    const ids = models.map((m) => m.id);
+    const result = handlers['settings:list-models']?.({ provider: 'deepseek' });
+    const models = result?.models ?? [];
+    const ids = models.map((m: { id: string }) => m.id);
     expect(ids).toContain('deepseek-v4-pro');
     expect(ids).toContain('deepseek-v4-flash');
     // The legacy default surfaced by the V1 UI was `deepseek-chat`. pi-ai
@@ -297,7 +340,9 @@ describe('settings IPC handlers', () => {
   });
 
   it('settings:list-models returns ProviderCatalogModel-shaped rows', () => {
-    const models = handlers['settings:list-models']?.({ provider: 'deepseek' }) ?? [];
+    const result = handlers['settings:list-models']?.({ provider: 'deepseek' });
+    const models = result?.models ?? [];
+    expect(result?.checkedAt).toBeNull();
     expect(models.length).toBeGreaterThan(0);
     const first = models[0];
     if (!first) return;
@@ -324,10 +369,10 @@ describe('settings IPC handlers', () => {
     // The renderer surfaces this as an empty-catalog → free-form text input
     // fallback, so the user can still type a model id even when pi-ai's
     // `getModels` would have thrown for a stale post-migration string.
-    const models = handlers['settings:list-models']?.({
+    const result = handlers['settings:list-models']?.({
       provider: 'totally-not-a-real-provider',
     });
-    expect(models).toEqual([]);
+    expect(result).toEqual({ models: [], checkedAt: null });
   });
 
   it('settings:list-models rejects empty-string provider input (ZodError)', () => {

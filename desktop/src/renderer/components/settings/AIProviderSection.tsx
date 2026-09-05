@@ -7,11 +7,13 @@ import {
 } from '@renderer/components/ui/combobox';
 import { Input } from '@renderer/components/ui/input';
 import { Label } from '@renderer/components/ui/label';
+import { appApi } from '@renderer/lib/api/app';
 import { settingsApi } from '@renderer/lib/api/settings';
 import { friendlyErrorDescription } from '@renderer/lib/error-message';
+import { currentLocale } from '@renderer/lib/i18n';
 import { cn } from '@renderer/lib/utils';
 import * as m from '@renderer/paraglide/messages';
-import type { ProviderCatalogModel, ProviderConfigV2 } from '@shared/types';
+import type { ProviderCatalogModel, ProviderConfigV2, ProviderGuidance } from '@shared/types';
 import { useForm, useStore } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
@@ -147,6 +149,17 @@ function buildProviderConfigV2(v: SettingsFormValues): ProviderConfigV2 | null {
 }
 
 /**
+ * Resolve a guidance copy key shipped by the main process into the current
+ * locale's string. Keys travel over IPC (not resolved text) so a runtime
+ * locale switch re-renders without re-fetching; an unknown key falls back
+ * to the key itself rather than blanking the card.
+ */
+function resolveGuidanceCopy(key: string): string {
+  const fn = (m as unknown as Record<string, (() => string) | undefined>)[key];
+  return fn?.() ?? key;
+}
+
+/**
  * Build the structured combobox row for a model: mono id, then the human
  * `name` (e.g. "DeepSeek V4 Pro") in muted text when the catalog carries
  * one, with capability text (image, reasoning) trailing so it's
@@ -196,8 +209,13 @@ export function AIProviderSection() {
 
   const saveMutation = useMutation({
     mutationFn: settingsApi.saveProvider,
-    onSuccess: async () => {
+    onSuccess: async (_, input) => {
       await queryClient.invalidateQueries({ queryKey: ['settings:get-provider'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['settings:get-key-status', input.config.provider],
+      });
+      setIsEditingKey(false);
+      form.setFieldValue('apiKey', '');
       toast.success(m.settings_save_success());
     },
     onError: (err) => {
@@ -215,13 +233,19 @@ export function AIProviderSection() {
         });
         return;
       }
-      if (!value.apiKey.trim()) {
+      // `hasSavedKey` already follows the selected provider (per-provider
+      // key-status query), so retaining needs no provider comparison.
+      const apiKeyTrimmed = value.apiKey.trim();
+      if (!apiKeyTrimmed && !(hasSavedKey && !isEditingKey)) {
         toast.error(m.settings_save_failed(), {
           description: 'Please enter an API key.',
         });
         return;
       }
-      await saveMutation.mutateAsync({ config, apiKey: value.apiKey.trim() });
+      await saveMutation.mutateAsync({
+        config,
+        ...(apiKeyTrimmed ? { apiKey: apiKeyTrimmed } : {}),
+      });
     },
   });
 
@@ -229,23 +253,91 @@ export function AIProviderSection() {
   const apiKeyValue = useStore(form.store, (s) => s.values.apiKey);
   const modelValue = useStore(form.store, (s) => s.values.model);
 
+  // Key status follows the *selected* provider, not the saved config.
+  // Switching providers without saving must flip the key display + Test /
+  // Fetch gating to the new provider's keychain entry (previously the UI
+  // kept showing the old provider's mask, so Test pinged a missing key
+  // and surfaced a bare `auth_failed`).
+  const keyStatusQuery = useQuery({
+    queryKey: ['settings:get-key-status', provider],
+    queryFn: () => settingsApi.getKeyStatus(provider),
+    enabled: provider !== '',
+  });
+
+  const guidanceQuery = useQuery({
+    queryKey: ['settings:provider-guidance'],
+    queryFn: settingsApi.getProviderGuidance,
+    // Static table + maintainer-edited runtime file; cannot change
+    // within a session, so we never refetch.
+    staleTime: Number.POSITIVE_INFINITY,
+  });
+
+  const guidanceMap = useMemo(() => {
+    const map = new Map<string, ProviderGuidance>();
+    for (const g of guidanceQuery.data ?? []) {
+      map.set(g.id, g);
+    }
+    return map;
+  }, [guidanceQuery.data]);
+
+  const isZh = currentLocale().startsWith('zh');
+
   const providerGroups = useMemo<ComboboxGroup[]>(() => {
     const { recommended, rest } = splitProviders(providersQuery.data ?? []);
+    const buildProviderOption = (id: string): ComboboxOption => {
+      const g = guidanceMap.get(id);
+      if (!g) return { value: id };
+      const latencyHint = resolveGuidanceCopy(g.latencyHintKey);
+      const matchesLocale =
+        (isZh && g.recommendedFor.includes('cn')) || (!isZh && g.recommendedFor.includes('global'));
+      return {
+        value: id,
+        keywords: [g.name, latencyHint],
+        label: (
+          <span className="flex min-w-0 flex-1 items-baseline gap-2">
+            <span className="truncate font-mono text-[0.8125rem]">{id}</span>
+            {g.name !== id && (
+              <span className="truncate text-xs text-muted-foreground">{g.name}</span>
+            )}
+            <span className="ms-auto flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
+              <span>{latencyHint}</span>
+              {matchesLocale && (
+                <span className="rounded-full border border-border px-1.5 py-0.5 text-[0.625rem]">
+                  {m.settings_provider_group_recommended()}
+                </span>
+              )}
+            </span>
+          </span>
+        ),
+      };
+    };
+
     const groups: ComboboxGroup[] = [];
     if (recommended.length > 0) {
       groups.push({
         heading: m.settings_provider_group_recommended(),
-        options: recommended.map((p) => ({ value: p })),
+        options: recommended.map(buildProviderOption),
       });
     }
     if (rest.length > 0) {
       groups.push({
         heading: m.settings_provider_group_all(),
-        options: rest.map((p) => ({ value: p })),
+        options: rest.map(buildProviderOption),
       });
     }
     return groups;
-  }, [providersQuery.data]);
+  }, [providersQuery.data, guidanceMap, isZh]);
+
+  const selectedGuidance = useMemo(
+    () => (guidanceQuery.data ?? []).find((g) => g.id === provider),
+    [guidanceQuery.data, provider],
+  );
+  // Locale-local heuristic only — a hint, not a geo verdict. A zh-*
+  // app locale matches 'cn'; any other locale matches 'global'.
+  const showRecommendedChip =
+    selectedGuidance !== undefined &&
+    ((isZh && selectedGuidance.recommendedFor.includes('cn')) ||
+      (!isZh && selectedGuidance.recommendedFor.includes('global')));
 
   const knownProviders = providersQuery.data ?? [];
   const hasUnknownProvider = provider !== '' && !knownProviders.includes(provider);
@@ -259,6 +351,10 @@ export function AIProviderSection() {
     enabled: provider !== '' && !hasUnknownProvider,
     staleTime: Number.POSITIVE_INFINITY,
   });
+  // Merged bundled+dynamic catalog rows; `checkedAt` is the dynamic-cache
+  // freshness (null when never fetched) for the stale badge.
+  const modelRows = modelsQuery.data?.models ?? [];
+  const modelsCheckedAt = modelsQuery.data?.checkedAt ?? null;
 
   // Hydrate from existing saved config when the query resolves. V2-shaped:
   // any provider id pi-ai accepts is allowed; baseUrl (if non-empty) flows
@@ -291,7 +387,7 @@ export function AIProviderSection() {
     },
   });
 
-  const savedMask = existingQuery.data?.apiKeyMasked ?? null;
+  const savedMask = keyStatusQuery.data?.apiKeyMasked ?? null;
   const hasSavedKey = savedMask != null;
 
   const handleProviderChange = (next: string) => {
@@ -302,6 +398,11 @@ export function AIProviderSection() {
     // below when its data arrives.
     form.setFieldValue('model', '');
     form.setFieldValue('baseUrl', '');
+    // A typed-but-unsaved key belongs to the old provider — never carry
+    // it across. The key display + Test/Fetch gating re-derive from the
+    // per-provider key-status query for the new selection.
+    form.setFieldValue('apiKey', '');
+    setIsEditingKey(false);
   };
 
   // When the model catalog for the selected provider arrives, default to
@@ -312,11 +413,53 @@ export function AIProviderSection() {
   // undo the escape hatch.
   // biome-ignore lint/correctness/useExhaustiveDependencies: form is stable; we explicitly only run when models data flips.
   useEffect(() => {
-    const models = modelsQuery.data;
-    if (!models || models.length === 0) return;
+    if (modelRows.length === 0) return;
     if (form.state.values.model !== '') return;
-    form.setFieldValue('model', models[0]?.id ?? '');
-  }, [modelsQuery.data]);
+    form.setFieldValue('model', modelRows[0]?.id ?? '');
+  }, [modelRows]);
+
+  const baseUrlValue = useStore(form.store, (s) => s.values.baseUrl);
+  // Live model discovery: "Fetch latest" asks the provider's own list
+  // endpoint (saved or typed key, never persisted by the fetch). On
+  // success the merged catalog lands in `list-models` cache directly.
+  const fetchMutation = useMutation({
+    mutationFn: async (input: { provider: string; baseUrl?: string; apiKey?: string }) =>
+      await settingsApi.fetchModels(input),
+    onSuccess: (result) => {
+      if (!result.ok) {
+        toast.error(m.settings_model_fetch_failed(), { description: result.error });
+        return;
+      }
+      queryClient.setQueryData(['settings:list-models', provider], {
+        models: result.models,
+        checkedAt: result.checkedAt,
+      });
+      toast.success(m.settings_model_fetch_success());
+    },
+    onError: (err) => {
+      toast.error(m.settings_model_fetch_failed(), { description: friendlyErrorDescription(err) });
+    },
+  });
+  const handleFetchLatest = () => {
+    const typedKey = apiKeyValue.trim();
+    const trimmedBase = baseUrlValue.trim();
+    if (!typedKey && !hasSavedKey) {
+      toast.error(m.settings_model_fetch_failed(), {
+        description: m.settings_model_fetch_no_key(),
+      });
+      return;
+    }
+    void fetchMutation.mutate({
+      provider,
+      ...(trimmedBase ? { baseUrl: trimmedBase } : {}),
+      // Typed-but-not-saved key wins (mirrors Test connection); a saved
+      // key needs no arg — the handler resolves it from the keychain.
+      ...(typedKey ? { apiKey: typedKey } : {}),
+    });
+  };
+  // Stale badge: dynamic cache older than 24h, or never fetched.
+  const MODEL_TTL_MS = 24 * 60 * 60 * 1000;
+  const modelsAreStale = modelsCheckedAt == null || Date.now() - modelsCheckedAt > MODEL_TTL_MS;
 
   const handleTest = () => {
     const values = form.state.values;
@@ -341,11 +484,12 @@ export function AIProviderSection() {
     }
   };
 
+  const isRetainingSavedKey = hasSavedKey && !isEditingKey;
   const canSave = (() => {
     if (saveMutation.isPending) return false;
     if (!provider.trim()) return false;
     if (!modelValue.trim()) return false;
-    if (!apiKeyValue.trim()) return false;
+    if (!apiKeyValue.trim() && !isRetainingSavedKey) return false;
     return true;
   })();
 
@@ -354,8 +498,8 @@ export function AIProviderSection() {
   // free-form <Input> so the user can type an id we don't yet know about
   // (or escape a transient catalog read failure).
   const modelOptions = useMemo<ComboboxOption[]>(
-    () => (modelsQuery.data ?? []).map(buildModelOption),
-    [modelsQuery.data],
+    () => modelRows.map(buildModelOption),
+    [modelRows],
   );
   const useModelDropdown = !hasUnknownProvider && modelOptions.length > 0;
   // A selected id outside the catalog = the custom-id escape hatch in use
@@ -411,6 +555,42 @@ export function AIProviderSection() {
           </div>
         )}
       />
+      {selectedGuidance && (
+        <div className="rounded-md border border-border bg-muted/40 px-3 py-2 text-xs">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="font-medium">{selectedGuidance.name}</span>
+            <span className="text-muted-foreground">
+              {resolveGuidanceCopy(selectedGuidance.latencyHintKey)}
+            </span>
+            {showRecommendedChip && (
+              <span className="rounded-full border border-border px-2 py-0.5 text-[0.6875rem] text-muted-foreground">
+                {m.settings_provider_group_recommended()}
+              </span>
+            )}
+          </div>
+          <p className="mt-1 text-muted-foreground">
+            {resolveGuidanceCopy(selectedGuidance.noteKey)}
+          </p>
+          {selectedGuidance.referralUrl &&
+            (() => {
+              const referralUrl = selectedGuidance.referralUrl;
+              return (
+                <a
+                  href={referralUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    void appApi.openUrl(referralUrl);
+                  }}
+                  className="mt-1 inline-block underline underline-offset-2"
+                >
+                  {m.settings_provider_guidance_account()}
+                </a>
+              );
+            })()}
+        </div>
+      )}
 
       {provider === 'anthropic' && (
         // OAuth flow is a v1.x target — for now we just nudge users
@@ -429,7 +609,29 @@ export function AIProviderSection() {
         }}
         children={(field) => (
           <div className="space-y-1">
-            <Label htmlFor="settings-model">{m.settings_provider_model_label()}</Label>
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor="settings-model">{m.settings_provider_model_label()}</Label>
+              {!hasUnknownProvider && provider !== '' && (
+                <div className="flex items-center gap-2">
+                  {modelsAreStale && modelRows.length > 0 && (
+                    <span className="text-xs text-muted-foreground">
+                      {m.settings_model_stale()}
+                    </span>
+                  )}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    disabled={fetchMutation.isPending || modelsQuery.isPending}
+                    onClick={handleFetchLatest}
+                  >
+                    {fetchMutation.isPending
+                      ? m.settings_model_fetching()
+                      : m.settings_model_fetch_latest()}
+                  </Button>
+                </div>
+              )}
+            </div>
             {useModelDropdown ? (
               <Combobox
                 id="settings-model"
