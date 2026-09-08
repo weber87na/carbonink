@@ -1,4 +1,5 @@
-import { currentLocale } from '@renderer/lib/i18n';
+import { currentLocale, type Locale } from '@renderer/lib/i18n';
+import { toTaiwanTraditional } from '@renderer/lib/traditional-chinese';
 import { emissionCategoryLabel, findEmissionCategory } from '@shared/emission-categories';
 
 /**
@@ -197,6 +198,14 @@ const DERIVED_EN: Record<string, string> = {
   travel: 'Travel',
 };
 
+function standardCategoryLabel(
+  category: Parameters<typeof emissionCategoryLabel>[0],
+  locale: Locale,
+): string {
+  const label = emissionCategoryLabel(category, locale === 'en' ? 'en' : 'zh-CN');
+  return locale === 'zh-TW' ? toTaiwanTraditional(label) : label;
+}
+
 /**
  * Look up the localized label for a category string. Falls back to the
  * raw input when no translation exists — preserving custom user input
@@ -214,9 +223,10 @@ export function categoryLabel(raw: string | null | undefined): string {
   // A standard taxonomy code can reach here from a legacy `category` that
   // happened to be one, or from the picker's "current value" row.
   const standard = findEmissionCategory(raw);
-  if (standard) return emissionCategoryLabel(standard, locale);
-  if (locale === 'zh-CN') {
-    return CLIMATIQ_ZH[raw] ?? LEGACY_ZH[raw] ?? DERIVED_ZH[raw] ?? raw;
+  if (standard) return standardCategoryLabel(standard, locale);
+  if (locale !== 'en') {
+    const label = CLIMATIQ_ZH[raw] ?? LEGACY_ZH[raw] ?? DERIVED_ZH[raw] ?? raw;
+    return locale === 'zh-TW' ? toTaiwanTraditional(label) : label;
   }
   // en: Climatiq strings are already idiomatic English; only humanize
   // the dotted-legacy forms.
@@ -262,7 +272,7 @@ export function pathLabel(raw: string | null | undefined): string {
   // they render bare rather than going through `scopeShort`.
   const standard = findEmissionCategory(raw);
   if (standard) {
-    const label = emissionCategoryLabel(standard, locale);
+    const label = standardCategoryLabel(standard, locale);
     return standard.ghgpNumber
       ? label
       : `${scopeShort(`scope${standard.scope}`, locale)} · ${label}`;
@@ -279,7 +289,12 @@ export function pathLabel(raw: string | null | undefined): string {
   // Scope 2 has a methodology axis (location vs market) the category
   // label space doesn't cover. Handle it explicitly.
   if (scopePart === 'scope2') {
-    const method = locale === 'zh-CN' ? SCOPE2_METHOD_ZH[tail] : SCOPE2_METHOD_EN[tail];
+    const method =
+      locale === 'en'
+        ? SCOPE2_METHOD_EN[tail]
+        : locale === 'zh-TW'
+          ? toTaiwanTraditional(SCOPE2_METHOD_ZH[tail] ?? '')
+          : SCOPE2_METHOD_ZH[tail];
     if (method) {
       return `${scopeShort('scope2', locale)} · ${method}`;
     }
@@ -297,11 +312,12 @@ export function pathLabel(raw: string | null | undefined): string {
   return `${scopeText} · ${tailLabel}`;
 }
 
-function scopeShort(prefix: string, locale: 'zh-CN' | 'en'): string {
-  if (locale === 'zh-CN') {
-    if (prefix === 'scope1') return '范围 1';
-    if (prefix === 'scope2') return '范围 2';
-    if (prefix === 'scope3') return '范围 3';
+function scopeShort(prefix: string, locale: Locale): string {
+  if (locale !== 'en') {
+    const scopeName = locale === 'zh-TW' ? '範疇' : '范围';
+    if (prefix === 'scope1') return `${scopeName} 1`;
+    if (prefix === 'scope2') return `${scopeName} 2`;
+    if (prefix === 'scope3') return `${scopeName} 3`;
     return '';
   }
   if (prefix === 'scope1') return 'Scope 1';

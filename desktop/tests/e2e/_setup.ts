@@ -137,9 +137,9 @@ export type LaunchOpts = {
    *      AGAIN — addInitScript can register after the first paint
    *      depending on Playwright timing, so this is the belt-and-braces.
    *
-   * Without both, `initLocale()` (src/renderer/lib/i18n.ts) falls
-   * through to `navigator.language` (= `en-US` in Playwright) and the
-   * renderer ends up half-translated for whichever side loses.
+   * Without both, `initLocale()` (src/renderer/lib/i18n.ts) uses the
+   * product's `zh-TW` first-run default and English or Simplified Chinese
+   * screenshot runs can end up using the wrong locale.
    */
   locale?: 'zh-CN' | 'en';
   /**
@@ -182,10 +182,8 @@ export async function launchApp(opts: LaunchOpts): Promise<StageE2ESetup> {
   // wired before the window loads so we catch the bundle's first execution.
   app.on('window', (page) => {
     // Lock the renderer into `locale` BEFORE main.tsx runs. Without this,
-    // `initLocale()` (src/renderer/lib/i18n.ts) reads `window.navigator.language`
-    // which playwright defaults to `en-US`, so every screenshot renders
-    // half-translated (Chinese content, English sidebar / footer chrome
-    // — or the opposite when we're trying to capture EN screenshots).
+    // `initLocale()` uses the product's zh-TW first-run default, so every
+    // screenshot must pin its intended locale before the renderer mounts.
     // `addInitScript` runs after preload but before the renderer bundle's
     // top-level statements, which is the exact seam initLocale needs.
     void page.addInitScript((loc) => {
@@ -197,8 +195,8 @@ export async function launchApp(opts: LaunchOpts): Promise<StageE2ESetup> {
         localStorage.setItem('carbonink.locale', loc);
       } catch {
         // localStorage can throw in some contexts (sandboxed iframe, file://
-        // with disk-quota issues). Best-effort: fall through, the renderer's
-        // navigator.language path stays as-is.
+        // with disk-quota issues). Best-effort: the renderer then uses its
+        // zh-TW first-run default.
       }
     }, locale);
     page.on('console', (m) => console.log(`[renderer.${m.type()}]`, m.text()));
@@ -419,10 +417,9 @@ export async function launchApp(opts: LaunchOpts): Promise<StageE2ESetup> {
   // Belt-and-braces locale pin. The `addInitScript` registration in the
   // `app.on('window')` handler above can race the first page load —
   // by the time we register, the bundle has often already evaluated
-  // `initLocale()` against the empty localStorage and committed to
-  // navigator.language ("en-US" in playwright). Write the storage key
-  // directly here, then reload — the second load picks up `locale`
-  // deterministically.
+  // `initLocale()` against empty localStorage and committed to the zh-TW
+  // first-run default. Write the storage key directly here, then reload —
+  // the second load picks up `locale` deterministically.
   await window.evaluate((loc) => {
     try {
       localStorage.setItem('carbonink.locale', loc);

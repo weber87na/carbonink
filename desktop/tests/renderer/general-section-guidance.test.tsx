@@ -19,6 +19,14 @@ describe('Settings → General: guided tours', () => {
   });
   afterEach(cleanup);
 
+  it('offers Traditional Chinese, Simplified Chinese, and English', () => {
+    render(<GeneralSection />);
+
+    expect(screen.getByRole('button', { name: '繁體中文' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: '简体中文' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'English' })).toBeTruthy();
+  });
+
   it('switches guidance off and back on', () => {
     render(<GeneralSection />);
     expect(isGuidanceEnabled()).toBe(true);

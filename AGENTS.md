@@ -28,9 +28,9 @@ read on demand.
   remaining ~170 warnings/infos — mostly noNonNullAssertion in tests — are
   accepted style residue, don't churn them). New code MUST pass a scoped
   `biome check <changed files>` with no NEW errors or warnings.
-- **i18n keys go in BOTH `messages/en.json` + `messages/zh-CN.json`** — same key
-  set, same commit. (Inbound v2.0's inline-Chinese debt was cleared 2026-07-23;
-  no surface is exempt anymore.)
+- **i18n keys go in ALL message catalogs (`en`, `zh-CN`, and `zh-TW`)** — same
+  key set, same commit. (Inbound v2.0's inline-Chinese debt was cleared
+  2026-07-23; no surface is exempt anymore.)
 - **`audit_event` payloads carry no prompt content** — only tool names, IDs,
   counts, decision flags. `organizationId` is injected server-side, never
   user-supplied.

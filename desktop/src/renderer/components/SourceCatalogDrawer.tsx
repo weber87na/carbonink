@@ -2,6 +2,7 @@ import { sourceApi } from '@renderer/lib/api/emission-source';
 import { categoryLabel } from '@renderer/lib/category-labels';
 import { friendlyErrorDescription } from '@renderer/lib/error-message';
 import { currentLocale } from '@renderer/lib/i18n';
+import { toTaiwanTraditional } from '@renderer/lib/traditional-chinese';
 import { cn } from '@renderer/lib/utils';
 import * as m from '@renderer/paraglide/messages';
 import type { EmissionSource, PresetSource } from '@shared/types';
@@ -227,8 +228,13 @@ export function SourceCatalogDrawer({ organizationId, open, onClose }: SourceCat
                   {visible.map((preset) => {
                     const already = existingNames.has(preset.name_zh);
                     const selected = selectedIds.has(preset.id);
-                    const primaryName = locale === 'zh-CN' ? preset.name_zh : preset.name_en;
-                    const secondaryName = locale === 'zh-CN' ? preset.name_en : preset.name_zh;
+                    const primaryName =
+                      locale === 'en'
+                        ? preset.name_en
+                        : locale === 'zh-TW'
+                          ? toTaiwanTraditional(preset.name_zh)
+                          : preset.name_zh;
+                    const secondaryName = locale === 'en' ? preset.name_zh : preset.name_en;
                     return (
                       <li key={preset.id} className="flex items-start gap-3 px-3 py-2.5">
                         {already ? (
