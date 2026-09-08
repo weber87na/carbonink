@@ -7,9 +7,8 @@ import * as m from '@renderer/paraglide/messages';
  *
  * Why this exists alongside the `GeneralSection` segmented control:
  *   - Onboarding has its own chrome (no sidebar, no settings access until
- *     the wizard completes). Without an inline switcher, a user whose
- *     `navigator.language` mis-detects gets stuck reading whichever locale
- *     `initLocale()` chose with no escape until they finish onboarding.
+ *     the wizard completes). The inline switcher lets users choose another
+ *     locale without waiting until they finish onboarding.
  *   - The settings switcher is fine but is too wide/loud for the wizard
  *     header. This is the smallest visual treatment that still reads as
  *     "this is a language toggle".
@@ -20,7 +19,7 @@ import * as m from '@renderer/paraglide/messages';
  *     event that drives `LocaleProvider`'s re-render in `main.tsx`. The
  *     wizard re-renders along with the rest of the tree because it's
  *     mounted inside the same `LocaleProvider`.
- *   - Labels are `简体中文` / `English` — universal in both locales (we
+ *   - Labels use each locale's native name — universal across locales (we
  *     deliberately don't translate "Chinese" to "中文" because the user
  *     might be stuck in a locale they can't read). Same convention as
  *     macOS / iOS language pickers.
@@ -32,6 +31,7 @@ import * as m from '@renderer/paraglide/messages';
  */
 
 const OPTIONS: Array<{ value: Locale; label: () => string }> = [
+  { value: 'zh-TW', label: () => m.settings_general_language_zh_tw() },
   { value: 'zh-CN', label: () => m.settings_general_language_zh() },
   { value: 'en', label: () => m.settings_general_language_en() },
 ];

@@ -1,23 +1,22 @@
 import * as runtime from '@renderer/paraglide/runtime';
 
-export type Locale = 'en' | 'zh-CN';
+export type Locale = 'en' | 'zh-CN' | 'zh-TW';
 
 const STORAGE_KEY = 'carbonink.locale';
 const LOCALE_CHANGED_EVENT = 'carbonink:locale-changed';
 
 export function initLocale(): Locale {
   const stored = localStorage.getItem(STORAGE_KEY);
-  const navigator = typeof window !== 'undefined' ? window.navigator.language : 'en';
   const locale: Locale =
-    stored === 'zh-CN' || stored === 'en' ? stored : navigator.startsWith('zh') ? 'zh-CN' : 'en';
+    stored === 'zh-TW' || stored === 'zh-CN' || stored === 'en' ? stored : 'zh-TW';
   // `{ reload: false }` is critical. Paraglide's `setLocale` default is
   // `reload: true`, which calls `window.location.reload()` when the new
   // locale differs from `getLocale()`. On first mount we don't have a
   // paraglide-tracked current locale, so the reload fires every paint —
   // and because our STORAGE_KEY ("carbonink.locale") isn't paraglide's
   // internal localStorage key, the reload loops forever in production
-  // (where `loadFile` puts the renderer at `file://...` and the
-  // navigator.language strategy can't read a cookie either).
+  // (where `loadFile` puts the renderer at `file://...` and the default
+  // strategy has no durable locale signal either).
   //
   // The fix: just set the locale in-memory. The renderer is freshly
   // mounted; there's nothing painted yet that needs "refreshing".

@@ -94,7 +94,12 @@ describe('AiClient.ping', () => {
   it('Layer + Tag wiring works (ping returns ok against faux pi-ai response)', async () => {
     // Arrange: register a faux pi-ai provider + script one assistant reply.
     faux = fauxProvider({ provider: 'deepseek', models: [{ id: 'deepseek-chat' }] });
-    faux.setResponses([fauxAssistantMessage([fauxText('ok')])]);
+    faux.setResponses([
+      async (_ctx, opts) => {
+        expect(opts?.maxTokens).toBe(32);
+        return fauxAssistantMessage([fauxText('ok')]);
+      },
+    ]);
 
     const layer = buildAiClientLayer({
       config: fakeConfig(),

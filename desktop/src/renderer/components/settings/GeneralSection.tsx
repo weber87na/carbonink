@@ -29,6 +29,7 @@ import { useEffect, useState } from 'react';
  */
 
 const LANGUAGE_OPTIONS: Array<{ value: Locale; labelKey: () => string }> = [
+  { value: 'zh-TW', labelKey: () => m.settings_general_language_zh_tw() },
   { value: 'zh-CN', labelKey: () => m.settings_general_language_zh() },
   { value: 'en', labelKey: () => m.settings_general_language_en() },
 ];

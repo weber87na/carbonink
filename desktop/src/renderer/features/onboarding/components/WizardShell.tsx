@@ -60,9 +60,9 @@ export function WizardShell({ step, title, subtitle, children, footer }: WizardS
       {/* Top chrome row: progress dots on the left, language toggle on
        * the right. Same row keeps the wizard "skin" compact — if the
        * toggle sat above the dots, every step would gain an extra band
-       * of empty space. The toggle is present on every step so a user
-       * whose `navigator.language` was mis-detected can recover without
-       * waiting until the end of onboarding to find /settings. */}
+       * of empty space. The toggle is present on every step so a user can
+       * change locale without waiting until the end of onboarding to find
+       * /settings. */}
       <div className="flex items-center justify-between gap-3">
         <ProgressDots current={step} total={TOTAL_STEPS} />
         <LocaleToggle />

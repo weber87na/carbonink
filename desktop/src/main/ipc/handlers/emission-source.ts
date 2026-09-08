@@ -178,7 +178,7 @@ function resolveSiteId(
 
 /**
  * Translate a preset row into the EmissionSourceService.create input.
- * Uses the zh name (UI default locale is zh-CN; en users can rename via
+ * Uses the stored zh name (Chinese is the UI default; en users can rename via
  * the edit drawer). `template_origin = preset.id` so a future migration
  * can tell which presets a customer has already adopted, and so the AERA-
  * backed catalog can suppress already-adopted entries by id rather than

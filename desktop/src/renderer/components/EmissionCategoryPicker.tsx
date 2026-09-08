@@ -1,6 +1,7 @@
 import { Combobox, type ComboboxGroup } from '@renderer/components/ui/combobox';
 import { categoryLabel } from '@renderer/lib/category-labels';
-import { currentLocale } from '@renderer/lib/i18n';
+import { currentLocale, type Locale } from '@renderer/lib/i18n';
+import { toTaiwanTraditional } from '@renderer/lib/traditional-chinese';
 import * as m from '@renderer/paraglide/messages';
 import {
   categoriesForScope,
@@ -45,10 +46,15 @@ export interface EmissionCategoryPickerProps {
 /** Sentinel for the "clear this field" row — cmdk can't carry an empty value. */
 const NONE = '__carbonink-no-category__';
 
-function rowLabel(category: EmissionCategory, locale: 'en' | 'zh-CN') {
+function localizedCategoryLabel(category: EmissionCategory, locale: Locale): string {
+  const label = emissionCategoryLabel(category, locale === 'en' ? 'en' : 'zh-CN');
+  return locale === 'zh-TW' ? toTaiwanTraditional(label) : label;
+}
+
+function rowLabel(category: EmissionCategory, locale: Locale) {
   return (
     <>
-      <span className="truncate">{emissionCategoryLabel(category, locale)}</span>
+      <span className="truncate">{localizedCategoryLabel(category, locale)}</span>
       {/* The ISO 14064-1 category number, since that's what the report
           groups by. Muted + mono so it reads as reference, not content. */}
       <span className="ml-auto shrink-0 font-mono text-[0.6875rem] text-muted-foreground">
@@ -58,7 +64,7 @@ function rowLabel(category: EmissionCategory, locale: 'en' | 'zh-CN') {
   );
 }
 
-function toOption(category: EmissionCategory, locale: 'en' | 'zh-CN') {
+function toOption(category: EmissionCategory, locale: Locale) {
   return {
     value: category.code,
     label: rowLabel(category, locale),
@@ -67,6 +73,7 @@ function toOption(category: EmissionCategory, locale: 'en' | 'zh-CN') {
     keywords: [
       category.labelEn,
       category.labelZh,
+      toTaiwanTraditional(category.labelZh),
       category.code,
       ...(category.ghgpNumber ? [`${category.scope}.${category.ghgpNumber}`] : []),
       ...(category.keywords ?? []),
@@ -148,7 +155,7 @@ export function EmissionCategoryPicker({
       emptyText={m.sources_form_category_empty()}
       renderValue={(raw) => {
         const cat = findEmissionCategory(raw);
-        if (cat) return emissionCategoryLabel(cat, locale);
+        if (cat) return localizedCategoryLabel(cat, locale);
         // Legacy / custom: fall back to the historical label map, which
         // humanizes the dotted-lowercase and Climatiq flavors.
         return categoryLabel(raw);

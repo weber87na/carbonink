@@ -215,6 +215,9 @@ importers:
       lucide-react:
         specifier: ~1.14.0
         version: 1.14.0(react@18.3.1)
+      opencc-js:
+        specifier: 1.4.2
+        version: 1.4.2
       pdf-parse:
         specifier: ^2.4.5
         version: 2.4.5
@@ -5254,6 +5257,9 @@ packages:
         optional: true
       zod:
         optional: true
+
+  opencc-js@1.4.2:
+    resolution: {integrity: sha512-EdcspgdROiCCZDM+jZR6Pa670xW+EW2QhctPBQ8gRjg6lrx4IHEl+2s+kt5izk/TkxVRgdWuFgaGkaEdIUfdaw==}
 
   p-cancelable@2.1.1:
     resolution: {integrity: sha512-BZOr3nRQHOntUjTrH8+Lh54smKHoHyur8We1V8DSMVrl5A2malOOwuJRnKRDjSnkoeBh4at6BwEnb5I7Jl31wg==}
@@ -12083,6 +12089,8 @@ snapshots:
     optionalDependencies:
       ws: 8.20.1
       zod: 4.4.3
+
+  opencc-js@1.4.2: {}
 
   p-cancelable@2.1.1: {}
 

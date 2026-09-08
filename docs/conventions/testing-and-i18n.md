@@ -5,10 +5,10 @@
 
 ## i18n
 
-All user-facing strings go through paraglide messages (`messages/en.json`
-+ `messages/zh-CN.json`). Both files must have the exact same key set —
-the Phase 5 sweep includes a key-alignment check. New features add keys
-to BOTH files in the same commit.
+All user-facing strings go through paraglide messages (`messages/en.json`,
+`messages/zh-CN.json`, and `messages/zh-TW.json`). Every catalog must have the
+exact same key set — the Phase 5 sweep includes a key-alignment check. New
+features add keys to all catalogs in the same commit.
 
 **Known exception:** the inbound supplier-disclosure UI (v2.0) shipped with
 inline Chinese rather than paraglide keys, as a deliberate ship-it shortcut.

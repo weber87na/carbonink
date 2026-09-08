@@ -452,8 +452,9 @@ export function buildAiClientLayer(deps: BuildAiClientDeps): Layer.Layer<AiClien
           Effect.gen(function* () {
             const { model, apiKey } = yield* ensureReady();
 
-            // The smallest valid request pi-ai supports: a single user message
-            // with a one-token answer budget. We don't care about the content
+            // The smallest useful request pi-ai supports: a single user message
+            // with a small provider-compatible output budget. We don't care
+            // about the content
             // of the response — only that the provider returns a 2xx and
             // pi-ai's stopReason isn't 'error'.
             const message = yield* Effect.tryPromise({
@@ -461,7 +462,7 @@ export function buildAiClientLayer(deps: BuildAiClientDeps): Layer.Layer<AiClien
                 models.complete(
                   model,
                   { messages: [{ role: 'user', content: 'ok', timestamp: Date.now() }] },
-                  { apiKey, maxTokens: 4 },
+                  { apiKey, maxTokens: 32 },
                 ),
               catch: (e): AiAuthError | AiProviderError => {
                 // pi-ai's `complete()` only rejects on unexpected throws (the
