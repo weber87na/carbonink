@@ -83,6 +83,16 @@ const FAKE_NARRATIVE = {
     '电网电力为最大排放源，年度排放量约 34.2 吨 CO2e，占总量 91% 以上。建议优先考虑可再生能源替代以降低范围二排放。',
 };
 
+function schemaMismatch(payload: unknown) {
+  const parsed = ReportNarrativeSchema.safeParse(payload);
+  if (parsed.success) throw new Error('test payload must violate ReportNarrativeSchema');
+  return {
+    _tag: 'AiSchemaMismatch',
+    raw: JSON.stringify(payload),
+    cause: parsed.error,
+  };
+}
+
 afterEach(() => {
   vi.mocked(runAiObject).mockReset();
 });
@@ -128,7 +138,25 @@ describe('generateReportNarrative', () => {
     const args = call?.[2];
     expect(args?.schema).toBe(ReportNarrativeSchema);
     expect(args?.system).toContain('ISO 14064-1');
+    expect(args?.system).toContain('boundary_description 50-800');
+    expect(args?.system).not.toContain('250-450 字');
     expect(args?.prompt).toContain('<inventory>');
+  });
+
+  it('uses schema-compatible character limits in the English prompt', async () => {
+    vi.mocked(runAiObject).mockResolvedValue(FAKE_NARRATIVE);
+
+    await generateReportNarrative({
+      data: { ...fakeData(), language: 'en' },
+      config: fakeConfig(),
+      credentials: fakeCredentials(),
+      onProgress: () => {},
+      abortSignal: new AbortController().signal,
+    });
+
+    const system = vi.mocked(runAiObject).mock.calls[0]?.[2].system;
+    expect(system).toContain('boundary_description 50-800');
+    expect(system).not.toContain('250-450 words');
   });
 
   it('throws LlmNarrativeCanceled when AbortSignal fires before the call', async () => {
@@ -149,12 +177,49 @@ describe('generateReportNarrative', () => {
     expect(runAiObject).not.toHaveBeenCalled();
   });
 
-  it('translates AiSchemaMismatch into LlmNarrativeRefused', async () => {
-    vi.mocked(runAiObject).mockRejectedValue(
-      Object.assign(new Error('schema invalid: missing field foo'), {
-        _tag: 'AiSchemaMismatch',
-      }),
-    );
+  it('repairs one schema-invalid response with field-level feedback', async () => {
+    vi.mocked(runAiObject)
+      .mockRejectedValueOnce(schemaMismatch({ boundary_description: 'too short' }))
+      .mockResolvedValueOnce(FAKE_NARRATIVE);
+
+    const result = await generateReportNarrative({
+      data: fakeData(),
+      config: fakeConfig(),
+      credentials: fakeCredentials(),
+      onProgress: () => {},
+      abortSignal: new AbortController().signal,
+    });
+
+    expect(result).toEqual(FAKE_NARRATIVE);
+    expect(runAiObject).toHaveBeenCalledTimes(2);
+    const repairPrompt = vi.mocked(runAiObject).mock.calls[1]?.[2].prompt;
+    expect(repairPrompt).toContain('<validation_feedback>');
+    expect(repairPrompt).toContain('boundary_description');
+    expect(repairPrompt).toContain('<inventory>');
+  });
+
+  it('translates a second AiSchemaMismatch into an actionable refusal', async () => {
+    const mismatch = schemaMismatch({ boundary_description: 'too short' });
+    vi.mocked(runAiObject).mockRejectedValue(mismatch);
+
+    const error = await generateReportNarrative({
+      data: fakeData(),
+      config: fakeConfig(),
+      credentials: fakeCredentials(),
+      onProgress: () => {},
+      abortSignal: new AbortController().signal,
+    }).catch((cause: unknown) => cause);
+
+    expect(error).toBeInstanceOf(LlmNarrativeRefused);
+    expect((error as Error).message).toMatch(/boundary_description/);
+    expect(runAiObject).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not retry a non-schema provider failure', async () => {
+    const providerError = Object.assign(new Error('provider unavailable'), {
+      _tag: 'AiProviderError',
+    });
+    vi.mocked(runAiObject).mockRejectedValue(providerError);
 
     await expect(
       generateReportNarrative({
@@ -164,6 +229,26 @@ describe('generateReportNarrative', () => {
         onProgress: () => {},
         abortSignal: new AbortController().signal,
       }),
-    ).rejects.toBeInstanceOf(LlmNarrativeRefused);
+    ).rejects.toBe(providerError);
+    expect(runAiObject).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not start a repair attempt after cancellation', async () => {
+    const controller = new AbortController();
+    vi.mocked(runAiObject).mockImplementationOnce(async () => {
+      controller.abort();
+      throw schemaMismatch({});
+    });
+
+    await expect(
+      generateReportNarrative({
+        data: fakeData(),
+        config: fakeConfig(),
+        credentials: fakeCredentials(),
+        onProgress: () => {},
+        abortSignal: controller.signal,
+      }),
+    ).rejects.toBeInstanceOf(LlmNarrativeCanceled);
+    expect(runAiObject).toHaveBeenCalledTimes(1);
   });
 });

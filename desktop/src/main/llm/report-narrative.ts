@@ -44,7 +44,7 @@ function buildSystemPrompt(lang: 'zh-CN' | 'en'): string {
 
 1. 你只能使用 <inventory> 块中提供的数字与名称。任何 <inventory> 中不存在的事实, 一律写 "本期未评估"。严禁推测、补充或虚构。
 2. 不要在文本中改动 <inventory> 给出的数字 (允许换算单位时另当别论)。
-3. 语气专业、克制、不夸张。每个 section 250-450 字之间。
+3. 语气专业、克制、不夸张。各字段必须满足以下字符数限制（含标点）：boundary_description 50-800；reporting_boundary_description 50-800；methodology_description 100-1200；emissions_summary 100-1500；significant_changes 20-800；notable_observations 50-800。
 4. 边界方法措辞: equity_share → "股权法"; financial_control → "财务控制法"; operational_control → "运营控制法"。
 5. 排放因子来源信息若 <inventory> 提供, 在 methodology_description 中必须披露 GWP 基准 (AR5 / AR6)。
 6. 输出必须是 JSON, 完全符合给定 schema, 不要添加 schema 外的字段。`;
@@ -53,7 +53,7 @@ function buildSystemPrompt(lang: 'zh-CN' | 'en'): string {
 
 1. You may only use numbers and names from the <inventory> block. For any fact not present in <inventory>, write "Not assessed in this inventory". No speculation, no extrapolation, no fabrication.
 2. Do not alter numbers from <inventory> (unit conversion is allowed when explicit).
-3. Tone: professional, restrained, never promotional. Each section 250-450 words.
+3. Tone: professional, restrained, never promotional. Each field must stay within these character limits, including punctuation: boundary_description 50-800; reporting_boundary_description 50-800; methodology_description 100-1200; emissions_summary 100-1500; significant_changes 20-800; notable_observations 50-800.
 4. Boundary phrasing: equity_share → "equity share"; financial_control → "financial control"; operational_control → "operational control".
 5. If <inventory> includes EF source provenance, the methodology_description must disclose the GWP basis (AR5 / AR6).
 6. Output must be JSON matching the schema exactly, no extra fields.`;
@@ -61,6 +61,53 @@ function buildSystemPrompt(lang: 'zh-CN' | 'en'): string {
 
 function buildUserMessage(data: InventoryReportData): string {
   return `<inventory>\n${JSON.stringify(data, null, 2)}\n</inventory>`;
+}
+
+interface SchemaMismatchLike {
+  _tag?: string;
+  cause?: unknown;
+  message?: string;
+  raw?: string;
+}
+
+function schemaIssuesFrom(error: SchemaMismatchLike): Array<{ path?: unknown; message?: unknown }> {
+  const causeIssues = (error.cause as { issues?: unknown } | undefined)?.issues;
+  if (Array.isArray(causeIssues)) {
+    return causeIssues as Array<{ path?: unknown; message?: unknown }>;
+  }
+
+  if (error.raw) {
+    try {
+      const parsed = ReportNarrativeSchema.safeParse(JSON.parse(error.raw));
+      if (!parsed.success) return parsed.error.issues;
+    } catch {
+      // A malformed raw payload has no safe field-level detail to recover.
+    }
+  }
+  return [];
+}
+
+function summarizeSchemaMismatch(error: SchemaMismatchLike): string {
+  const issues = schemaIssuesFrom(error);
+  if (issues.length > 0) {
+    const summary = issues.slice(0, 3).map((issue) => {
+      const path =
+        Array.isArray(issue.path) && issue.path.length > 0 ? issue.path.join('.') : 'response';
+      const message = typeof issue.message === 'string' ? issue.message : 'invalid value';
+      return `${path}: ${message}`;
+    });
+    if (issues.length > summary.length) summary.push(`and ${issues.length - summary.length} more`);
+    return summary.join('; ');
+  }
+  return error.message?.trim() || 'response did not match the six required report fields';
+}
+
+function buildRepairUserMessage(data: InventoryReportData, validationSummary: string): string {
+  const correction =
+    data.language === 'zh-CN'
+      ? `前次输出未通过格式验证：${validationSummary}。请重新生成完整的六个字段，严格满足每个字段的字符数限制。只能使用 inventory 中的事实，不得沿用或新增 inventory 以外的内容。`
+      : `The previous output failed validation: ${validationSummary}. Regenerate all six fields and strictly observe each field's character limits. Use only facts from the inventory; do not carry over or add content that is not present there.`;
+  return `${buildUserMessage(data)}\n\n<validation_feedback>\n${correction}\n</validation_feedback>`;
 }
 
 /**
@@ -98,8 +145,9 @@ function buildUserMessage(data: InventoryReportData): string {
  *   because `streamObject`'s `object` Promise was permissive. The new
  *   path's `runAiObject({ schema })` enforces the schema via pi-ai's
  *   tool-call envelope (see `ai-client.ts`); a mismatch surfaces as
- *   `AiSchemaMismatch`, which we translate to `LlmNarrativeRefused`
- *   to preserve the handler's existing branching.
+ *   `AiSchemaMismatch`. One report-level repair attempt supplies concise
+ *   field feedback to the model; a second mismatch is translated to
+ *   `LlmNarrativeRefused` to preserve the handler's existing branching.
  */
 export async function generateReportNarrative(args: {
   data: InventoryReportData;
@@ -128,33 +176,39 @@ export async function generateReportNarrative(args: {
   // calling us.
   onProgress({ sub_phase: null });
 
-  try {
-    const result = await runAiObject(config, credentials, {
-      schema: ReportNarrativeSchema,
-      system: buildSystemPrompt(data.language),
-      prompt: buildUserMessage(data),
-    });
-    // Post-call abort check. If the user clicked Cancel while the
-    // LLM round-trip was in flight, the abort didn't interrupt the
-    // request (see JSDoc) but we still honour the user's intent by
-    // discarding the result and surfacing the canonical cancel error.
-    if (abortSignal.aborted) {
-      throw new LlmNarrativeCanceled();
+  let prompt = buildUserMessage(data);
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const result = await runAiObject(config, credentials, {
+        schema: ReportNarrativeSchema,
+        system: buildSystemPrompt(data.language),
+        prompt,
+      });
+      // Post-call abort check. If the user clicked Cancel while the
+      // LLM round-trip was in flight, the abort didn't interrupt the
+      // request (see JSDoc) but we still honour the user's intent by
+      // discarding the result and surfacing the canonical cancel error.
+      if (abortSignal.aborted) {
+        throw new LlmNarrativeCanceled();
+      }
+      return result;
+    } catch (err) {
+      if (err instanceof LlmNarrativeCanceled) throw err;
+      if (abortSignal.aborted) throw new LlmNarrativeCanceled();
+      if ((err as Error)?.name === 'AbortError') throw new LlmNarrativeCanceled();
+
+      const mismatch = err as SchemaMismatchLike;
+      if (mismatch?._tag === 'AiSchemaMismatch') {
+        const summary = summarizeSchemaMismatch(mismatch);
+        if (attempt === 0) {
+          prompt = buildRepairUserMessage(data, summary);
+          continue;
+        }
+        throw new LlmNarrativeRefused(`LLM returned schema-invalid narrative: ${summary}`);
+      }
+      throw err;
     }
-    return result;
-  } catch (err) {
-    if (err instanceof LlmNarrativeCanceled) throw err;
-    if (abortSignal.aborted) throw new LlmNarrativeCanceled();
-    if ((err as Error)?.name === 'AbortError') throw new LlmNarrativeCanceled();
-    // pi-ai's tool-call envelope failed schema validation. Re-throw as
-    // `LlmNarrativeRefused` so the IPC handler's existing `_tag` switch
-    // ("Refused" branch) keeps working unchanged.
-    const tag = (err as { _tag?: string })?._tag;
-    if (tag === 'AiSchemaMismatch') {
-      throw new LlmNarrativeRefused(
-        `LLM returned schema-invalid narrative: ${(err as Error).message}`,
-      );
-    }
-    throw err;
   }
+
+  throw new LlmNarrativeRefused('LLM returned schema-invalid narrative after repair');
 }
