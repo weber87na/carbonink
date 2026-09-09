@@ -13,7 +13,7 @@ Per cloud package:
   = true` on every page) via `@astrojs/cloudflare` v13. Pages: `/`, `/download`,
   `/privacy`, `/guides/*` + their `/zh/` mirrors — all CDN HTML, no SSR. Build
   emits `dist/client/` (static) + `dist/_worker.js/index.js` (the Static-Assets
-  worker entry). Deploy: `cd cloud/web && pnpm exec wrangler deploy`.
+  worker entry). Deploy: `npm exec --workspace=@carbonink-cloud/web -- wrangler deploy`.
 
 **Gotcha**: don't put `main` in `cloud/web/wrangler.toml`. The
 `@cloudflare/vite-plugin` bundled into `@astrojs/cloudflare` v13 resolves `main`

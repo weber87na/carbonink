@@ -2,21 +2,21 @@
 /**
  * E2E pre-flight guard.
  *
- * `pnpm test:e2e` invokes `pnpm build`, which runs `electron-rebuild` to
+ * `npm run test:e2e` invokes `npm run build`, which runs `electron-rebuild` to
  * flip the better-sqlite3 native binary to Electron's Node ABI. If a
- * `pnpm dev` session is running concurrently, electron-vite's watcher
+ * `npm run dev` session is running concurrently, electron-vite's watcher
  * sees the binary change and triggers a destabilizing reload cycle in
  * the user's interactive Electron window (looks like rapid flicker).
  *
  * This guard refuses to proceed if it detects an `electron-vite … dev`
- * process. Stop `pnpm dev` first, then re-run.
+ * process. Stop `npm run dev` first, then re-run.
  *
  * Detection: `pgrep -fl "electron-vite[^ ]* dev"`. The `-f` flag matches
  * against the full command line; `-l` prints matching lines so the error
  * message can show what's running.
  *
  * Pattern shape — DON'T simplify back to the literal `"electron-vite dev"`:
- * `pnpm dev` actually launches `node …/electron-vite/bin/electron-vite.js
+ * `npm run dev` actually launches `node …/electron-vite/bin/electron-vite.js
  * dev`, so the binary name carries a `.js` extension and the literal
  * (space-separated) pattern never matched — the guard was silently dead.
  * `electron-vite[^ ]* dev` matches the bare form, the real `.js` form, and
@@ -45,13 +45,13 @@ try {
 
 if (matches) {
   console.error('');
-  console.error('  ❌  `pnpm dev` is running — `pnpm test:e2e` cannot proceed safely.');
+  console.error('  ❌  `npm run dev` is running — `npm run test:e2e` cannot proceed safely.');
   console.error('');
   console.error('      The E2E suite invokes `electron-rebuild`, which rewrites the same');
   console.error('      better-sqlite3 binary your dev Electron has loaded. The rewrite');
   console.error('      triggers a HMR cascade that destabilizes your dev window.');
   console.error('');
-  console.error('      Stop `pnpm dev` (Ctrl-C in that terminal), then re-run.');
+  console.error('      Stop `npm run dev` (Ctrl-C in that terminal), then re-run.');
   console.error('');
   console.error('      Detected process(es):');
   for (const line of matches.split('\n')) {

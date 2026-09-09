@@ -17,7 +17,7 @@ import { app } from 'electron';
  * `LOG_RETENTION_DAYS` so users don't accumulate forever-growing log dirs.
  *
  * Severity policy: every call goes through `log(level, ...args)`. We
- * mirror to console (so `pnpm dev` still shows it in the terminal) and
+ * mirror to console (so `npm run dev` still shows it in the terminal) and
  * append a single line to the day's log file. No JSON, no timestamps in
  * the args — the file format is `[ISO_TIMESTAMP] LEVEL message...`, plain
  * text for easy `tail -f` + `grep`.

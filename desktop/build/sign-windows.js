@@ -6,7 +6,7 @@
 // + CertificateProfileName), and exports SIGNTOOL_PATH + DLIB_PATH.
 //
 // Locally, this script is a no-op (returns without signing) so unsigned
-// `pnpm dist:win` builds succeed for developer smoke testing.
+// `npm run dist:win` builds succeed for developer smoke testing.
 exports.default = async function signWindows(configuration) {
   const { execFileSync } = require('node:child_process');
   const { existsSync } = require('node:fs');

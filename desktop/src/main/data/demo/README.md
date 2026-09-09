@@ -153,7 +153,7 @@ one row — the loader refuses an ambiguous code rather than guessing a vintage.
 4. `node scripts/seed-demo-company.mjs --pack <id> --db /tmp/x.sqlite --init`
    and read the reconciliation table. Record what you see in
    `expected_reconciliation[]`, including the direction and the cause.
-5. `pnpm vitest run tests/main/demo-packs.test.ts`
+5. `npm exec -- vitest run tests/main/demo-packs.test.ts`
 
 Sources were retrieved 2026-08-13; all four are the most recent reports
 published as of that date.

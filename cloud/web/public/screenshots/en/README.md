@@ -28,7 +28,7 @@ to `desktop/tests/e2e/_setup.ts` + `tour.spec.ts`). Run it with `en`
 to capture English screenshots:
 
 ```bash
-TOUR_LOCALE=en pnpm --filter carbonink test:e2e tests/e2e/tour.spec.ts
+TOUR_LOCALE=en npm run test:e2e --workspace=carbonink -- tests/e2e/tour.spec.ts
 ```
 
 The harness pins `localStorage['carbonink.locale'] = 'en'` in two
@@ -54,7 +54,7 @@ on the marketing page — skip them.)
 One-liner copy after the tour run:
 
 ```bash
-TOUR_LOCALE=en pnpm --filter carbonink test:e2e tests/e2e/tour.spec.ts && \
+TOUR_LOCALE=en npm run test:e2e --workspace=carbonink -- tests/e2e/tour.spec.ts && \
   cp desktop/tests/e2e/screenshots/tour-01-dashboard.en.png      cloud/web/public/screenshots/en/dashboard.png && \
   cp desktop/tests/e2e/screenshots/tour-02-sources.en.png        cloud/web/public/screenshots/en/sources.png && \
   cp desktop/tests/e2e/screenshots/tour-04-documents.en.png      cloud/web/public/screenshots/en/documents.png && \
@@ -72,13 +72,13 @@ unsuffixed `tour-NN-*.png` filenames. Those feed
 `cloud/web/public/screenshots/*.png` (no `en/`).
 
 ```bash
-pnpm --filter carbonink test:e2e tests/e2e/tour.spec.ts
+npm run test:e2e --workspace=carbonink -- tests/e2e/tour.spec.ts
 # then cp tour-NN-*.png → cloud/web/public/screenshots/{name}.png
 ```
 
 ## Sanity checks after replacing
 
-- Local: `pnpm --filter @carbonink-cloud/web dev` → open
+- Local: `npm run dev --workspace=@carbonink-cloud/web` → open
   http://localhost:4321/en/ → hero + gallery should show English UI.
-- Built: `pnpm --filter @carbonink-cloud/web build` → grep
+- Built: `npm run build --workspace=@carbonink-cloud/web` → grep
   `dist/client/en/index.html` for `/screenshots/en/dashboard.png`.

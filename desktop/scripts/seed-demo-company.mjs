@@ -35,9 +35,9 @@
  * take a second one — point --db at a scratch file instead.
  *
  * ABI note: this runs on plain node, so better-sqlite3 must be built for the
- * node ABI. After `pnpm build` / electron-rebuild it is built for Electron and
+ * node ABI. After `npm run build` / electron-rebuild it is built for Electron and
  * this script fails with NODE_MODULE_VERSION mismatch. Fix:
- *   pnpm --filter carbonink run rebuild:node
+ *   npm run rebuild:node
  */
 
 import { randomUUID } from 'node:crypto';
@@ -55,7 +55,7 @@ import Database from 'better-sqlite3';
  *
  * Note the native binding is NOT loaded at import time — better-sqlite3 calls
  * `bindings()` lazily inside the Database constructor — so the guard has to sit
- * here rather than around the import. `pnpm dev` and `pnpm build` rebuild the
+ * here rather than around the import. `npm run dev` and `npm run build` rebuild the
  * binding for Electron in their pre-hooks, and that is the state you are in
  * most of the time you reach for a seed, so this is the common path, not an
  * edge case.
@@ -66,10 +66,10 @@ function openDatabase(path) {
   } catch (err) {
     if (String(err?.message ?? '').includes('NODE_MODULE_VERSION')) {
       console.error('\n✗ better-sqlite3 is currently built for Electron, not node.');
-      console.error('  `pnpm dev` and `pnpm build` rebuild it for Electron in their pre-hooks.');
+      console.error('  `npm run dev` and `npm run build` rebuild it for Electron in their pre-hooks.');
       console.error('  This script runs on plain node. Rebuild once:\n');
-      console.error('    pnpm --filter carbonink run rebuild:node\n');
-      console.error('  then re-run this command. Starting `pnpm dev` again flips it back');
+      console.error('    npm run rebuild:node\n');
+      console.error('  then re-run this command. Starting `npm run dev` again flips it back');
       console.error('  automatically, so there is nothing to undo.\n');
       process.exit(1);
     }
@@ -162,7 +162,7 @@ const DB_PATH = workspace.path;
 const dbExisted = existsSync(DB_PATH);
 if (!dbExisted && !values.init) {
   console.error(`✗ DB not found: ${DB_PATH}`);
-  console.error('  Launch the app once (pnpm dev) so onboarding creates it, or pass --init');
+  console.error('  Launch the app once (npm run dev) so onboarding creates it, or pass --init');
   console.error('  together with --db to build a standalone scratch database.');
   process.exit(1);
 }

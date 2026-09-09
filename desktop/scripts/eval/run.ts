@@ -7,8 +7,8 @@
  * "wrap rate". Zero app-DB / Electron — just the stage (pure data) + pi-ai.
  *
  * Run (from desktop/):
- *   DEEPSEEK_API_KEY=sk-... pnpm eval:extract
- *   ... pnpm eval:extract --models deepseek-v4-flash --prompts current,terse --runs 3
+ *   DEEPSEEK_API_KEY=sk-... npm run eval:extract
+ *   ... npm run eval:extract -- --models deepseek-v4-flash --prompts current,terse --runs 3
  *
  * Flags:
  *   --provider  pi-ai provider id              (default: deepseek)

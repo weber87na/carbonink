@@ -6,7 +6,7 @@
 
 1. **启动应用 + 完成 onboarding 创建组织 + 首个 site**（首次运行）
    ```bash
-   pnpm dev
+   npm run dev
    ```
    走完向导后回到此终端继续。
 

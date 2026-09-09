@@ -29,17 +29,17 @@ it's debt, not precedent.
   split in ActivityRebindCard, `role="link"` removed from BreadcrumbPage
   (deviation from shadcn upstream, commented inline), redundant setter
   deps dropped in sidebar.tsx.
-- **better-sqlite3 ABI flip:** after `pnpm build` (or any script that runs
+- **better-sqlite3 ABI flip:** after `npm run build` (or any script that runs
   `electron-rebuild`), vitest will fail with `NODE_MODULE_VERSION 145 vs 137`
   because better-sqlite3's native binding flipped to Electron ABI. Restore
   via the desktop package script:
   ```bash
-  pnpm --filter carbonink run rebuild:node
+  npm run rebuild:node --workspace=carbonink
   ```
-  That runs `pnpm rebuild better-sqlite3` from the desktop workspace,
+  That runs `npm rebuild better-sqlite3` from the desktop workspace,
   which finds the actual installed version (currently 12.10.0; the
-  earlier hand-rolled `rm node_modules/.pnpm/better-sqlite3@12.9.0/...`
-  recipe went stale after the dep bump). This is environmental,
+  earlier hand-rolled package-store deletion recipe went stale after the dep
+  bump). This is environmental,
   never a regression. The inverse — `rebuild:native` — flips back to the
   Electron ABI the app + Playwright e2e need.
 

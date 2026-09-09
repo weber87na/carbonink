@@ -23,7 +23,7 @@ on:
 permissions:
   contents: write
 
-# Opt JS actions onto Node 24 now — checkout/setup-node/pnpm/gh-release ship on
+# Opt JS actions onto Node 24 now — checkout/setup-node/gh-release ship on
 # the deprecated Node 20; GitHub forces Node 24 by 2026-06-16 regardless.
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
@@ -46,27 +46,27 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: pnpm
+          cache: npm
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Set version from tag
         working-directory: desktop
-        # `pnpm pkg set` (not `pnpm version`) — the latter errors "Version not
+        # `npm pkg set` (not `npm version`) — the latter errors "Version not
         # changed" when the tag matches the current package.json version, which
         # is exactly the case for a v1.0.0 release of a 1.0.0 package.
         run: |
           VERSION=${GITHUB_REF_NAME#v}
-          pnpm pkg set "version=$VERSION"
+          npm pkg set "version=$VERSION"
 
       - name: Build + package (unsigned — notarize off, ad-hoc sign)
         working-directory: desktop
-        run: pnpm build && pnpm exec electron-builder --mac --publish never
+        run: npm run build && npm exec -- electron-builder --mac --publish never
 
       # Launch-smoke the packaged .app before uploading. ELECTRON_RUN_AS_NODE
       # exercises the same dyld load of Electron Framework as a real launch,
@@ -95,27 +95,27 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: pnpm
+          cache: npm
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Set version from tag
         working-directory: desktop
         shell: pwsh
-        # `pnpm pkg set` (not `pnpm version`) — see the mac job: avoids the
+        # `npm pkg set` (not `npm version`) — see the mac job: avoids the
         # "Version not changed" error when tag == current package.json version.
         run: |
           $version = $env:GITHUB_REF_NAME -replace '^v', ''
-          pnpm pkg set "version=$version"
+          npm pkg set "version=$version"
 
       - name: Build + package (unsigned — Azure sign hook self-skips with no creds)
         working-directory: desktop
-        run: pnpm build && pnpm exec electron-builder --win --publish never
+        run: npm run build && npm exec -- electron-builder --win --publish never
 
       - name: Upload installers + update manifest to GitHub Release
         uses: softprops/action-gh-release@v2

@@ -18,13 +18,13 @@ read on demand.
 - **Git: commit freely without asking; push only when explicitly allowed.**
   Never force-push, never run destructive git. If on the default branch, branch
   first.
-- **Tests must not regress.** `pnpm desktop:test` is at **1337/1337** (2026-08-14,
+- **Tests must not regress.** `npm run desktop:test` is at **1337/1337** (2026-08-14,
   after the emission-category taxonomy picker). Don't land a commit that drops
   the count.
 - **No licensing.** CarbonInk is free & open-source (MIT) — there is no license
   gate, activation, account, or payment. Don't reintroduce one.
 - **Biome errors stay at ZERO.** The historic ~940-error debt was cleared
-  2026-07-22 (`pnpm exec biome check .` in desktop/ reports 0 errors; the
+  2026-07-22 (`npm exec -- biome check .` in desktop/ reports 0 errors; the
   remaining ~170 warnings/infos — mostly noNonNullAssertion in tests — are
   accepted style residue, don't churn them). New code MUST pass a scoped
   `biome check <changed files>` with no NEW errors or warnings.
@@ -34,8 +34,8 @@ read on demand.
 - **`audit_event` payloads carry no prompt content** — only tool names, IDs,
   counts, decision flags. `organizationId` is injected server-side, never
   user-supplied.
-- **After any `electron-rebuild` (e.g. `pnpm build`), vitest breaks** with
-  `NODE_MODULE_VERSION 145 vs 137`. Fix: `pnpm --filter carbonink run rebuild:node`.
+- **After any `electron-rebuild` (e.g. `npm run build`), vitest breaks** with
+  `NODE_MODULE_VERSION 145 vs 137`. Fix: `npm run rebuild:node --workspace=carbonink`.
   Environmental, never a regression.
 - **Electron is pinned at `^41.5.1`** — do not upgrade (better-sqlite3 v8 blocker).
 - **Workflow: brainstorm → spec → plan → implement.** Specs land in
@@ -44,7 +44,7 @@ read on demand.
 
 ## Where things live
 
-pnpm workspace; two apps share `docs/` + tooling:
+npm workspace; two apps share `docs/` + tooling:
 
 | Path | What |
 |---|---|
@@ -52,9 +52,9 @@ pnpm workspace; two apps share `docs/` + tooling:
 | `cloud/web/` | Astro **static marketing site** (`/`, `/download`, `/privacy`, `/guides/*` + `/zh/` mirrors; guides ship as en+zh pairs), Workers + Static Assets |
 
 ```bash
-pnpm test                 # all packages          pnpm desktop:test / desktop:typecheck
-pnpm --filter carbonink dev                       # electron-vite dev --watch (renderer HMR + main/preload hot-restart)
-pnpm --filter @carbonink-cloud/web build
+npm test                  # all packages          npm run desktop:test / desktop:typecheck
+npm run desktop:dev                              # electron-vite dev --watch (renderer HMR + main/preload hot-restart)
+npm run cloud:build:web
 ```
 
 ## Detailed conventions → `docs/conventions/`

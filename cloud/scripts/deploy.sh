@@ -22,18 +22,18 @@ for arg in "$@"; do
   esac
 done
 
-echo "==> wrangler version: $(cd "$REPO_ROOT/cloud/web" && pnpm exec wrangler --version 2>&1 | head -1)"
-echo "==> account: $(cd "$REPO_ROOT/cloud/web" && pnpm exec wrangler whoami 2>&1 | grep -E 'email|account' | head -2 | tr '\n' ' ')"
+echo "==> wrangler version: $(cd "$REPO_ROOT" && npm exec --workspace=@carbonink-cloud/web -- wrangler --version 2>&1 | head -1)"
+echo "==> account: $(cd "$REPO_ROOT" && npm exec --workspace=@carbonink-cloud/web -- wrangler whoami 2>&1 | grep -E 'email|account' | head -2 | tr '\n' ' ')"
 echo ""
 
 echo "===================================================================="
 echo " Building + deploying cloud/web"
 echo "===================================================================="
 
-# The Astro worker needs `pnpm build` first so `dist/` exists for
+# The Astro worker needs `npm run build` first so `dist/` exists for
 # wrangler to pick up the SSR entry + static assets.
 echo "==> Building cloud/web (Astro)..."
-(cd "$REPO_ROOT/cloud/web" && pnpm run build)
+(cd "$REPO_ROOT" && npm run cloud:build:web)
 
 wr cloud/web deploy $DRY_RUN
 

@@ -32,5 +32,5 @@ require_env() {
 #   wr <dir> <args...>
 wr() {
   local dir="$1"; shift
-  (cd "$REPO_ROOT/$dir" && pnpm exec wrangler "$@")
+  (cd "$REPO_ROOT" && npm exec --workspace="$dir" -- wrangler "$@")
 }

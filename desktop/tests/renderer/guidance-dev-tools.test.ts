@@ -14,7 +14,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
  * exists in dev builds to clear the flags without digging through
  * localStorage.
  *
- * (vitest runs with `import.meta.env.DEV` true, same as `pnpm dev`.)
+ * (vitest runs with `import.meta.env.DEV` true, same as `npm run dev`.)
  */
 function tools(): GuidanceDevTools {
   const installed = (window as unknown as { guidance?: GuidanceDevTools }).guidance;

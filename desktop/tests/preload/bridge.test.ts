@@ -76,7 +76,7 @@ function extractInterfaceChannelKeys(src: string, typeName: string): string[] {
 
 // vitest's `import.meta.url` isn't a `file:` URL in all loader configs, so
 // we resolve via `process.cwd()` — vitest sets cwd to the package root
-// (`desktop/`) when invoked through `pnpm --filter carbonink test`.
+// (`desktop/`) when invoked through `npm run desktop:test`.
 const TYPES_SRC = readFileSync(resolve(process.cwd(), 'src/main/ipc/types.ts'), 'utf8');
 
 describe('preload bridge', () => {

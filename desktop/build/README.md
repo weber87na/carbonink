@@ -25,9 +25,9 @@ the "ledger entries" mark).
 Re-run after any design change:
 
 ```bash
-pnpm icons                          # uses the active direction (X2)
+npm run icons                      # uses the active direction (X2)
 node scripts/generate-icons.mjs --preview   # render all variants side-by-side
-ICON_DIRECTION=X1 pnpm icons        # ship a different variant
+ICON_DIRECTION=X1 npm run icons     # ship a different variant
 ```
 
 The script:
@@ -42,7 +42,7 @@ The script:
 ## Dev-mode icon
 
 The compiled icons are baked into the installer artifacts, but during
-`pnpm dev` there's no bundle for the OS to read from. `main/index.ts`
+`npm run dev` there's no bundle for the OS to read from. `main/index.ts`
 calls `app.dock.setIcon` (macOS) and `BrowserWindow.icon` (Win/Linux)
 with the PNG from this directory so the Dock / taskbar match production.
 See `devIconPath()` in `src/main/window.ts`.

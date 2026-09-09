@@ -30,9 +30,9 @@
  * For a clean single-company database instead, skip this wrapper:
  *   node scripts/seed-demo-company.mjs --pack catl-fy2025 --db /tmp/x.sqlite --init
  *
- * ABI note: run under plain node. After `pnpm build` / electron-rebuild the
+ * ABI note: run under plain node. After `npm run build` / electron-rebuild the
  * better-sqlite3 binding is built for Electron and this fails with
- * NODE_MODULE_VERSION mismatch. Fix: pnpm --filter carbonink run rebuild:node
+ * NODE_MODULE_VERSION mismatch. Fix: npm run rebuild:node
  */
 
 import { spawnSync } from 'node:child_process';

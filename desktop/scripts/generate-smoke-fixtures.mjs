@@ -19,7 +19,7 @@ import { fileURLToPath } from 'node:url';
  *   schema while staying obviously synthetic.
  *
  * Run:
- *   pnpm exec node scripts/generate-smoke-fixtures.mjs
+ *   node scripts/generate-smoke-fixtures.mjs
  *
  * Outputs to tests/fixtures/smoke/.
  */

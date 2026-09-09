@@ -32,13 +32,13 @@ Grab the latest macOS / Windows build from the
 
 ## Build from source
 
-pnpm workspace; the desktop app lives in `desktop/`.
+npm workspace; the desktop app lives in `desktop/`.
 
 ```bash
-pnpm install
-pnpm --filter carbonink dev      # run the Electron app
-pnpm --filter carbonink test     # vitest
-pnpm --filter carbonink build    # production build (electron-builder)
+npm install
+npm run desktop:dev       # run the Electron app
+npm run desktop:test      # vitest
+npm run desktop:build     # production build (electron-builder)
 ```
 
 See [`AGENTS.md`](AGENTS.md) for repo conventions and [`docs/`](docs/) for the

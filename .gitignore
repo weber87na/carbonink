@@ -1,6 +1,5 @@
 # Dependencies
 node_modules/
-.pnpm-store/
 .pnp.*
 
 # Build artifacts
@@ -49,7 +48,6 @@ auth.json
 # Logs
 *.log
 npm-debug.log*
-pnpm-debug.log*
 
 # Test
 coverage/

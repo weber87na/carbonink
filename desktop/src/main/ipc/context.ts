@@ -336,7 +336,7 @@ export function createIpcContext(
 
   // Agent skill installer — bundled SKILL.md ships under
   // `process.resourcesPath/agent-skill/SKILL.md` in production. Dev mode
-  // tries a couple of project-relative paths because `pnpm dev` may run
+  // tries a couple of project-relative paths because `npm run dev` may run
   // from either `desktop/` or the workspace root depending on the script.
   const skillResolver: SkillResolver = {
     bundledSkillPath: () => {

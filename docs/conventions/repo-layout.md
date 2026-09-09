@@ -3,12 +3,12 @@
 > Detailed reference for `AGENTS.md` → "Where things live". This file is linked,
 > not auto-loaded; read it when you need the full monorepo picture.
 
-This is a pnpm workspace. Two top-level apps share tooling + docs:
+This is an npm workspace. Two top-level apps share tooling + docs:
 
 ```
 carbonink/
 ├── package.json              ← workspace root, monorepo scripts
-├── pnpm-workspace.yaml       ← lists desktop + cloud/web packages
+├── package-lock.json         ← one lockfile for the complete workspace
 ├── docs/                     ← shared (specs, plans, release notes, conventions)
 ├── CLAUDE.md                 ← @AGENTS.md (the always-loaded conventions index)
 ├── desktop/                  ← Electron app (the user-facing v1)
@@ -23,25 +23,26 @@ carbonink/
 **Top-level scripts** (run from repo root):
 
 ```bash
-pnpm desktop:test         # vitest tests in desktop/
-pnpm desktop:typecheck    # tsc --noEmit on desktop/
-pnpm test                 # all packages (workspace-concurrency=1)
+npm run desktop:test      # vitest tests in desktop/
+npm run desktop:typecheck # tsc --noEmit on desktop/
+npm test                  # all workspaces with a test script
 ```
 
-**Per-package scripts** still work via filter:
+**Per-package scripts** still work through npm workspace selection:
 
 ```bash
-pnpm --filter carbonink dev          # electron-vite dev --watch (renderer HMR + main/preload hot-restart)
-pnpm --filter @carbonink-cloud/web build
+npm run dev --workspace=carbonink          # electron-vite dev --watch (renderer HMR + main/preload hot-restart)
+npm run build --workspace=@carbonink-cloud/web
 ```
 
 **Why monorepo**: desktop + the marketing site share tooling, CI, and docs in
 one place — a single PR can touch both apps atomically.
 
-**`onlyBuiltDependencies`** lives in the top-level `package.json` (pnpm
-warns if it's at a sub-package). Includes `better-sqlite3`, `electron`,
-`esbuild`, `sharp`, `workerd`, `@napi-rs/canvas-*`. New native deps
-must be added here before pnpm will run their postinstall.
+**Dependency lifecycle scripts** run under npm's default policy. This is
+required by native/tooling dependencies including `better-sqlite3`, `electron`,
+`esbuild`, `sharp`, and `workerd`. The former pnpm per-package `allowBuilds`
+policy has no direct npm 11.8 equivalent, so review new dependencies that add
+install scripts before accepting them.
 
 **Brand identity is unified** across desktop + cloud — `--color-primary`
 in `cloud/web/src/styles/global.css` is bound to the X2 mark's moss-green

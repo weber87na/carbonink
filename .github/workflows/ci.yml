@@ -9,7 +9,7 @@ name: CI
 #                            breakage / lint-time TS errors in the web
 #
 # What is NOT run:
-#   - biome `pnpm lint`. CLAUDE.md documents ~940 pre-existing biome
+#   - biome `npm run lint`. CLAUDE.md documents ~940 pre-existing biome
 #     errors deferred to v1.0.1. Running it here would fail every PR.
 #     New code should lint clean on a scoped `biome check <files>`
 #     manually before merging.
@@ -19,7 +19,7 @@ name: CI
 #     tag-triggered) handles signed installer builds; we don't rebuild
 #     Electron on every PR.
 #
-# Ordering: tests BEFORE any `pnpm build` — better-sqlite3's native
+# Ordering: tests BEFORE any `npm run build` — better-sqlite3's native
 # binding flips between Node and Electron ABI when electron-rebuild
 # runs (CLAUDE.md § "Test discipline"), so test→build is the only
 # safe sequence.
@@ -54,24 +54,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: pnpm
+          cache: npm
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        # `--frozen-lockfile` rejects pnpm-lock.yaml drift — keeps CI
-        # honest if someone bumps package.json without regenerating
-        # the lockfile.
-        run: pnpm install --frozen-lockfile
+        # `npm ci` rejects package-lock.json drift and never rewrites it.
+        run: npm ci
 
       - name: Compile paraglide messages (renderer i18n)
         # `src/renderer/paraglide/*` is gitignored — `@inlang/paraglide-js`
         # generates it. In local dev the electron-vite plugin
-        # (`paraglide()` in electron.vite.config.ts) emits it on `pnpm
-        # dev` / `pnpm build`. CI does neither — it goes straight to
+        # (`paraglide()` in electron.vite.config.ts) emits it on `npm run
+        # dev` / `npm run build`. CI does neither — it goes straight to
         # `tsc --noEmit`, which then fails on 60+ "Cannot find module
         # '@renderer/paraglide/messages'" errors because the source
         # tree was never emitted. Compile it explicitly here.
@@ -80,16 +77,16 @@ jobs:
         # workspace) — vitest also imports from @renderer/paraglide/*.
         # Main-process code (`src/main/*`) does NOT import paraglide,
         # so we only generate the renderer outdir.
-        run: pnpm --filter carbonink exec paraglide-js compile --project ./project.inlang --outdir ./src/renderer/paraglide
+        run: npm exec --workspace=carbonink -- paraglide-js compile --project ./project.inlang --outdir ./src/renderer/paraglide
 
       - name: Typecheck desktop
-        run: pnpm desktop:typecheck
+        run: npm run desktop:typecheck
 
       - name: Test desktop (vitest)
-        run: pnpm desktop:test
+        run: npm run desktop:test
 
       - name: Build cloud web (Astro)
         # Doubles as a smoke test for the SSR Worker entry — Astro
         # build refuses to emit if any TS/import error blocks
         # prerender of the marketing pages.
-        run: pnpm cloud:build:web
+        run: npm run cloud:build:web

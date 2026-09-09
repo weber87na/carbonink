@@ -53,25 +53,24 @@ jobs:
           # github.sha is HEAD of the chosen branch (default main).
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
-      - uses: pnpm/action-setup@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: pnpm
+          cache: npm
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Build cloud/web (Astro)
         # cloud/web needs `dist/` populated before wrangler can pick
         # up the SSR entry + Static Assets binding.
-        run: pnpm cloud:build:web
+        run: npm run cloud:build:web
 
       - name: Deploy cloud/web (carbonink-cloud-web)
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: cd cloud/web && pnpm exec wrangler deploy
+        run: npm exec --workspace=@carbonink-cloud/web -- wrangler deploy
 
       - name: Summary
         run: |

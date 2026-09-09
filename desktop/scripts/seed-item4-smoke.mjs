@@ -6,19 +6,19 @@
  *
  * Run from `desktop/`:
  *
- *   pnpm exec node scripts/seed-item4-smoke.mjs
- *   pnpm exec node scripts/seed-item4-smoke.mjs --db /custom/path/to/app.sqlite
+ *   node scripts/seed-item4-smoke.mjs
+ *   node scripts/seed-item4-smoke.mjs --db /custom/path/to/app.sqlite
  *
  * Pre-flight: the app must have been launched at least once so the
  * organization + first site rows exist (onboarding writes them).
  *
  * ABI note: this script loads `better-sqlite3` under Node's ABI. If the
- * binding was last built for Electron (after `pnpm dev` or `pnpm build`),
+ * binding was last built for Electron (after `npm run dev` or `npm run build`),
  * the script will fail with NODE_MODULE_VERSION mismatch — fix once with
  *
- *   pnpm --filter carbonink run rebuild:node
+ *   npm run rebuild:node
  *
- * The next `pnpm --filter carbonink dev` will flip it back automatically
+ * The next `npm run dev` will flip it back automatically
  * via the `predev` hook (`electron-rebuild -f -w better-sqlite3`), so
  * you don't need to undo this manually.
  *
@@ -45,7 +45,7 @@
  *            · 2 narrative  (describe scope 1 sources; describe travel scope)
  *
  * After running, the user can:
- *   1. Restart `pnpm --filter carbonink dev`
+ *   1. Restart `npm run dev`
  *   2. Navigate to `/questionnaires` → open "Item 4 Smoke Questionnaire"
  *   3. Click "Generate" on any question (single-shot test)
  *   4. Click "Generate all unanswered" (batch test)
@@ -55,7 +55,7 @@
  *             WHERE event_kind='agent_answer.generate' \
  *             ORDER BY occurred_at DESC LIMIT 5;"
  *   6. Force fallback path: set `ANSWER_AGENT_MAX_TURNS=1` in the dev
- *      terminal before `pnpm dev`, then re-generate → `source_summary`
+ *      terminal before `npm run dev`, then re-generate → `source_summary`
  *      gets the `【单 shot fallback】` prefix.
  *
  * Re-running this script is safe: customer / document / questionnaire /
@@ -84,7 +84,7 @@ const DB_PATH =
 
 if (!existsSync(DB_PATH)) {
   console.error(`✗ DB not found: ${DB_PATH}`);
-  console.error('  Launch the CarbonInk app once (pnpm dev) so onboarding creates it.');
+  console.error('  Launch the CarbonInk app once (npm run dev) so onboarding creates it.');
   process.exit(1);
 }
 
@@ -326,7 +326,7 @@ console.log('');
 console.log('Next steps (manual smoke — Task 9 in the plan):');
 console.log('');
 console.log('  1. (Re)start the dev app:');
-console.log('       pnpm --filter carbonink dev');
+console.log('       npm run dev');
 console.log('');
 console.log('  2. Navigate to /questionnaires → open the row for');
 console.log(`     "${CUSTOMER_NAME}" (2025, ${TEMPLATE_KIND}).`);
@@ -351,7 +351,7 @@ console.log("            WHERE event_kind='agent_answer.generate'");
 console.log('            ORDER BY occurred_at DESC LIMIT 10;"');
 console.log('');
 console.log('  6. Force fallback (separate run):');
-console.log('       ANSWER_AGENT_MAX_TURNS=1 pnpm --filter carbonink dev');
+console.log('       ANSWER_AGENT_MAX_TURNS=1 npm run dev');
 console.log('       → regenerate one of the same questions');
 console.log('       → source_summary now prefixed 【单 shot fallback】');
 console.log('       → audit row has isFallback=true, stopReason=max_turns');

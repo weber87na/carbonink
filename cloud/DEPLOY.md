@@ -59,8 +59,8 @@ static — no SSR pages, no API. The desktop app never phones home.
 
 ```bash
 # Build + deploy the web site
-pnpm cloud:build:web
-cd cloud/web && pnpm exec wrangler deploy
+npm run cloud:build:web
+npm exec --workspace=@carbonink-cloud/web -- wrangler deploy
 
 # …or via the helper (build + deploy in one):
 ./cloud/scripts/deploy.sh web
@@ -92,9 +92,9 @@ deploy via the `workflow_run.conclusion == success` gate. Fix forward.
 
 ```bash
 cd cloud/web
-pnpm exec wrangler versions list
-pnpm exec wrangler rollback           # previous
-pnpm exec wrangler rollback <VERSION> # specific
+npm exec -- wrangler versions list
+npm exec -- wrangler rollback           # previous
+npm exec -- wrangler rollback <VERSION> # specific
 ```
 
 ## Dashboard residue
