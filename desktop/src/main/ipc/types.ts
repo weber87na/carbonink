@@ -537,6 +537,7 @@ export type IpcTypeMap = {
         canceled: false;
         data: import('@main/services/report-data-service').InventoryReportData;
         narrative: import('@main/llm/report-narrative').ReportNarrative;
+        warnings: import('@main/llm/report-narrative').ReportNarrativeLengthWarning[];
         error?: never;
       }
     | {

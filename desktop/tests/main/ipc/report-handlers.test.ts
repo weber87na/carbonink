@@ -65,6 +65,31 @@ describe('reportHandlers', () => {
     }
   });
 
+  it('report:generate returns short narrative sections with advisory warnings', async () => {
+    vi.mocked(runAiObject).mockResolvedValue({
+      ...FAKE_NARRATIVE,
+      boundary_description: '太短',
+      reporting_boundary_description: '太短',
+      significant_changes: '無',
+    });
+    const ctx = makeCtx();
+    const handlers = reportHandlers(ctx as never);
+    const result = await handlers['report:generate']?.({
+      report_id: 'rep-short',
+      reporting_period_id: 'per-1',
+      language: 'zh-CN',
+    });
+
+    expect(result).toMatchObject({
+      canceled: false,
+      warnings: [
+        { field: 'boundary_description', actual_length: 2, minimum_length: 50 },
+        { field: 'reporting_boundary_description', actual_length: 2, minimum_length: 50 },
+        { field: 'significant_changes', actual_length: 1, minimum_length: 20 },
+      ],
+    });
+  });
+
   it('report:generate calls runAiObject with the configured provider', async () => {
     vi.mocked(runAiObject).mockResolvedValue(FAKE_NARRATIVE);
     const ctx = makeCtx();

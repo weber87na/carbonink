@@ -1,5 +1,8 @@
 import * as fs from 'node:fs/promises';
-import { generateReportNarrative } from '@main/llm/report-narrative.js';
+import {
+  generateReportNarrative,
+  getReportNarrativeLengthWarnings,
+} from '@main/llm/report-narrative.js';
 import { generateTcfdNarrative } from '@main/llm/tcfd-narrative.js';
 import { buildDeliverableBundle } from '@main/services/deliverable-export-service.js';
 import {
@@ -74,7 +77,12 @@ export function reportHandlers(ctx: IpcContext): {
           phase: 'finalizing',
           sub_phase: null,
         });
-        return { canceled: false as const, data, narrative };
+        return {
+          canceled: false as const,
+          data,
+          narrative,
+          warnings: getReportNarrativeLengthWarnings(narrative),
+        };
       } catch (err) {
         const e = err as { _tag?: string; message?: string; name?: string };
         if (

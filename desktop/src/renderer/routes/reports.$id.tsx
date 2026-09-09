@@ -1,4 +1,8 @@
-import type { ReportNarrative } from '@main/llm/report-narrative';
+import type {
+  ReportNarrative,
+  ReportNarrativeField,
+  ReportNarrativeLengthWarning,
+} from '@main/llm/report-narrative';
 import type { TcfdNarrative } from '@main/llm/tcfd-narrative';
 import type { InventoryReportData } from '@main/services/report-data-service';
 import {
@@ -26,8 +30,34 @@ export const Route = createFileRoute('/reports/$id')({ component: ReportDetail }
 type ReportKind = 'iso' | 'tcfd';
 
 type GeneratedReport =
-  | { kind: 'iso'; data: InventoryReportData; narrative: ReportNarrative }
+  | {
+      kind: 'iso';
+      data: InventoryReportData;
+      narrative: ReportNarrative;
+      warnings: ReportNarrativeLengthWarning[];
+    }
   | { kind: 'tcfd'; data: InventoryReportData; narrative: TcfdNarrative };
+
+const narrativeWarningFieldLabel: Record<ReportNarrativeField, () => string> = {
+  boundary_description: () => m.reports_narrative_field_boundary(),
+  reporting_boundary_description: () => m.reports_narrative_field_reporting_boundary(),
+  methodology_description: () => m.reports_narrative_field_methodology(),
+  emissions_summary: () => m.reports_narrative_field_emissions(),
+  significant_changes: () => m.reports_narrative_field_changes(),
+  notable_observations: () => m.reports_narrative_field_observations(),
+};
+
+function narrativeWarningDescription(warnings: ReportNarrativeLengthWarning[]): string {
+  return warnings
+    .map((warning) =>
+      m.reports_narrative_short_field({
+        field: narrativeWarningFieldLabel[warning.field](),
+        actual: String(warning.actual_length),
+        minimum: String(warning.minimum_length),
+      }),
+    )
+    .join(m.reports_narrative_warning_separator());
+}
 
 function ReportDetail() {
   const { id } = Route.useParams();
@@ -94,7 +124,12 @@ function ReportDetail() {
       if (result.error) return { canceled: false, error: result.error };
       return {
         canceled: false,
-        report: { kind: 'iso', data: result.data, narrative: result.narrative },
+        report: {
+          kind: 'iso',
+          data: result.data,
+          narrative: result.narrative,
+          warnings: result.warnings ?? [],
+        },
       };
     },
     onSuccess: (outcome) => {
@@ -107,6 +142,11 @@ function ReportDetail() {
           toast.error(m.reports_generate_failed({ message: outcome.error.message ?? '' }));
         }
         return;
+      }
+      if (outcome.report.kind === 'iso' && outcome.report.warnings.length > 0) {
+        toast.warning(m.reports_narrative_short_warning(), {
+          description: narrativeWarningDescription(outcome.report.warnings),
+        });
       }
       setGenerated(outcome.report);
     },

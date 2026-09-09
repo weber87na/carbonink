@@ -5,15 +5,50 @@ import type { ProviderConfigV2 } from '@shared/types.js';
 import { z } from 'zod';
 
 export const ReportNarrativeSchema = z.object({
-  boundary_description: z.string().min(50).max(800),
-  reporting_boundary_description: z.string().min(50).max(800),
-  methodology_description: z.string().min(100).max(1200),
-  emissions_summary: z.string().min(100).max(1500),
-  significant_changes: z.string().min(20).max(800),
-  notable_observations: z.string().min(50).max(800),
+  boundary_description: z.string().max(800),
+  reporting_boundary_description: z.string().max(800),
+  methodology_description: z.string().max(1200),
+  emissions_summary: z.string().max(1500),
+  significant_changes: z.string().max(800),
+  notable_observations: z.string().max(800),
 });
 
 export type ReportNarrative = z.infer<typeof ReportNarrativeSchema>;
+
+export type ReportNarrativeField = keyof ReportNarrative;
+
+export interface ReportNarrativeLengthWarning {
+  field: ReportNarrativeField;
+  actual_length: number;
+  minimum_length: number;
+}
+
+const REPORT_NARRATIVE_MIN_LENGTHS = [
+  { field: 'boundary_description', minimum_length: 50 },
+  { field: 'reporting_boundary_description', minimum_length: 50 },
+  { field: 'methodology_description', minimum_length: 100 },
+  { field: 'emissions_summary', minimum_length: 100 },
+  { field: 'significant_changes', minimum_length: 20 },
+  { field: 'notable_observations', minimum_length: 50 },
+] as const satisfies ReadonlyArray<{
+  field: ReportNarrativeField;
+  minimum_length: number;
+}>;
+
+/**
+ * Return advisory warnings for sections below the recommended lengths.
+ *
+ * These checks intentionally happen after schema validation: short text is
+ * usable report content and must not prevent a report from being generated.
+ */
+export function getReportNarrativeLengthWarnings(
+  narrative: ReportNarrative,
+): ReportNarrativeLengthWarning[] {
+  return REPORT_NARRATIVE_MIN_LENGTHS.flatMap(({ field, minimum_length }) => {
+    const actual_length = narrative[field].length;
+    return actual_length < minimum_length ? [{ field, actual_length, minimum_length }] : [];
+  });
+}
 
 export type ReportNarrativeSubPhase =
   | 'boundary'
@@ -44,7 +79,7 @@ function buildSystemPrompt(lang: 'zh-CN' | 'en'): string {
 
 1. 你只能使用 <inventory> 块中提供的数字与名称。任何 <inventory> 中不存在的事实, 一律写 "本期未评估"。严禁推测、补充或虚构。
 2. 不要在文本中改动 <inventory> 给出的数字 (允许换算单位时另当别论)。
-3. 语气专业、克制、不夸张。各字段必须满足以下字符数限制（含标点）：boundary_description 50-800；reporting_boundary_description 50-800；methodology_description 100-1200；emissions_summary 100-1500；significant_changes 20-800；notable_observations 50-800。
+3. 语气专业、克制、不夸张。各字段应尽可能完整；当 inventory 信息不足时，可以简洁说明“本期未评估”，不得为了凑长度编造事实。各字段最多可包含以下字符数（含标点）：boundary_description 800；reporting_boundary_description 800；methodology_description 1200；emissions_summary 1500；significant_changes 800；notable_observations 800。
 4. 边界方法措辞: equity_share → "股权法"; financial_control → "财务控制法"; operational_control → "运营控制法"。
 5. 排放因子来源信息若 <inventory> 提供, 在 methodology_description 中必须披露 GWP 基准 (AR5 / AR6)。
 6. 输出必须是 JSON, 完全符合给定 schema, 不要添加 schema 外的字段。`;
@@ -53,7 +88,7 @@ function buildSystemPrompt(lang: 'zh-CN' | 'en'): string {
 
 1. You may only use numbers and names from the <inventory> block. For any fact not present in <inventory>, write "Not assessed in this inventory". No speculation, no extrapolation, no fabrication.
 2. Do not alter numbers from <inventory> (unit conversion is allowed when explicit).
-3. Tone: professional, restrained, never promotional. Each field must stay within these character limits, including punctuation: boundary_description 50-800; reporting_boundary_description 50-800; methodology_description 100-1200; emissions_summary 100-1500; significant_changes 20-800; notable_observations 50-800.
+3. Tone: professional, restrained, never promotional. Keep each field as complete as the inventory supports; when information is insufficient, state "Not assessed in this inventory" rather than padding or inventing facts. Each field has the following maximum character count, including punctuation: boundary_description 800; reporting_boundary_description 800; methodology_description 1200; emissions_summary 1500; significant_changes 800; notable_observations 800.
 4. Boundary phrasing: equity_share → "equity share"; financial_control → "financial control"; operational_control → "operational control".
 5. If <inventory> includes EF source provenance, the methodology_description must disclose the GWP basis (AR5 / AR6).
 6. Output must be JSON matching the schema exactly, no extra fields.`;
@@ -105,8 +140,8 @@ function summarizeSchemaMismatch(error: SchemaMismatchLike): string {
 function buildRepairUserMessage(data: InventoryReportData, validationSummary: string): string {
   const correction =
     data.language === 'zh-CN'
-      ? `前次输出未通过格式验证：${validationSummary}。请重新生成完整的六个字段，严格满足每个字段的字符数限制。只能使用 inventory 中的事实，不得沿用或新增 inventory 以外的内容。`
-      : `The previous output failed validation: ${validationSummary}. Regenerate all six fields and strictly observe each field's character limits. Use only facts from the inventory; do not carry over or add content that is not present there.`;
+      ? `前次输出未通过格式验证：${validationSummary}。请重新生成完整的六个字段，严格满足字段结构与最大字符数限制。只能使用 inventory 中的事实，不得沿用或新增 inventory 以外的内容。`
+      : `The previous output failed validation: ${validationSummary}. Regenerate all six fields and strictly observe the required field structure and maximum character counts. Use only facts from the inventory; do not carry over or add content that is not present there.`;
   return `${buildUserMessage(data)}\n\n<validation_feedback>\n${correction}\n</validation_feedback>`;
 }
 

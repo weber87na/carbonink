@@ -1,5 +1,6 @@
 import {
   generateReportNarrative,
+  getReportNarrativeLengthWarnings,
   LlmNarrativeCanceled,
   LlmNarrativeRefused,
   ReportNarrativeSchema,
@@ -138,7 +139,8 @@ describe('generateReportNarrative', () => {
     const args = call?.[2];
     expect(args?.schema).toBe(ReportNarrativeSchema);
     expect(args?.system).toContain('ISO 14064-1');
-    expect(args?.system).toContain('boundary_description 50-800');
+    expect(args?.system).toContain('boundary_description 800');
+    expect(args?.system).not.toContain('boundary_description 50-800');
     expect(args?.system).not.toContain('250-450 字');
     expect(args?.prompt).toContain('<inventory>');
   });
@@ -155,8 +157,25 @@ describe('generateReportNarrative', () => {
     });
 
     const system = vi.mocked(runAiObject).mock.calls[0]?.[2].system;
-    expect(system).toContain('boundary_description 50-800');
+    expect(system).toContain('boundary_description 800');
+    expect(system).not.toContain('boundary_description 50-800');
     expect(system).not.toContain('250-450 words');
+  });
+
+  it('accepts short sections and reports advisory length warnings', () => {
+    const shortNarrative = {
+      ...FAKE_NARRATIVE,
+      boundary_description: '太短',
+      reporting_boundary_description: '太短',
+      significant_changes: '無',
+    };
+
+    expect(ReportNarrativeSchema.safeParse(shortNarrative).success).toBe(true);
+    expect(getReportNarrativeLengthWarnings(shortNarrative)).toEqual([
+      { field: 'boundary_description', actual_length: 2, minimum_length: 50 },
+      { field: 'reporting_boundary_description', actual_length: 2, minimum_length: 50 },
+      { field: 'significant_changes', actual_length: 1, minimum_length: 20 },
+    ]);
   });
 
   it('throws LlmNarrativeCanceled when AbortSignal fires before the call', async () => {
@@ -179,7 +198,9 @@ describe('generateReportNarrative', () => {
 
   it('repairs one schema-invalid response with field-level feedback', async () => {
     vi.mocked(runAiObject)
-      .mockRejectedValueOnce(schemaMismatch({ boundary_description: 'too short' }))
+      .mockRejectedValueOnce(
+        schemaMismatch({ ...FAKE_NARRATIVE, boundary_description: 'a'.repeat(801) }),
+      )
       .mockResolvedValueOnce(FAKE_NARRATIVE);
 
     const result = await generateReportNarrative({
@@ -199,7 +220,7 @@ describe('generateReportNarrative', () => {
   });
 
   it('translates a second AiSchemaMismatch into an actionable refusal', async () => {
-    const mismatch = schemaMismatch({ boundary_description: 'too short' });
+    const mismatch = schemaMismatch({ ...FAKE_NARRATIVE, boundary_description: 'a'.repeat(801) });
     vi.mocked(runAiObject).mockRejectedValue(mismatch);
 
     const error = await generateReportNarrative({
