@@ -1,0 +1,80 @@
+name: CarbonInk Windows Release v1.1.0
+
+on:
+  push:
+    branches:
+      - release/v1.1.0
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  build-win:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Set application version
+        working-directory: desktop
+        shell: pwsh
+        run: npm pkg set "version=1.1.0"
+
+      - name: Build application
+        working-directory: desktop
+        run: npm run build
+
+      - name: Package Windows installer
+        working-directory: desktop
+        shell: pwsh
+        run: |
+          npm exec -- electron-builder --win --publish never
+          New-Item -ItemType Directory -Force -Path release-assets | Out-Null
+          Get-ChildItem -Path release -Filter "*.exe" | Copy-Item -Destination release-assets -Force
+          Get-ChildItem -Path release -Filter "*.blockmap" -ErrorAction SilentlyContinue | Copy-Item -Destination release-assets -Force
+          Get-ChildItem -Path release -Filter "stable.yml" -ErrorAction SilentlyContinue | Copy-Item -Destination release-assets -Force
+
+      - name: Package Windows portable executable
+        working-directory: desktop
+        shell: pwsh
+        run: |
+          npm exec -- electron-builder --win portable --publish never
+          Get-ChildItem -Path release -Filter "*.exe" | Copy-Item -Destination release-assets -Force
+          Get-ChildItem -Path release -Filter "*.blockmap" -ErrorAction SilentlyContinue | Copy-Item -Destination release-assets -Force
+          Get-ChildItem -Path release -Filter "stable.yml" -ErrorAction SilentlyContinue | Copy-Item -Destination release-assets -Force
+
+      - name: Create GitHub Release and upload Windows assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.1.0
+          target_commitish: cbdb1da10729ddeeafb09f5b04ef9342c6ad2510
+          name: CarbonInk v1.1.0 (Windows)
+          body: |
+            ## CarbonInk v1.1.0
+
+            Windows x64 build of CarbonInk.
+
+            ### Downloads
+
+            - **Installer**: download the setup .exe and follow the installation wizard.
+            - **Portable**: download the portable .exe and run it directly without installation.
+
+            Windows 10 or later, 64-bit.
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            desktop/release-assets/*.exe
+            desktop/release-assets/*.exe.blockmap
+            desktop/release-assets/stable.yml
