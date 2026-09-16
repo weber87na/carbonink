@@ -14,7 +14,7 @@ export function QuestionnairePdfPreview({ data }: QuestionnairePdfPreviewProps) 
       <CoverPage data={data} />
       <TableOfContents data={data} />
       {data.sheets.map((sheet) => (
-        <SheetSection key={sheet.sheet_name} sheet={sheet} />
+        <SheetSection key={sheet.sheet_name} sheet={sheet} language={data.language} />
       ))}
     </div>
   );

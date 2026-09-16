@@ -1,5 +1,6 @@
 import type { ReportNarrative } from '@main/llm/report-narrative';
 import type { TcfdNarrative } from '@main/llm/tcfd-narrative';
+import { toTaiwanTraditional } from '@shared/traditional-chinese.js';
 import { BrowserWindow, type WebContents } from 'electron';
 import ExcelJS from 'exceljs';
 import type { InventoryReportData } from './report-data-service.js';
@@ -64,54 +65,52 @@ const TCFD_SECTION_LABELS = {
 export async function writeAppendixXlsx(args: {
   data: InventoryReportData;
   narrative: ReportNarrative | TcfdNarrative;
-  language: 'zh-CN' | 'en';
+  language: 'zh-CN' | 'zh-TW' | 'en';
   /** Which narrative shape fills the narrative sheet. Defaults to ISO. */
   kind?: 'iso' | 'tcfd';
 }): Promise<Buffer> {
   const { data, narrative, language } = args;
-  const labels = SHEET_NAMES[language];
-  const narrativeHdr = NARRATIVE_HEADERS[language];
-  const sectionLabels = SECTION_LABELS[language];
+  const labelLanguage = language === 'en' ? 'en' : 'zh-CN';
+  const labels = SHEET_NAMES[labelLanguage];
+  const narrativeHdr = NARRATIVE_HEADERS[labelLanguage];
+  const sectionLabels = SECTION_LABELS[labelLanguage];
+  // Localize application labels only; names, evidence and edited narratives remain verbatim.
+  const localizeLabel = (text: string) => {
+    if (language !== 'zh-TW') return text;
+    return toTaiwanTraditional(text)
+      .replace(/^排放因子$/, '排放係數')
+      .replace(/^範圍/, '範疇')
+      .replace(/^戰略$/, '策略');
+  };
+  const label = (zh: string, en: string) => localizeLabel(language === 'en' ? en : zh);
 
   const wb = new ExcelJS.Workbook();
 
   // 1. Overview
-  const overview = wb.addWorksheet(labels.overview);
+  const overview = wb.addWorksheet(localizeLabel(labels.overview));
   overview.addRow([
-    language === 'zh-CN' ? '组织' : 'Organization',
-    data.org.name_zh ?? data.org.name_en ?? '',
+    label('组织', 'Organization'),
+    language === 'en'
+      ? (data.org.name_en ?? data.org.name_zh ?? '')
+      : (data.org.name_zh ?? data.org.name_en ?? ''),
   ]);
   overview.addRow([
-    language === 'zh-CN' ? '报告期' : 'Reporting period',
+    label('报告期', 'Reporting period'),
     `${data.period.year} ${data.period.granularity}`,
   ]);
-  overview.addRow([
-    language === 'zh-CN' ? '范围一 (kg CO2e)' : 'Scope 1 (kg CO2e)',
-    data.scope_totals.scope1_kg,
-  ]);
-  overview.addRow([
-    language === 'zh-CN' ? '范围二 (kg CO2e)' : 'Scope 2 (kg CO2e)',
-    data.scope_totals.scope2_kg,
-  ]);
-  overview.addRow([
-    language === 'zh-CN' ? '范围三 (kg CO2e)' : 'Scope 3 (kg CO2e)',
-    data.scope_totals.scope3_kg,
-  ]);
-  overview.addRow([
-    language === 'zh-CN' ? '合计 (kg CO2e)' : 'Total (kg CO2e)',
-    data.scope_totals.total_kg,
-  ]);
-  overview.addRow([
-    language === 'zh-CN' ? '生物质 (单独)' : 'Biogenic (separate)',
-    data.scope_totals.biogenic_kg,
-  ]);
+  overview.addRow([label('范围一 (kg CO2e)', 'Scope 1 (kg CO2e)'), data.scope_totals.scope1_kg]);
+  overview.addRow([label('范围二 (kg CO2e)', 'Scope 2 (kg CO2e)'), data.scope_totals.scope2_kg]);
+  overview.addRow([label('范围三 (kg CO2e)', 'Scope 3 (kg CO2e)'), data.scope_totals.scope3_kg]);
+  overview.addRow([label('合计 (kg CO2e)', 'Total (kg CO2e)'), data.scope_totals.total_kg]);
+  overview.addRow([label('生物质 (单独)', 'Biogenic (separate)'), data.scope_totals.biogenic_kg]);
 
   // 2. Activities — every activity_data row from data.activities.
-  const activities = wb.addWorksheet(labels.activities);
+  const activities = wb.addWorksheet(localizeLabel(labels.activities));
   activities.addRow(
-    language === 'zh-CN'
+    (language !== 'en'
       ? ['活动 ID', '场地', '排放源', '范围', '数量', '单位', 'EF 来源', 'CO2e (kg)']
-      : ['Activity ID', 'Site', 'Source', 'Scope', 'Amount', 'Unit', 'EF Source', 'CO2e (kg)'],
+      : ['Activity ID', 'Site', 'Source', 'Scope', 'Amount', 'Unit', 'EF Source', 'CO2e (kg)']
+    ).map(localizeLabel),
   );
   for (const a of data.activities) {
     activities.addRow([
@@ -127,38 +126,41 @@ export async function writeAppendixXlsx(args: {
   }
 
   // 3. Factors — derived from ef_sources_used aggregate.
-  const factors = wb.addWorksheet(labels.factors);
+  const factors = wb.addWorksheet(localizeLabel(labels.factors));
   factors.addRow(
-    language === 'zh-CN' ? ['来源', '使用次数', 'GWP 基准'] : ['Source', 'Count', 'GWP basis'],
+    (language === 'en' ? ['Source', 'Count', 'GWP basis'] : ['来源', '使用次数', 'GWP 基准']).map(
+      localizeLabel,
+    ),
   );
   for (const f of data.ef_sources_used) {
     factors.addRow([f.source, f.count, f.gwp_basis]);
   }
 
   // 4. Emission Sources
-  const sourcesSheet = wb.addWorksheet(labels.sources);
+  const sourcesSheet = wb.addWorksheet(localizeLabel(labels.sources));
   sourcesSheet.addRow(
-    language === 'zh-CN'
+    (language !== 'en'
       ? ['名称', '范围', 'CO2e (kg)', '占比 %']
-      : ['Name', 'Scope', 'CO2e (kg)', 'Share %'],
+      : ['Name', 'Scope', 'CO2e (kg)', 'Share %']
+    ).map(localizeLabel),
   );
   for (const s of data.all_sources) {
     sourcesSheet.addRow([s.name, s.scope, s.co2e_kg, s.share_pct.toFixed(2)]);
   }
 
   // 5. Narrative — section rows depend on the report kind.
-  const narrativeSheet = wb.addWorksheet(labels.narrative);
-  narrativeSheet.addRow([narrativeHdr.section, narrativeHdr.text]);
+  const narrativeSheet = wb.addWorksheet(localizeLabel(labels.narrative));
+  narrativeSheet.addRow([narrativeHdr.section, narrativeHdr.text].map(localizeLabel));
   if (args.kind === 'tcfd') {
-    const tcfdLabels = TCFD_SECTION_LABELS[language];
+    const tcfdLabels = TCFD_SECTION_LABELS[labelLanguage];
     const tcfd = narrative as TcfdNarrative;
     for (const key of Object.keys(tcfdLabels) as Array<keyof typeof tcfdLabels>) {
-      narrativeSheet.addRow([tcfdLabels[key], tcfd[key]]);
+      narrativeSheet.addRow([localizeLabel(tcfdLabels[key]), tcfd[key]]);
     }
   } else {
     const iso = narrative as ReportNarrative;
     for (const key of Object.keys(sectionLabels) as Array<keyof typeof sectionLabels>) {
-      narrativeSheet.addRow([sectionLabels[key], iso[key]]);
+      narrativeSheet.addRow([localizeLabel(sectionLabels[key]), iso[key]]);
     }
   }
 
@@ -179,7 +181,7 @@ export async function renderReportPdf(
   args: {
     data: InventoryReportData;
     narrative: ReportNarrative | TcfdNarrative;
-    language: 'zh-CN' | 'en';
+    language: 'zh-CN' | 'zh-TW' | 'en';
     /** Which print-render payload to mount. Defaults to the ISO report. */
     kind?: 'inventory_report' | 'tcfd_report';
   },
@@ -200,7 +202,7 @@ export async function renderReportPdf(
     await win.webContents.executeJavaScript(
       `window.__REPORT_PAYLOAD__ = ${JSON.stringify({
         kind: args.kind ?? 'inventory_report',
-        data: args.data,
+        data: { ...args.data, language: args.language },
         narrative: args.narrative,
         language: args.language,
       })};`,
@@ -255,7 +257,7 @@ export function slugifyOrgName(data: InventoryReportData): string {
 
 export function defaultExportFilename(args: {
   data: InventoryReportData;
-  language: 'zh-CN' | 'en';
+  language: 'zh-CN' | 'zh-TW' | 'en';
   kind: 'pdf' | 'xlsx';
 }): string {
   const slug = slugifyOrgName(args.data);
@@ -268,7 +270,7 @@ export function defaultExportFilename(args: {
 /** TCFD report filename (spec 2026-07-22-tcfd-report). */
 export function tcfdExportFilename(args: {
   data: InventoryReportData;
-  language: 'zh-CN' | 'en';
+  language: 'zh-CN' | 'zh-TW' | 'en';
   kind: 'pdf' | 'xlsx';
 }): string {
   const slug = slugifyOrgName(args.data);
@@ -286,7 +288,7 @@ export function tcfdExportFilename(args: {
  */
 export function deliverableExportFilename(args: {
   data: InventoryReportData;
-  language: 'zh-CN' | 'en';
+  language: 'zh-CN' | 'zh-TW' | 'en';
   kind: 'iso' | 'tcfd';
 }): string {
   const slug = slugifyOrgName(args.data);

@@ -9,16 +9,16 @@ const guides = (await getCollection('guides', ({ id }) => id.startsWith('zh/')))
 );
 ---
 <Base
-  title="指南 — 碳核算 / 碳盘查 / ISO 14064-1 实操 | 碳墨"
-  description="面向实操的碳核算指南：ISO 14064-1 温室气体清单编制七步、ISO 14064-1 与 GHG Protocol 的区别、碳盘查和碳核查的区别等，持续更新。"
-  lang="zh-CN"
+  title="指南 — 碳核算 / 碳盤查 / ISO 14064-1 實務 | 碳墨"
+  description="面向實務的碳核算指南：ISO 14064-1 溫室氣體清單編製七步、ISO 14064-1 與 GHG Protocol 的區別、碳盤查和碳查證的區別等，持續更新。"
+  lang="zh-TW"
 >
   <section class="py-16 px-5">
     <div class="max-w-3xl mx-auto">
       <p class="text-xs font-medium text-primary uppercase tracking-widest mb-3">指南</p>
-      <h1 class="text-3xl md:text-4xl font-semibold tracking-tight mb-3">把碳核算讲清楚</h1>
+      <h1 class="text-3xl md:text-4xl font-semibold tracking-tight mb-3">把碳核算講清楚</h1>
       <p class="text-muted-foreground leading-relaxed mb-12 max-w-2xl">
-        中立、贴标准的碳盘查实操指南 —— 写给要把数字送过审核员那一关的顾问和企业可持续团队。
+        中立、貼標準的碳盤查實務指南 —— 寫給要把數字送過稽核員那一關的顧問和企業永續團隊。
       </p>
       <ul class="divide-y divide-border border border-border rounded-md">
         {guides.map((g) => (

@@ -45,6 +45,22 @@ function seedQuestionnaire(db: Database.Database) {
 }
 
 describe('QuestionnairePdfDataService.assemble', () => {
+  it('keeps questionnaire content intact when preparing a Traditional Chinese PDF', () => {
+    const db = new Database(':memory:');
+    runMigrations(db);
+    seedQuestionnaire(db);
+    try {
+      const svc = new QuestionnairePdfDataService({ db });
+      const data = svc.assemble({ questionnaire_id: 'qn-1', language: 'zh-TW' });
+      expect(data.language).toBe('zh-TW');
+      expect(data.sheets.map((sheet) => sheet.sheet_name)).toEqual(['Sheet1', 'Sheet2', '未指定']);
+      expect(data.sheets[0]?.questions[0]?.normalized_text).toBe('公司行业');
+      expect(data.sheets[0]?.questions[0]?.answer?.value).toBe('Manufacturing');
+    } finally {
+      db.close();
+    }
+  });
+
   it('groups questions by sheet and sorts by cell position within each sheet', () => {
     const db = new Database(':memory:');
     runMigrations(db);

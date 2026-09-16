@@ -15,6 +15,7 @@ vi.mock('@renderer/components/toast', () => ({
 
 import { SourceCatalogDrawer } from '@renderer/components/SourceCatalogDrawer';
 import { sourceApi } from '@renderer/lib/api/emission-source';
+import { setLocale } from '@renderer/lib/i18n';
 import type { EmissionSource, PresetSource } from '@shared/types';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
@@ -60,6 +61,24 @@ describe('<SourceCatalogDrawer>', () => {
   afterEach(() => {
     cleanup();
     vi.clearAllMocks();
+    setLocale('en');
+  });
+
+  it('finds Simplified catalog data using Traditional Chinese search text', async () => {
+    setLocale('zh-TW');
+    vi.mocked(sourceApi.listPresets).mockResolvedValue(PRESETS);
+    vi.mocked(sourceApi.listByOrg).mockResolvedValue([] satisfies EmissionSource[]);
+    mountDrawer();
+
+    await waitFor(() => expect(screen.getByText('天然氣燃燒')).toBeTruthy());
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: '天然氣燃燒' } });
+
+    await waitFor(() => {
+      expect(screen.getByText('天然氣燃燒').getAttribute('title')).toBe('天然氣燃燒');
+      expect(screen.queryByText('國家電網電力')).toBeNull();
+      expect(screen.getAllByRole('checkbox')).toHaveLength(1);
+    });
+    expect(PRESETS[0]?.name_zh).toBe('天然气燃烧');
   });
 
   it('renders all 3 presets and batches the selected ones into one IPC call', async () => {

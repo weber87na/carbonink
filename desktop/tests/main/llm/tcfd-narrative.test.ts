@@ -73,6 +73,22 @@ afterEach(() => {
 });
 
 describe('generateTcfdNarrative', () => {
+  it('requests Taiwan Traditional Chinese for all TCFD pillars', async () => {
+    vi.mocked(runAiObject).mockResolvedValue(FAKE_TCFD);
+    await generateTcfdNarrative({
+      data: { ...fakeData(), language: 'zh-TW' },
+      config: fakeConfig(),
+      credentials: fakeCredentials(),
+      onProgress: () => {},
+      abortSignal: new AbortController().signal,
+    });
+    const args = vi.mocked(runAiObject).mock.calls[0]?.[2];
+    expect(args?.system).toContain('臺灣繁體中文');
+    expect(args?.system).toContain('本期未開展定量評估');
+    expect(args?.system).toContain('範疇一／二／三');
+    expect(args?.prompt).toContain('测试公司');
+  });
+
   it('validates a well-shaped response against the four-pillar schema', () => {
     expect(TcfdNarrativeSchema.safeParse(FAKE_TCFD).success).toBe(true);
     expect(TcfdNarrativeSchema.safeParse({ ...FAKE_TCFD, governance: 'too short' }).success).toBe(

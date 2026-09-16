@@ -5,17 +5,17 @@
  * `h-px bg-border` strip, hidden on mobile where the steps stack.
  */
 
-const { lang } = Astro.props as { lang: 'zh-CN' | 'en' };
-const isZh = lang === 'zh-CN';
+const { lang } = Astro.props as { lang: 'zh-TW' | 'en' };
+const isZh = lang === 'zh-TW';
 
 const tx = isZh
   ? {
       label: '工作流程',
-      title: '三步完成碳盘查',
+      title: '三步完成碳盤查',
       steps: [
-        { num: '01', title: '上传单据', body: '上传电费单、燃料发票、运输单据（PDF / Excel / 图片均可）' },
-        { num: '02', title: 'AI 提取 + 匹配排放因子', body: 'AI 自动识别数据，关联 IPCC / ECOINVENT 排放因子' },
-        { num: '03', title: '导出报告', body: '一键生成符合 ISO 14064-1 的盘查报告（PDF + Excel）' },
+        { num: '01', title: '上傳單據', body: '上傳電費單、燃料發票、運輸單據（PDF / Excel / 圖片均可）' },
+        { num: '02', title: 'AI 擷取 + 比對排放係數', body: 'AI 自動辨識資料，關聯 IPCC / ECOINVENT 排放係數' },
+        { num: '03', title: '匯出報告', body: '一鍵產生符合 ISO 14064-1 的盤查報告（PDF + Excel）' },
       ],
     }
   : {

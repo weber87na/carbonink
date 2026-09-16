@@ -131,7 +131,7 @@ describe('renderInboundXlsx — cover content', () => {
     const { wb } = await renderAndReopen({
       periodYear: 2024,
       myOrgName: '某采购方',
-      supplierName: 'Beta Chemicals Ltd.',
+      supplierName: '贝塔化学有限公司',
       dueDate: '2026-08-15',
     });
     const cover = wb.getWorksheet('封面 Cover');
@@ -141,14 +141,21 @@ describe('renderInboundXlsx — cover content', () => {
     expect(concatenated).toContain('2024');
     expect(concatenated).toContain('某采购方');
     expect(concatenated).toContain('2026-08-15');
+    expect(concatenated).toContain('碳排放資料蒐集問卷');
+    expect(concatenated).toContain('本表由 某采购方 透過 CarbonInk 系統產生');
+    expect(concatenated).toContain('填寫說明：');
+    expect(cover.getCell('Z1').value).toBe('贝塔化学有限公司');
+    expect(wb.getWorksheet('metadata')?.getCell('A1').value).toBe('基本資訊 / Metadata');
+    expect(wb.getWorksheet('metadata')?.getCell('C1').value).toBe('備註 / Notes');
+    expect(wb.getWorksheet('tier2')?.getCell('A5').value).toContain('範疇一（Scope 1）');
   });
 
-  it('falls back to "请尽快回复 / please reply at your earliest convenience" when dueDate is null', async () => {
+  it('falls back to a bilingual prompt to reply when dueDate is null', async () => {
     const { wb } = await renderAndReopen({ dueDate: null });
     const cover = wb.getWorksheet('封面 Cover');
     if (!cover) throw new Error('unreachable');
     const concatenated = collectColumnA(cover);
-    expect(concatenated).toContain('请尽快回复');
+    expect(concatenated).toContain('請儘快回覆');
     expect(concatenated).toContain('please reply at your earliest convenience');
   });
 });
@@ -317,6 +324,28 @@ describe('parseInboundXlsx — sentinel hard-failure modes', () => {
 });
 
 describe('parseInboundXlsx — happy-path round trips', () => {
+  it('still reads legacy Simplified Chinese workbook labels and preserves supplier answers', async () => {
+    const result = await renderFillAndParse({
+      'metadata!A1': '基础信息 / Metadata',
+      'metadata!A5': '请填写贵公司法定名称（与营业执照一致）。',
+      'metadata!B5': '贝塔化学有限公司',
+      'tier2!A5': '贵公司报告期内 Scope 1 + Scope 2 排放总量（kgCO2e）。',
+      'tier2!B5': 850000,
+      'tier2!B7': '按质量份额',
+      'tier2!B9': 12000,
+      'tier2!C9': '依据供应商原始报告',
+    });
+    expect(result.answers.find((a) => a.position === 'meta.1')?.parsed_value).toBe(
+      '贝塔化学有限公司',
+    );
+    expect(result.answers.find((a) => a.position === 'tier2.2')?.parsed_value).toBe('按质量份额');
+    expect(result.answers.find((a) => a.position === 'tier2.3')).toMatchObject({
+      parsed_value: 12000,
+      note: '依据供应商原始报告',
+    });
+    expect(result.warnings).toEqual([]);
+  });
+
   it('returns ParsedXlsxAnswer for every template position (filled or blank)', async () => {
     const result = await renderFillAndParse({
       'metadata!B5': 'Acme Steel Co., Ltd.',

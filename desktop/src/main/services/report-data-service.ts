@@ -60,7 +60,7 @@ export interface InventoryReportData {
     co2e_kg: number;
   }>;
   ef_sources_used: Array<{ source: string; count: number; gwp_basis: 'AR5' | 'AR6' }>;
-  language: 'zh-CN' | 'en';
+  language: 'zh-CN' | 'zh-TW' | 'en';
   prior_period_summary: { year: number; total_kg: number } | null;
   base_year_summary: { year: number; total_kg: number } | null;
 }
@@ -70,7 +70,7 @@ export class ReportDataService {
 
   assembleReportData(input: {
     reporting_period_id: string;
-    language: 'zh-CN' | 'en';
+    language: 'zh-CN' | 'zh-TW' | 'en';
   }): InventoryReportData {
     const period = this.deps.db
       .prepare(
@@ -287,7 +287,7 @@ export class ReportDataService {
       all_sources,
       activities: rawActivities.map((r) => ({
         id: r.activity_id,
-        site_name: input.language === 'zh-CN' ? r.site_name_zh : r.site_name_en,
+        site_name: input.language === 'en' ? r.site_name_en : r.site_name_zh,
         source_name: r.source_name,
         scope: r.scope,
         amount: r.amount,

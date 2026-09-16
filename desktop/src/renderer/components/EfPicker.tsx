@@ -1,5 +1,6 @@
 import { efApi } from '@renderer/lib/api/ef-library';
 import { efMatcherApi } from '@renderer/lib/api/ef-matcher';
+import { emissionFactorName, localizeChineseText } from '@renderer/lib/localized-data';
 import * as m from '@renderer/paraglide/messages';
 import type { EfCompositePk, EmissionFactor, MatcherResult } from '@shared/types';
 import { USER_EF_SOURCE_PREFIX } from '@shared/types';
@@ -112,15 +113,13 @@ export function EfPicker({
                         onChange={() => onChange(pkOf(rec.ef), rec.ef)}
                       />
                       <span>
-                        <span className="font-medium">
-                          ⭐ {rec.ef.name_zh ?? rec.ef.name_en ?? rec.ef.factor_code}
-                        </span>
+                        <span className="font-medium">⭐ {emissionFactorName(rec.ef)}</span>
                         <span className="ml-2 text-xs text-muted-foreground">
                           {rec.ef.co2e_kg_per_unit} kgCO₂e/{rec.ef.input_unit}
                         </span>
                         <span className="block text-xs text-muted-foreground">
                           <span>{m.ef_matcher_reasoning_label()}</span>{' '}
-                          <span>{rec.reasoning_zh}</span>
+                          <span>{localizeChineseText(rec.reasoning_zh)}</span>
                         </span>
                       </span>
                     </label>
@@ -174,7 +173,7 @@ function EfRow({
     <label className="flex items-start gap-2 text-sm cursor-pointer rounded px-1 py-1 hover:bg-muted/40">
       <input type="radio" name="ef" className="mt-1" checked={selected} onChange={onClick} />
       <span className="flex-1">
-        <span className="font-medium">{ef.name_zh ?? ef.name_en ?? ef.factor_code}</span>
+        <span className="font-medium">{emissionFactorName(ef)}</span>
         {ef.source.startsWith(USER_EF_SOURCE_PREFIX) && (
           <span
             className="ml-1.5 inline-flex items-center rounded-sm border border-border bg-secondary px-1 text-[11px] leading-4 text-muted-foreground"

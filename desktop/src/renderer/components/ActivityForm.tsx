@@ -7,6 +7,7 @@ import { activityApi } from '@renderer/lib/api/activity-data';
 import { orgApi } from '@renderer/lib/api/organization';
 import { routingApi } from '@renderer/lib/api/routing';
 import { friendlyErrorDescription } from '@renderer/lib/error-message';
+import { useSourceDisplayName } from '@renderer/lib/source-labels';
 import * as m from '@renderer/paraglide/messages';
 import type { ActivityData, EmissionSource, ReportingPeriod } from '@shared/types';
 import { useForm, useStore } from '@tanstack/react-form';
@@ -133,6 +134,7 @@ export function ActivityForm({
   initialValues,
 }: ActivityFormProps) {
   const queryClient = useQueryClient();
+  const displaySourceName = useSourceDisplayName(sources);
 
   // ── Routing lookup ──────────────────────────────────────────────────────────
   // Enabled for freight + travel rows that have origin + destination in the
@@ -374,7 +376,7 @@ export function ActivityForm({
                 // worse than no suffix at all. Scope + category are
                 // already visible on the /sources cards.
                 <option key={s.id} value={s.id}>
-                  {s.name}
+                  {displaySourceName(s)}
                 </option>
               ))}
             </select>

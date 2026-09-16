@@ -14,8 +14,8 @@
  * (below the fold) with explicit aspect-ratio to prevent CLS.
  */
 
-const { lang } = Astro.props as { lang: 'zh-CN' | 'en' };
-const isZh = lang === 'zh-CN';
+const { lang } = Astro.props as { lang: 'zh-TW' | 'en' };
+const isZh = lang === 'zh-TW';
 
 // Screenshot paths are locale-aware. zh shots live at /screenshots/*;
 // en shots at /screenshots/en/* (mirrored layout). See
@@ -25,39 +25,39 @@ const shotDir = isZh ? '/screenshots' : '/screenshots/en';
 
 const tx = isZh
   ? {
-      label: '产品截图',
-      title: '看碳墨在干什么',
-      sub: '所有截图来自真实的桌面应用，不是渲染图。',
+      label: '產品螢幕擷取畫面',
+      title: '看看碳墨能做什麼',
+      sub: '所有螢幕擷取畫面來自真實的桌面應用程式，不是渲染圖。',
       shots: [
         {
           src: `${shotDir}/documents.png`,
-          title: 'AI 识别单据',
-          body: '电费单、燃料发票、运输单据上传即解析。AI 抽数据，你只确认。',
+          title: 'AI 辨識單據',
+          body: '電費單、燃料發票、運輸單據上傳即解析。AI 抽資料，你只確認。',
         },
         {
           src: `${shotDir}/questionnaires.png`,
-          title: '问卷自动填报',
-          body: '一份核算数据，自动回填客户的 CDP / TCFD 问卷。',
+          title: '問卷自動填報',
+          body: '一份核算資料，自動回填客戶的 CDP / TCFD 問卷。',
         },
         {
           src: `${shotDir}/sources.png`,
-          title: '排放源 + 排放因子库',
-          body: 'IPCC / ECOINVENT 排放因子内置；可自建私有 EF 库。',
+          title: '排放源 + 排放係數庫',
+          body: 'IPCC / ECOINVENT 排放係數內建；可自建私有 EF 庫。',
         },
         {
           src: `${shotDir}/supplier-disclosures.png`,
-          title: '供应商披露收集',
-          body: '向上游收 Scope 3 数据：xlsx 邮件往返、逾期红字提醒，供应商零账户零注册。',
+          title: '供應商揭露收集',
+          body: '向上游收 Scope 3 資料：xlsx 郵件往返、逾期紅字提醒，供應商零帳號零註冊。',
         },
         {
           src: `${shotDir}/activity-import.png`,
-          title: '台账批量导入',
-          body: 'xlsx / csv 整表导入，排放因子分组确认——几千行只拍板几十次，数字仍人工把关。',
+          title: '台帳批次匯入',
+          body: 'xlsx / csv 整表匯入，排放係數分組確認——幾千行只拍板幾十次，數字仍人工把關。',
         },
         {
           src: `${shotDir}/reports.png`,
-          title: '盘查 + 披露报告',
-          body: 'ISO 14064-1 盘查报告与 TCFD 四支柱披露一键导出；附完整公式、引用与版本号。',
+          title: '盤查 + 揭露報告',
+          body: 'ISO 14064-1 盤查報告與 TCFD 四支柱揭露一鍵匯出；附完整公式、引用與版本號。',
         },
       ],
     }

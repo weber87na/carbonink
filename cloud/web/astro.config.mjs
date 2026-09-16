@@ -96,7 +96,7 @@ export default defineConfig({
         const zhPath = isZh ? path : path === '/' ? '/zh/' : `/zh${path}`;
         item.links = [
           { url: `https://carbonink.xyz${enPath}`, lang: 'en' },
-          { url: `https://carbonink.xyz${zhPath}`, lang: 'zh-CN' },
+          { url: `https://carbonink.xyz${zhPath}`, lang: 'zh-TW' },
           { url: `https://carbonink.xyz${enPath}`, lang: 'x-default' },
         ];
         return item;
@@ -107,10 +107,10 @@ export default defineConfig({
   i18n: {
     // English is the default locale — served unprefixed at the apex
     // (`/`, `/download/`, …). Chinese lives under `/zh/` via the custom
-    // `path` mapping (locale code stays `zh-CN`; the URL segment is the
+    // `path` mapping (locale code stays `zh-TW`; the URL segment is the
     // shorter `zh`). `prefixDefaultLocale: false` keeps en at the root.
     defaultLocale: 'en',
-    locales: ['en', { path: 'zh', codes: ['zh-CN'] }],
+    locales: ['en', { path: 'zh', codes: ['zh-TW'] }],
     routing: { prefixDefaultLocale: false },
   },
 });

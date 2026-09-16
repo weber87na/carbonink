@@ -4,7 +4,7 @@ import { Label } from '@renderer/components/ui/label';
 import * as m from '@renderer/paraglide/messages';
 import { useForm } from '@tanstack/react-form';
 import { useNavigate } from '@tanstack/react-router';
-import { COMMON_COUNTRIES, INDUSTRIES } from '../lookups';
+import { COMMON_COUNTRIES, INDUSTRIES, lookupLabel } from '../lookups';
 import { WizardShell } from './WizardShell';
 import { loadDraft, saveDraft } from './wizardState';
 
@@ -78,7 +78,7 @@ export function StepCompanyInfo() {
                     id="name_zh"
                     value={field.state.value}
                     onChange={(e) => field.handleChange(e.target.value)}
-                    placeholder="碳墨示例有限公司"
+                    placeholder={m.onboarding_company_name_placeholder()}
                   />
                 )}
               />
@@ -136,7 +136,7 @@ export function StepCompanyInfo() {
                   </option>
                   {INDUSTRIES.map((opt) => (
                     <option key={opt.value} value={opt.value}>
-                      {opt.label_zh} · {opt.label_en}
+                      {lookupLabel(opt)}
                     </option>
                   ))}
                 </select>
@@ -158,7 +158,7 @@ export function StepCompanyInfo() {
                 >
                   {COMMON_COUNTRIES.map((c) => (
                     <option key={c.code} value={c.code}>
-                      {c.label_zh} · {c.label_en}
+                      {lookupLabel(c)}
                     </option>
                   ))}
                 </select>

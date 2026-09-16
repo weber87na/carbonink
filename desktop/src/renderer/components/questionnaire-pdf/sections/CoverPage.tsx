@@ -11,11 +11,12 @@ export function CoverPage({ data }: { data: QuestionnairePdfData }) {
       </h2>
       {data.questionnaire.due_date && (
         <p>
-          {m.questionnaire_pdf_cover_due_date()}: {data.questionnaire.due_date}
+          {m.questionnaire_pdf_cover_due_date({}, { locale: data.language })}:{' '}
+          {data.questionnaire.due_date}
         </p>
       )}
       <p>
-        {m.questionnaire_pdf_cover_generated_at()}: {generatedAt}
+        {m.questionnaire_pdf_cover_generated_at({}, { locale: data.language })}: {generatedAt}
       </p>
     </section>
   );

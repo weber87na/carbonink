@@ -1,6 +1,7 @@
 import { runAiObject } from '@main/llm/run-ai.js';
 import type { CredentialService } from '@main/services/credential-service.js';
 import type { InventoryReportData } from '@main/services/report-data-service';
+import { toTaiwanTraditional } from '@shared/traditional-chinese.js';
 import type { ProviderConfigV2 } from '@shared/types.js';
 import { z } from 'zod';
 
@@ -73,7 +74,10 @@ export class LlmNarrativeRefused extends Error {
   readonly _tag = 'LlmNarrativeRefused' as const;
 }
 
-function buildSystemPrompt(lang: 'zh-CN' | 'en'): string {
+function buildSystemPrompt(lang: 'zh-CN' | 'zh-TW' | 'en'): string {
+  if (lang === 'zh-TW') {
+    return `${toTaiwanTraditional(buildSystemPrompt('zh-CN'))}\n7. 所有敘述使用臺灣繁體中文與臺灣慣用語；保留 inventory 中提供的人名、組織名稱、地名與其他專有名稱原文，不要轉換或翻譯。使用「範疇一／二／三」、「排放係數」、「揭露」與「盤查資料」等用語；營運控制法對應 operational_control。`;
+  }
   if (lang === 'zh-CN') {
     return `你是 ISO 14064-1:2018 GHG 盘查报告撰稿人。严格遵循以下规则:
 
@@ -139,10 +143,10 @@ function summarizeSchemaMismatch(error: SchemaMismatchLike): string {
 
 function buildRepairUserMessage(data: InventoryReportData, validationSummary: string): string {
   const correction =
-    data.language === 'zh-CN'
+    data.language !== 'en'
       ? `前次输出未通过格式验证：${validationSummary}。请重新生成完整的六个字段，严格满足字段结构与最大字符数限制。只能使用 inventory 中的事实，不得沿用或新增 inventory 以外的内容。`
       : `The previous output failed validation: ${validationSummary}. Regenerate all six fields and strictly observe the required field structure and maximum character counts. Use only facts from the inventory; do not carry over or add content that is not present there.`;
-  return `${buildUserMessage(data)}\n\n<validation_feedback>\n${correction}\n</validation_feedback>`;
+  return `${buildUserMessage(data)}\n\n<validation_feedback>\n${data.language === 'zh-TW' ? toTaiwanTraditional(correction) : correction}\n</validation_feedback>`;
 }
 
 /**

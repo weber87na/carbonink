@@ -339,4 +339,9 @@ dd a[href],
     /* OS handles window corner radius via `roundedCorners: true` on the
      * BrowserWindow; do NOT paint a CSS `border-radius` here. */
   }
+  html:lang(zh-TW) body {
+    font-family:
+      -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", "PingFang TC",
+      "Microsoft JhengHei UI", "Microsoft JhengHei", sans-serif;
+  }
 }

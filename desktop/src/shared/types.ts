@@ -242,7 +242,7 @@ export type QuestionnairePdfData = {
       } | null;
     }>;
   }>;
-  language: 'zh-CN' | 'en';
+  language: 'zh-CN' | 'zh-TW' | 'en';
 };
 
 // ---------------------------------------------------------------------------

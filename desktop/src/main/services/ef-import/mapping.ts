@@ -1,3 +1,4 @@
+import { toTaiwanTraditional } from '@shared/traditional-chinese.js';
 import type {
   EfImportField,
   EfImportMapping,
@@ -22,16 +23,19 @@ const SAMPLE_SIZE = 5;
  * before catch-alls (名称).
  */
 const FIELD_ALIASES: ReadonlyArray<{ field: EfImportField; aliases: readonly string[] }> = [
-  { field: 'factor_code', aliases: ['factorcode', 'code', '因子编码', '因子代码', '编码', '代码'] },
+  {
+    field: 'factor_code',
+    aliases: ['factorcode', 'code', '因子编码', '因子代码', '编码', '代码', '係數編碼', '係數代碼'],
+  },
   {
     field: 'name_zh',
-    aliases: ['namezh', 'zhname', '中文名称', '中文名', '名称中文', '因子名称', '名称'],
+    aliases: ['namezh', 'zhname', '中文名称', '中文名', '名称中文', '因子名称', '名称', '係數名稱'],
   },
   {
     field: 'name_en',
     aliases: ['nameen', 'enname', 'englishname', '英文名称', '英文名', '名称英文', 'name'],
   },
-  { field: 'scope', aliases: ['scope', '范围'] },
+  { field: 'scope', aliases: ['scope', '范围', '範疇'] },
   { field: 'category', aliases: ['category', '类别', '分类', '类目'] },
   { field: 'year', aliases: ['year', '年份', '年度', '年'] },
   {
@@ -50,6 +54,10 @@ const FIELD_ALIASES: ReadonlyArray<{ field: EfImportField; aliases: readonly str
       '排放因子',
       '因子值',
       '因子数值',
+      '排放係數值',
+      '排放係數',
+      '係數值',
+      '係數數值',
       'factorvalue',
       'value',
       '数值',
@@ -79,11 +87,17 @@ const FIELD_ALIASES: ReadonlyArray<{ field: EfImportField; aliases: readonly str
 ];
 
 function normalizeHeader(header: string): string {
-  return header
+  return toTaiwanTraditional(header)
     .toLowerCase()
     .replace(/[\s_\-()（）:：/\\.]/gu, '')
     .trim();
 }
+
+// Normalize both sides so Simplified, Traditional, and English headers coexist.
+const NORMALIZED_FIELD_ALIASES = FIELD_ALIASES.map(({ field, aliases }) => ({
+  field,
+  aliases: aliases.map(normalizeHeader),
+}));
 
 /**
  * Auto-detect the column mapping from the header row. Each column is claimed
@@ -94,7 +108,7 @@ export function autoDetectMapping(headers: string[]): EfImportMapping {
   const normalized = headers.map(normalizeHeader);
   const claimed = new Set<number>();
   const mapping: EfImportMapping = {};
-  for (const { field, aliases } of FIELD_ALIASES) {
+  for (const { field, aliases } of NORMALIZED_FIELD_ALIASES) {
     for (let col = 0; col < normalized.length; col += 1) {
       if (claimed.has(col)) continue;
       const header = normalized[col];
@@ -108,10 +122,10 @@ export function autoDetectMapping(headers: string[]): EfImportMapping {
   return mapping;
 }
 
-/** Scope cell → 1|2|3. Accepts `1`, `Scope 1`, `范围1`, `范围一` (any case/space). */
+/** Scope cell → 1|2|3. Accepts numeric, English, and both Chinese scripts. */
 function parseScope(raw: string): 1 | 2 | 3 | null {
-  const compact = raw.toLowerCase().replace(/[\s]/gu, '');
-  const match = compact.match(/^(?:scope|范围)?([123一二三])$/u);
+  const compact = toTaiwanTraditional(raw).toLowerCase().replace(/[\s]/gu, '');
+  const match = compact.match(/^(?:scope|範圍|範疇)?([123一二三])$/u);
   if (!match) return null;
   const digit = match[1] as string;
   if (digit === '1' || digit === '一') return 1;

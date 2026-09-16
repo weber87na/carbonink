@@ -413,7 +413,7 @@ export type IpcTypeMap = {
   'questionnaire:finalize': (input: { id: string }) => void;
   'questionnaire:export-pdf': (input: {
     questionnaire_id: string;
-    language: 'zh-CN' | 'en';
+    language: 'zh-CN' | 'zh-TW' | 'en';
   }) => Promise<{ canceled: true } | { ok: true; path: string } | { ok: false; error: string }>;
 
   // Inbound questionnaire (Phase 2.3 — Scope 3 Cat 1 supplier disclosure)
@@ -530,7 +530,7 @@ export type IpcTypeMap = {
   'report:generate': (input: {
     report_id: string;
     reporting_period_id: string;
-    language: 'zh-CN' | 'en';
+    language: 'zh-CN' | 'zh-TW' | 'en';
   }) => Promise<
     | { canceled: true }
     | {
@@ -557,7 +557,7 @@ export type IpcTypeMap = {
   'report:generate-tcfd': (input: {
     report_id: string;
     reporting_period_id: string;
-    language: 'zh-CN' | 'en';
+    language: 'zh-CN' | 'zh-TW' | 'en';
   }) => Promise<
     | { canceled: true }
     | {
@@ -579,22 +579,22 @@ export type IpcTypeMap = {
   'report:export-tcfd-pdf': (input: {
     data: import('@main/services/report-data-service').InventoryReportData;
     narrative: import('@main/llm/tcfd-narrative').TcfdNarrative;
-    language: 'zh-CN' | 'en';
+    language: 'zh-CN' | 'zh-TW' | 'en';
   }) => Promise<{ canceled: true } | { ok: true; path: string } | { ok: false; error: string }>;
   'report:export-tcfd-xlsx': (input: {
     data: import('@main/services/report-data-service').InventoryReportData;
     narrative: import('@main/llm/tcfd-narrative').TcfdNarrative;
-    language: 'zh-CN' | 'en';
+    language: 'zh-CN' | 'zh-TW' | 'en';
   }) => Promise<{ canceled: true } | { ok: true; path: string } | { ok: false; error: string }>;
   'report:export-pdf': (input: {
     data: import('@main/services/report-data-service').InventoryReportData;
     narrative: import('@main/llm/report-narrative').ReportNarrative;
-    language: 'zh-CN' | 'en';
+    language: 'zh-CN' | 'zh-TW' | 'en';
   }) => Promise<{ canceled: true } | { ok: true; path: string } | { ok: false; error: string }>;
   'report:export-xlsx': (input: {
     data: import('@main/services/report-data-service').InventoryReportData;
     narrative: import('@main/llm/report-narrative').ReportNarrative;
-    language: 'zh-CN' | 'en';
+    language: 'zh-CN' | 'zh-TW' | 'en';
   }) => Promise<{ canceled: true } | { ok: true; path: string } | { ok: false; error: string }>;
   // Client deliverable bundle (spec 2026-07-23-client-deliverable-bundle):
   // report PDF + xlsx appendix + evidence file copies + manifest.csv
@@ -605,7 +605,7 @@ export type IpcTypeMap = {
     narrative:
       | import('@main/llm/report-narrative').ReportNarrative
       | import('@main/llm/tcfd-narrative').TcfdNarrative;
-    language: 'zh-CN' | 'en';
+    language: 'zh-CN' | 'zh-TW' | 'en';
     kind: 'iso' | 'tcfd';
     /**
      * Rendered readiness sweep, optional. Supplied by the renderer because

@@ -1,10 +1,14 @@
 import type { TcfdNarrative } from '@main/llm/tcfd-narrative';
 import type { InventoryReportData } from '@main/services/report-data-service';
 import { TcfdReportPreview } from '@renderer/components/report/TcfdReportPreview';
+import { setLocale } from '@renderer/paraglide/runtime';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-afterEach(() => cleanup());
+afterEach(() => {
+  cleanup();
+  setLocale('en', { reload: false });
+});
 
 function data(overrides: Partial<InventoryReportData> = {}): InventoryReportData {
   return {
@@ -46,6 +50,35 @@ const narrative: TcfdNarrative = {
 };
 
 describe('TcfdReportPreview', () => {
+  it('renders Traditional Chinese pillars and appendix labels independently of the UI locale', () => {
+    setLocale('en', { reload: false });
+    render(
+      <TcfdReportPreview
+        data={data({ language: 'zh-TW' })}
+        narrative={narrative}
+        printMode={true}
+      />,
+    );
+    for (const label of [
+      '氣候相關財務資訊揭露報告（TCFD）',
+      '1 治理',
+      '2 策略',
+      '3 風險管理',
+      '4 指標與目標',
+      '範疇一',
+      '附表 1 主要排放源',
+      '附表 2 期間比較',
+      '基準年',
+      '合計 kg CO2e',
+    ]) {
+      expect(screen.getByText(label)).toBeTruthy();
+    }
+    expect(screen.getByText('報告期: 2025 (年度)')).toBeTruthy();
+    expect(screen.getByText('测试公司')).toBeTruthy();
+    expect(screen.getByText('电网电力')).toBeTruthy();
+    expect(screen.getByText(narrative.risk_management)).toBeTruthy();
+  });
+
   it('renders the four pillars with zh headings and the TCFD cover', () => {
     render(<TcfdReportPreview data={data()} narrative={narrative} printMode={false} />);
     expect(screen.getByText('气候相关财务信息披露报告（TCFD）')).toBeTruthy();

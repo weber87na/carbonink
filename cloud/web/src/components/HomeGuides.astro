@@ -9,8 +9,8 @@ import { getCollection } from 'astro:content';
  * Nav, and visitors who finish the marketing scroll have no second
  * click to make.
  */
-const { lang } = Astro.props as { lang: 'zh-CN' | 'en' };
-const isZh = lang === 'zh-CN';
+const { lang } = Astro.props as { lang: 'zh-TW' | 'en' };
+const isZh = lang === 'zh-TW';
 const prefix = isZh ? '/zh' : '';
 const localePrefix = isZh ? 'zh/' : 'en/';
 
@@ -19,7 +19,7 @@ const guides = (await getCollection('guides', ({ id }) => id.startsWith(localePr
   .slice(0, 3);
 
 const tx = isZh
-  ? { label: '指南', title: '把碳核算讲清楚', all: '全部指南' }
+  ? { label: '指南', title: '把碳核算講清楚', all: '全部指南' }
   : { label: 'Guides', title: 'Learn the craft', all: 'All guides' };
 ---
 {guides.length > 0 && (

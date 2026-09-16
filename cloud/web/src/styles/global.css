@@ -6,7 +6,7 @@
  * the CDN route left zh visitors staring at a stalled preconnect; same-
  * origin files ride the existing Cloudflare edge everywhere. Latin text
  * uses Inter (variable, one file covers 100–900); CJK intentionally has
- * NO webfont — PingFang SC / Microsoft YaHei render via the system stack
+ * NO webfont — PingFang TC / Microsoft JhengHei render via the system stack
  * below, which is both the native-feel doctrine (DESIGN.md) and the only
  * sane option (CJK webfonts are megabytes across dozens of slices).
  * ──────────────────────────────────────────────────────────────────── */
@@ -100,19 +100,19 @@
   --color-bg-muted: #f8fafc;
 
   --font-body:
-    "Inter Variable", -apple-system, "Segoe UI", "PingFang SC", "Hiragino Sans GB",
-    "Microsoft YaHei UI", "Microsoft YaHei", system-ui, sans-serif;
+    "Inter Variable", -apple-system, "Segoe UI", "PingFang TC", "Microsoft JhengHei UI",
+    "Microsoft JhengHei", system-ui, sans-serif;
   --font-display:
-    "Inter Variable", -apple-system, "Segoe UI", "PingFang SC", "Hiragino Sans GB",
-    "Microsoft YaHei UI", "Microsoft YaHei", system-ui, sans-serif;
+    "Inter Variable", -apple-system, "Segoe UI", "PingFang TC", "Microsoft JhengHei UI",
+    "Microsoft JhengHei", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
 
-/* zh-CN line-height bump — Chinese needs more vertical breathing room
+/* zh-TW line-height bump — Chinese needs more vertical breathing room
  * than Latin for the same visual density. Applies only when
- * <html lang="zh-CN">. Equivalent to the inline `lineHeight: "1.8"`
+ * <html lang="zh-TW">. Equivalent to the inline `lineHeight: "1.8"`
  * the Figma source threaded through every paragraph. */
-html[lang="zh-CN"] body {
+html[lang="zh-TW"] body {
   line-height: 1.75;
 }
 html[lang="en"] body {

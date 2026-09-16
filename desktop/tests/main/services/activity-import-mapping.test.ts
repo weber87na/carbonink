@@ -55,6 +55,39 @@ describe('autoDetectActivityMapping', () => {
     expect(mapping.occurred_at_end).toBeUndefined();
   });
 
+  it('maps Traditional Chinese ledger headers without translating imported data', () => {
+    const mapping = autoDetectActivityMapping([
+      '排放源名稱',
+      '活動描述',
+      '數量',
+      '計量單位',
+      '開始日期',
+      '結束日期',
+      '備註',
+    ]);
+    expect(mapping).toEqual(FULL_MAPPING);
+    const { validation, validRows } = validateActivityRows(
+      rowsOf(['锅炉房', '天然气 采暖', '1,234.5', 'm³', '2025-01-01', '2025-01-31', '一月账单']),
+      mapping,
+    );
+    expect(validation.error_count).toBe(0);
+    expect(validRows[0]).toEqual({
+      row: 2,
+      source_name: '锅炉房',
+      description: '天然气 采暖',
+      amount: 1234.5,
+      unit: 'm³',
+      occurred_at_start: '2025-01-01',
+      occurred_at_end: '2025-01-31',
+      notes: '一月账单',
+    });
+  });
+
+  it('recognizes mixed scripts but never maps Traditional monetary amounts as quantity', () => {
+    const mapping = autoDetectActivityMapping(['設備', '说明', '金額', '單位', '起始日期']);
+    expect(mapping).toEqual({ source_name: 0, description: 1, unit: 3, occurred_at_start: 4 });
+  });
+
   it('never auto-maps 金额 as the activity amount', () => {
     const mapping = autoDetectActivityMapping(['排放源', '品名', '金额', '单位']);
     expect(mapping.amount).toBeUndefined();

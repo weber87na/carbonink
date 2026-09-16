@@ -10,28 +10,28 @@
  * fully renderable without JS.
  */
 
-const { lang } = Astro.props as { lang: 'zh-CN' | 'en' };
-const isZh = lang === 'zh-CN';
+const { lang } = Astro.props as { lang: 'zh-TW' | 'en' };
+const isZh = lang === 'zh-TW';
 
 const tx = isZh
   ? {
-      label: '合规压力',
-      title: '三道坎，一个工具',
+      label: '合規壓力',
+      title: '三項挑戰，一個工具',
       items: [
         {
           icon: 'doc',
-          head: 'CSRD 供应链压力',
-          body: '欧洲客户要求 Scope 3 数据；拿不出来就丢单。',
+          head: 'CSRD 供應鏈壓力',
+          body: '歐洲客戶要求 Scope 3 資料；拿不出來就丟單。',
         },
         {
           icon: 'truck',
-          head: 'CBAM 碳边境税',
-          body: '出口欧盟需要申报每件商品的内嵌排放量。',
+          head: 'CBAM 碳邊境稅',
+          body: '出口歐盟需要申報每件商品的內嵌排放量。',
         },
         {
           icon: 'globe',
-          head: 'A 股供应商调查',
-          body: '国内上市公司向全供应链收集 GHG 数据。',
+          head: 'A 股供應商調查',
+          body: '中國上市公司向全供應鏈收集 GHG 資料。',
         },
       ],
     }

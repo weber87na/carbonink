@@ -55,6 +55,22 @@ function seedInventory(db: Database.Database) {
 }
 
 describe('ReportDataService.assembleReportData', () => {
+  it('uses Chinese site names in zh-TW reports and preserves stored source data', () => {
+    const db = new Database(':memory:');
+    runMigrations(db);
+    seedInventory(db);
+    try {
+      const svc = new ReportDataService({ db });
+      const data = svc.assembleReportData({ reporting_period_id: 'per-2025', language: 'zh-TW' });
+      expect(data.language).toBe('zh-TW');
+      expect(data.org.name_zh).toBe('测试公司');
+      expect(data.activities.every((activity) => activity.site_name === '北京工厂')).toBe(true);
+      expect(data.scope_totals.total_kg).toBe(37400);
+    } finally {
+      db.close();
+    }
+  });
+
   it('assembles full InventoryReportData with scope totals', () => {
     const db = new Database(':memory:');
     runMigrations(db);

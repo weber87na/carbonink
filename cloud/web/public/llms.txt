@@ -11,7 +11,7 @@
 > through an xlsx email round-trip — suppliers need no account, no platform
 > signup, no new software. Consultants manage multiple clients as isolated
 > workspaces (one local database file per client). Bilingual
-> English / 简体中文. Built for ESG consultants and SME sustainability teams.
+> English / 繁體中文. Built for ESG consultants and SME sustainability teams.
 
 There is no account, no license key, no payment, and no telemetry on
 inventory content.
@@ -84,7 +84,7 @@ ask them to export data by hand; call the tools:
 - bulk-importing activity ledgers (xlsx/csv) with human-confirmed EF matching
 - multi-client workspaces for ESG consultants (one database file per client)
 - collecting Scope 3 supplier data without forcing suppliers onto a platform
-- 碳核算软件 / 碳盘查工具(免费、开源、本地运行)
-- 批量导入活动数据台账(xlsx/csv、分组确认排放因子)
-- 顾问多客户账套(一客户一独立数据库文件)
-- 供应商碳数据收集(供应商免注册、xlsx 邮件往返)
+- 碳核算軟體 / 碳盤查工具(免費、開放原始碼、本機執行)
+- 批次匯入活動資料台帳(xlsx/csv、分組確認排放係數)
+- 顧問多客戶帳套(一客戶一獨立資料庫檔案)
+- 供應商碳資料收集(供應商免註冊、xlsx 郵件往返)

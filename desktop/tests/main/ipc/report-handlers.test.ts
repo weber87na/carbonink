@@ -48,6 +48,28 @@ function makeCtx() {
 }
 
 describe('reportHandlers', () => {
+  it.each([
+    'report:generate',
+    'report:generate-tcfd',
+  ] as const)('%s accepts and propagates zh-TW through IPC validation', async (channel) => {
+    vi.mocked(runAiObject).mockResolvedValue(
+      channel === 'report:generate' ? FAKE_NARRATIVE : FAKE_TCFD,
+    );
+    const ctx = makeCtx();
+    const handlers = reportHandlers(ctx as never);
+    const result = await handlers[channel]?.({
+      report_id: 'rep-tw',
+      reporting_period_id: 'per-1',
+      language: 'zh-TW',
+    });
+    expect(result?.canceled).toBe(false);
+    expect(result).not.toHaveProperty('error');
+    expect(ctx.reportDataService.assembleReportData).toHaveBeenCalledWith({
+      reporting_period_id: 'per-1',
+      language: 'zh-TW',
+    });
+  });
+
   it('report:generate returns assembled data + narrative', async () => {
     vi.mocked(runAiObject).mockResolvedValue(FAKE_NARRATIVE);
     const ctx = makeCtx();

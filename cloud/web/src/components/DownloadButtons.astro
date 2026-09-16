@@ -14,17 +14,17 @@
  * rebuild per release.
  */
 
-const { lang } = Astro.props as { lang: 'zh-CN' | 'en' };
-const isZh = lang === 'zh-CN';
+const { lang } = Astro.props as { lang: 'zh-TW' | 'en' };
+const isZh = lang === 'zh-TW';
 
 const tx = isZh
   ? {
-      mac: '下载 macOS 版（.dmg）',
+      mac: '下載 macOS 版（.dmg）',
       macNote: 'Apple Silicon · macOS 12+',
-      macIntel: '使用 Intel 芯片的 Mac？下载 Intel 版',
-      win: '下载 Windows 版（.exe）',
+      macIntel: '使用 Intel 晶片的 Mac？下載 Intel 版',
+      win: '下載 Windows 版（.exe）',
       winNote: 'Windows 10/11 x64',
-      signing: '应用未做代码签名（开源免费）。首次打开：macOS 请右键点按图标 →「打开」；Windows 在 SmartScreen 提示时选「更多信息 → 仍要运行」。',
+      signing: '應用程式尚未進行程式碼簽署（免費、開放原始碼）。首次開啟：macOS 請以滑鼠右鍵點選圖示 →「打開」；Windows 在 SmartScreen 提示時選「其他資訊 → 仍要執行」。',
     }
   : {
       mac: 'Download for macOS (.dmg)',

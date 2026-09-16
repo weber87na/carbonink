@@ -1,6 +1,7 @@
 import { Button } from '@renderer/components/ui/button';
 import { Input } from '@renderer/components/ui/input';
 import { userEfLibraryApi } from '@renderer/lib/api/user-ef-library';
+import { emissionFactorName } from '@renderer/lib/localized-data';
 import * as m from '@renderer/paraglide/messages';
 import type { EmissionFactor, UserEfLibrary } from '@shared/types';
 import { useQuery } from '@tanstack/react-query';
@@ -155,7 +156,7 @@ export function EfLibraryBrowseDrawer({ library, onClose }: EfLibraryBrowseDrawe
 }
 
 function FactorRow({ ef }: { ef: EmissionFactor }) {
-  const name = ef.name_zh ?? ef.name_en ?? ef.factor_code;
+  const name = emissionFactorName(ef);
   return (
     <li className="space-y-1 px-4 py-2.5">
       <div className="flex items-baseline justify-between gap-3">

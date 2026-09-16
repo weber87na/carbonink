@@ -6,13 +6,13 @@
  * proposition rather than feature copy.
  */
 
-const { lang } = Astro.props as { lang: 'zh-CN' | 'en' };
-const isZh = lang === 'zh-CN';
+const { lang } = Astro.props as { lang: 'zh-TW' | 'en' };
+const isZh = lang === 'zh-TW';
 
 const tx = isZh
   ? {
-      label: '数据隐私',
-      quote: '碳墨没有账户、没有许可证、不向任何地方上报。你算了什么、填了什么、问 AI 什么——它都无从知道，因为根本没有服务器可上传。',
+      label: '資料隱私',
+      quote: '碳墨沒有帳號、沒有授權憑證、不向任何地方上報。你算了什麼、填了什麼、問 AI 什麼——它都無從知道，因為根本沒有伺服器可上傳。',
     }
   : {
       label: 'Privacy by architecture',

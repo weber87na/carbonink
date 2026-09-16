@@ -4,7 +4,7 @@ import { Label } from '@renderer/components/ui/label';
 import * as m from '@renderer/paraglide/messages';
 import { useForm } from '@tanstack/react-form';
 import { useNavigate } from '@tanstack/react-router';
-import { COMMON_COUNTRIES } from '../lookups';
+import { COMMON_COUNTRIES, lookupLabel } from '../lookups';
 import { WizardShell } from './WizardShell';
 import { loadDraft, saveDraft } from './wizardState';
 
@@ -80,7 +80,7 @@ export function StepFirstSite() {
                     id="site_name_zh"
                     value={f.state.value}
                     onChange={(e) => f.handleChange(e.target.value)}
-                    placeholder="北京总部"
+                    placeholder={m.onboarding_site_name_placeholder()}
                   />
                 )}
               />
@@ -125,7 +125,7 @@ export function StepFirstSite() {
                 id="site_address"
                 value={f.state.value}
                 onChange={(e) => f.handleChange(e.target.value)}
-                placeholder="北京市朝阳区某某路 1 号"
+                placeholder={m.onboarding_site_address_placeholder()}
               />
             )}
           />
@@ -149,7 +149,7 @@ export function StepFirstSite() {
                 >
                   {COMMON_COUNTRIES.map((c) => (
                     <option key={c.code} value={c.code}>
-                      {c.label_zh} · {c.label_en}
+                      {lookupLabel(c)}
                     </option>
                   ))}
                 </select>

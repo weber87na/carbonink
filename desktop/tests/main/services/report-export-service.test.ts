@@ -68,6 +68,53 @@ const fakeNarrative: ReportNarrative = {
 };
 
 describe('writeAppendixXlsx', () => {
+  it('localizes zh-TW workbook labels without rewriting data or edited narratives', async () => {
+    const narrative = { ...fakeNarrative, boundary_description: '测试公司提供的原文' };
+    const buf = await writeAppendixXlsx({
+      data: { ...fakeData(), language: 'zh-TW' },
+      narrative,
+      language: 'zh-TW',
+    });
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(buf as unknown as ArrayBuffer);
+    expect(wb.worksheets.map((sheet) => sheet.name)).toEqual([
+      '概覽',
+      '活動明細',
+      '排放係數',
+      '排放源',
+      '敘述',
+    ]);
+    expect(wb.getWorksheet('概覽')?.getCell('A1').value).toBe('組織');
+    expect(wb.getWorksheet('概覽')?.getCell('B1').value).toBe('测试');
+    expect(wb.getWorksheet('概覽')?.getCell('A3').value).toBe('範疇一 (kg CO2e)');
+    expect(wb.getWorksheet('概覽')?.getCell('B3').value).toBe(100);
+    expect(wb.getWorksheet('活動明細')?.getCell('A1').value).toBe('活動 ID');
+    expect(wb.getWorksheet('活動明細')?.getCell('D1').value).toBe('範疇');
+    expect(wb.getWorksheet('敘述')?.getCell('A1').value).toBe('章節');
+    expect(wb.getWorksheet('敘述')?.getCell('A2').value).toBe('組織邊界');
+    expect(wb.getWorksheet('敘述')?.getCell('B2').value).toBe(narrative.boundary_description);
+  });
+
+  it('uses Taiwan terminology for the TCFD appendix pillars', async () => {
+    const buf = await writeAppendixXlsx({
+      data: { ...fakeData(), language: 'zh-TW' },
+      narrative: {
+        governance: '治理',
+        strategy: '策略',
+        risk_management: '風險',
+        metrics_targets: '目標',
+      },
+      language: 'zh-TW',
+      kind: 'tcfd',
+    });
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(buf as unknown as ArrayBuffer);
+    const narrative = wb.getWorksheet('敘述');
+    expect(narrative?.getCell('A3').value).toBe('策略');
+    expect(narrative?.getCell('A4').value).toBe('風險管理');
+    expect(narrative?.getCell('A5').value).toBe('指標與目標');
+  });
+
   it('produces a workbook with 5 sheets in zh-CN', async () => {
     const buf = await writeAppendixXlsx({
       data: fakeData(),

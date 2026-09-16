@@ -20,7 +20,7 @@ import type { IpcTypeMap } from '../types.js';
 const generateInput = z.object({
   report_id: z.string().min(1),
   reporting_period_id: z.string().min(1),
-  language: z.enum(['zh-CN', 'en']),
+  language: z.enum(['zh-CN', 'zh-TW', 'en']),
 });
 const cancelInput = z.object({ report_id: z.string().min(1) });
 

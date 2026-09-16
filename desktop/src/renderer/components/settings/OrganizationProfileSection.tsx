@@ -2,7 +2,7 @@ import { toast } from '@renderer/components/toast';
 import { Button } from '@renderer/components/ui/button';
 import { Input } from '@renderer/components/ui/input';
 import { Label } from '@renderer/components/ui/label';
-import { COMMON_COUNTRIES, INDUSTRIES } from '@renderer/features/onboarding/lookups';
+import { COMMON_COUNTRIES, INDUSTRIES, lookupLabel } from '@renderer/features/onboarding/lookups';
 import { orgApi } from '@renderer/lib/api/organization';
 import { settingsApi } from '@renderer/lib/api/settings';
 import { friendlyErrorDescription } from '@renderer/lib/error-message';
@@ -157,7 +157,7 @@ function BasicInfoGroup({ orgId, initial, onSaved }: BasicInfoProps) {
             </option>
             {INDUSTRIES.map((opt) => (
               <option key={opt.value} value={opt.value}>
-                {opt.label_zh} · {opt.label_en}
+                {lookupLabel(opt)}
               </option>
             ))}
           </select>
@@ -172,7 +172,7 @@ function BasicInfoGroup({ orgId, initial, onSaved }: BasicInfoProps) {
           >
             {COMMON_COUNTRIES.map((c) => (
               <option key={c.code} value={c.code}>
-                {c.label_zh} · {c.label_en}
+                {lookupLabel(c)}
               </option>
             ))}
           </select>

@@ -99,6 +99,24 @@ afterEach(() => {
 });
 
 describe('generateReportNarrative', () => {
+  it('requests Taiwan Traditional Chinese while preserving inventory names and numbers', async () => {
+    vi.mocked(runAiObject).mockResolvedValue(FAKE_NARRATIVE);
+    await generateReportNarrative({
+      data: { ...fakeData(), language: 'zh-TW' },
+      config: fakeConfig(),
+      credentials: fakeCredentials(),
+      onProgress: () => {},
+      abortSignal: new AbortController().signal,
+    });
+    const args = vi.mocked(runAiObject).mock.calls[0]?.[2];
+    expect(args?.system).toContain('臺灣繁體中文');
+    expect(args?.system).toContain('排放係數');
+    expect(args?.system).toContain('本期未評估');
+    expect(args?.system).toContain('boundary_description 800');
+    expect(args?.prompt).toContain('测试公司');
+    expect(args?.prompt).toContain('37400');
+  });
+
   it('validates a well-shaped LLM response against the schema', () => {
     const result = ReportNarrativeSchema.safeParse(FAKE_NARRATIVE);
     expect(result.success).toBe(true);

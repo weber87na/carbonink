@@ -21,6 +21,7 @@ export function initLocale(): Locale {
   // The fix: just set the locale in-memory. The renderer is freshly
   // mounted; there's nothing painted yet that needs "refreshing".
   runtime.setLocale(locale, { reload: false });
+  document.documentElement.lang = locale;
   return locale;
 }
 
@@ -39,6 +40,7 @@ export function initLocale(): Locale {
 export function setLocale(locale: Locale): void {
   localStorage.setItem(STORAGE_KEY, locale);
   runtime.setLocale(locale, { reload: false });
+  document.documentElement.lang = locale;
   window.dispatchEvent(new CustomEvent(LOCALE_CHANGED_EVENT, { detail: locale }));
 }
 

@@ -50,7 +50,10 @@ function parsePosition(position: string): { sheet: string; addr: string } | null
 export class QuestionnairePdfDataService {
   constructor(private deps: QuestionnairePdfDataDeps) {}
 
-  assemble(input: { questionnaire_id: string; language: 'zh-CN' | 'en' }): QuestionnairePdfData {
+  assemble(input: {
+    questionnaire_id: string;
+    language: 'zh-CN' | 'zh-TW' | 'en';
+  }): QuestionnairePdfData {
     const questionnaireRow = this.deps.db
       .prepare(
         `SELECT id, customer_id, document_id, template_kind, reporting_year, status, due_date, created_at
@@ -138,7 +141,7 @@ export class QuestionnairePdfDataService {
     const realSheets = sheetOrder.filter((k) => k !== unspecifiedKey);
     const hasUnspecified = sheetOrder.includes(unspecifiedKey);
 
-    const unspecifiedLabel = input.language === 'zh-CN' ? '未指定' : 'Unspecified';
+    const unspecifiedLabel = input.language === 'en' ? 'Unspecified' : '未指定';
     const sheets = realSheets.map((sheetName) => ({
       sheet_name: sheetName,
       questions: sheetGroups.get(sheetName)!.map((q) => ({
