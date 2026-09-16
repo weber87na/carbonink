@@ -23,7 +23,7 @@ import ExcelJS from 'exceljs';
  * On each non-sentinel sheet the layout is:
  *
  *   | Column A         | Column B (input)  | Column C (notes)             |
- *   | "question (zh)   | _empty_           | "备注 / Notes:"              |
+ *   | "question (zh)   | _empty_           | "備註 / Notes:"              |
  *   |  question (en)"  |                   |                              |
  *
  * Row coordinates come straight from each question's `cell_ref` (e.g.
@@ -131,18 +131,18 @@ function buildCoverSheet(wb: ExcelJS.Workbook, args: RenderInboundXlsxArgs): voi
   // present. Each row is one cell in column A — Excel's wrapText handles
   // newlines visually.
   const lines = [
-    `碳排放数据采集问卷 — ${args.template.template_kind}`,
+    `碳排放資料蒐集問卷 — ${args.template.template_kind}`,
     '',
-    `本表由 ${args.myOrgName} 通过 CarbonInk 系统生成，用于收集贵公司报告期内（${args.periodYear} 年）作为我方供应商所产生的温室气体排放数据。`,
+    `本表由 ${args.myOrgName} 透過 CarbonInk 系統產生，用於蒐集貴公司報告期間內（${args.periodYear} 年）作為我方供應商所產生的溫室氣體排放資料。`,
     '',
-    '填写说明：',
-    '1. 请优先填写 **Tier 1** sheet（单位产品碳足迹）。如贵公司持有第三方核证 PCF 报告，请将文件作为附件回传并在备注列注明文件名。',
-    '2. 若无 PCF，请填写 **Tier 2** sheet（公司层级分配排放），需填全 3 项（总排放、分配方法、归因排放）。',
-    '3. **metadata** sheet 中的 3 项基础信息为必填。',
-    '4. 仅填部分字段也可；缺失字段我方将以行业平均估算。',
+    '填寫說明：',
+    '1. 請優先填寫 **Tier 1** 工作表（單位產品碳足跡）。如貴公司持有第三方查證 PCF 報告，請將檔案作為附件回傳，並在備註欄註明檔名。',
+    '2. 若無 PCF，請填寫 **Tier 2** 工作表（公司層級分配排放），需填齊 3 項（總排放、分配方法、歸屬排放）。',
+    '3. **metadata** 工作表中的 3 項基本資訊為必填。',
+    '4. 亦可僅填寫部分欄位；缺漏欄位將由我方以產業平均值估算。',
     '',
-    args.dueDate ? `截止日期：${args.dueDate}` : '截止日期：请尽快回复',
-    `请回传至：${args.myOrgName} 对接窗口（邮件正文中已注明）。`,
+    args.dueDate ? `截止日期：${args.dueDate}` : '截止日期：請儘快回覆',
+    `請回傳至：${args.myOrgName} 聯絡窗口（電子郵件內文中已註明）。`,
     '',
     '─────────────────────────────────────────────────────────────',
     '',
@@ -192,7 +192,7 @@ function buildQuestionSheet(
   const headerRow = sheet.getRow(1);
   headerRow.getCell('A').value = sheetLabel(sheetName);
   headerRow.getCell('B').value = '答案 / Answer';
-  headerRow.getCell(NOTES_COLUMN).value = '备注 / Notes';
+  headerRow.getCell(NOTES_COLUMN).value = '備註 / Notes';
   headerRow.font = { bold: true };
 
   for (const q of questions) {
@@ -210,7 +210,7 @@ function buildQuestionSheet(
     // doesn't read notes (only the value).
     const inputCell = row.getCell('B');
     if (q.expected_unit !== null && q.expected_unit !== '') {
-      inputCell.note = `单位 / Unit: ${q.expected_unit}`;
+      inputCell.note = `單位 / Unit: ${q.expected_unit}`;
     }
     // Column C: notes column (also empty, free-form for supplier).
     row.getCell(NOTES_COLUMN).value = '';
@@ -294,9 +294,9 @@ function parseRowNumberFromAddress(address: string): number | null {
 function sheetLabel(sheetName: string): string {
   switch (sheetName) {
     case 'metadata':
-      return '基础信息 / Metadata';
+      return '基本資訊 / Metadata';
     case 'tier1':
-      return 'Tier 1：单位产品碳足迹 / Per-unit Product Carbon Footprint';
+      return 'Tier 1：單位產品碳足跡 / Per-unit Product Carbon Footprint';
     case 'tier2':
       return 'Tier 2：分配排放 / Allocated Company Emissions';
     default:
@@ -329,7 +329,7 @@ export interface ParsedXlsxAnswer {
   /** True when the cell was empty or contained only whitespace. */
   is_blank: boolean;
   /**
-   * Free-form note from the same row's "备注 / Notes" column (C). Trimmed;
+   * Free-form note from the same row's "備註 / Notes" column (C). Trimmed;
    * empty string when the supplier left it blank. Independent of
    * `is_blank` (which only reflects the answer cell B) — a supplier can
    * leave the answer blank but still add a note, or vice versa.
@@ -485,7 +485,7 @@ export async function parseInboundXlsx(
 // ---------------------------------------------------------------------------
 
 /**
- * Read the "备注 / Notes" cell (column C) sitting on the same row as a
+ * Read the "備註 / Notes" cell (column C) sitting on the same row as a
  * given answer cell address (e.g. answer at `B5` → note at `C5`). Returns
  * the trimmed string, or '' when the note cell is blank / the address is
  * malformed. The answer column is always B in our render layout, so we

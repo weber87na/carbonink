@@ -5,7 +5,7 @@ export function TableOfContents({ data }: { data: QuestionnairePdfData }) {
   if (data.sheets.length <= 1) return null;
   return (
     <nav className="qpdf__toc">
-      <h2>{m.questionnaire_pdf_toc_heading()}</h2>
+      <h2>{m.questionnaire_pdf_toc_heading({}, { locale: data.language })}</h2>
       <ol>
         {data.sheets.map((s) => (
           <li key={s.sheet_name}>{s.sheet_name}</li>

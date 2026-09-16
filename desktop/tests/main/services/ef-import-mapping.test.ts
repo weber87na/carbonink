@@ -63,6 +63,42 @@ describe('autoDetectMapping', () => {
     });
   });
 
+  it('maps Taiwan Traditional headers, including local emissions terminology', () => {
+    expect(
+      autoDetectMapping([
+        '係數編碼',
+        '係數名稱',
+        '英文名稱',
+        '範疇',
+        '類別',
+        '年度',
+        '國家地區',
+        '計量單位',
+        '排放係數',
+        'GWP 基準',
+        '說明',
+        '英文描述',
+        '備註',
+        '來源連結',
+      ]),
+    ).toEqual({
+      factor_code: 0,
+      name_zh: 1,
+      name_en: 2,
+      scope: 3,
+      category: 4,
+      year: 5,
+      geography: 6,
+      input_unit: 7,
+      co2e_kg_per_unit: 8,
+      gwp_basis: 9,
+      description_zh: 10,
+      description_en: 11,
+      notes: 12,
+      citation_url: 13,
+    });
+  });
+
   it('claims each column once — 名称 falls to name_zh, name to name_en', () => {
     const mapping = autoDetectMapping(['名称', 'name', 'value']);
     expect(mapping.name_zh).toBe(0);
@@ -109,6 +145,49 @@ describe('validateRows', () => {
       FULL_MAPPING,
     );
     expect(validRows[0]?.data).toMatchObject({ scope: 2, co2e_kg_per_unit: 1234.5 });
+  });
+
+  it.each([
+    ['範疇一', 1],
+    ['範疇 2', 2],
+    ['範圍三', 3],
+    ['范围二', 2],
+    ['Scope 3', 3],
+  ])('accepts the scope label %s while preserving imported text and identifiers', (label, scope) => {
+    const mapping = autoDetectMapping([
+      '中文名稱',
+      '範疇',
+      '年度',
+      '單位',
+      '排放係數',
+      '係數編碼',
+      '地區',
+      '類別',
+      '備註',
+    ]);
+    const { validation, validRows } = validateRows(
+      rowsOf([
+        '电力',
+        label as string,
+        '2025',
+        'kWh',
+        '0.495',
+        '电力-01',
+        '台湾',
+        '购电',
+        '原始备注',
+      ]),
+      mapping,
+    );
+    expect(validation.error_count).toBe(0);
+    expect(validRows[0]?.data).toMatchObject({
+      scope,
+      name_zh: '电力',
+      factor_code: '电力-01',
+      geography: '台湾',
+      category: '购电',
+      notes: '原始备注',
+    });
   });
 
   it('reports per-field error codes with row numbers from the file', () => {

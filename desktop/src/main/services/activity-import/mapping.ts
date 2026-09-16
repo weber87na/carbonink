@@ -1,3 +1,4 @@
+import { toTaiwanTraditional } from '@shared/traditional-chinese.js';
 import type {
   ActivityImportField,
   ActivityImportMapping,
@@ -79,11 +80,17 @@ const FIELD_ALIASES: ReadonlyArray<{ field: ActivityImportField; aliases: readon
 ];
 
 function normalizeHeader(header: string): string {
-  return header
+  return toTaiwanTraditional(header)
     .toLowerCase()
     .replace(/[\s_\-()（）:：/\\.]/gu, '')
     .trim();
 }
+
+// Header recognition must not translate source names or any imported row data.
+const NORMALIZED_FIELD_ALIASES = FIELD_ALIASES.map(({ field, aliases }) => ({
+  field,
+  aliases: aliases.map(normalizeHeader),
+}));
 
 /**
  * Auto-detect the column mapping from the header row. Same engine contract
@@ -94,7 +101,7 @@ export function autoDetectActivityMapping(headers: string[]): ActivityImportMapp
   const normalized = headers.map(normalizeHeader);
   const claimed = new Set<number>();
   const mapping: ActivityImportMapping = {};
-  for (const { field, aliases } of FIELD_ALIASES) {
+  for (const { field, aliases } of NORMALIZED_FIELD_ALIASES) {
     for (let col = 0; col < normalized.length; col += 1) {
       if (claimed.has(col)) continue;
       const header = normalized[col];

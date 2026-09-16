@@ -1,3 +1,4 @@
+import * as m from '@renderer/paraglide/messages';
 import { Route as DocumentReviewRoute } from '@renderer/routes/documents.$id';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
@@ -322,7 +323,9 @@ describe('/documents/$id review route', () => {
 
     // The ManualStagePicker should now be visible; its dropdown is a select element.
     // The select should show the current stage (china_utility.v1 = 电费账单).
-    const stageSelect = (await screen.findByDisplayValue('电费账单')) as HTMLSelectElement;
+    const stageSelect = (await screen.findByDisplayValue(
+      m.documents_type_utility(),
+    )) as HTMLSelectElement;
     expect(stageSelect).toBeTruthy();
 
     // Verify it's a select with the stage options.

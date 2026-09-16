@@ -1,5 +1,6 @@
 import { efApi } from '@renderer/lib/api/ef-library';
 import { formatCo2e, formatSignedInteger, formatSignedPercent } from '@renderer/lib/format';
+import { emissionFactorName } from '@renderer/lib/localized-data';
 import * as m from '@renderer/paraglide/messages';
 import type { ActivityRebindEfPayload, AuditEvent, EfCompositePk } from '@shared/types';
 import { useQuery } from '@tanstack/react-query';
@@ -22,7 +23,7 @@ function useEfName(pk: EfCompositePk): string {
     staleTime: Infinity,
   });
   if (!q.data) return pk.factor_code;
-  const name = q.data.name_zh ?? q.data.name_en ?? pk.factor_code;
+  const name = emissionFactorName(q.data);
   return `${name} (${pk.year})`;
 }
 

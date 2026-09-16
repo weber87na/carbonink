@@ -153,8 +153,9 @@ describe('notifyOverdueDisclosures', () => {
     expect(H.FakeNotification.instances.length).toBe(1);
     const n = H.FakeNotification.instances[0];
     expect(n?.didShow).toBe(true);
-    expect(n?.opts.title).toBe('供应商披露逾期');
+    expect(n?.opts.title).toBe('供應商揭露逾期');
     expect(n?.opts.body).toContain('中山钢铁');
+    expect(n?.opts.body).toContain('揭露已過截止日期，點選查看');
     expect(lastNotifiedSetting(db)).toBe(TODAY);
   });
 

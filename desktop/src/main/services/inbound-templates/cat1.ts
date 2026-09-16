@@ -42,7 +42,7 @@ export const CAT1_SUPPLIER_DISCLOSURE: InboundTemplate = {
       position: 'meta.1',
       tier: null,
       kind: 'narrative',
-      raw_zh: '请填写贵公司法定名称（与营业执照一致）。',
+      raw_zh: '請填寫貴公司法定名稱（與營業執照一致）。',
       raw_en: "Please enter your company's legal name (matching business license).",
       expected_unit: null,
       cell_ref: 'metadata!B5',
@@ -52,7 +52,7 @@ export const CAT1_SUPPLIER_DISCLOSURE: InboundTemplate = {
       tier: null,
       kind: 'narrative',
       raw_zh:
-        '本次填报对应的报告期。我方采购报告期为 {{period_year}} 年，请填写贵公司对应的报告期（例如 2025 自然年、2024 财年）。',
+        '本次填報對應的報告期間。我方採購報告期間為 {{period_year}} 年，請填寫貴公司對應的報告期間（例如 2025 曆年、2024 會計年度）。',
       raw_en:
         'Reporting period this disclosure covers. Our purchase period: {{period_year}}. Please enter your company’s corresponding reporting period (e.g. 2025 calendar year, FY2024).',
       expected_unit: null,
@@ -63,7 +63,7 @@ export const CAT1_SUPPLIER_DISCLOSURE: InboundTemplate = {
       tier: null,
       kind: 'categorical',
       raw_zh:
-        '贵公司是否已编制正式的温室气体清单？请填写：无 / 自行核算未审 / 第三方核证 / 已取得 ISO 14064 / 其他。',
+        '貴公司是否已編製正式的溫室氣體清冊？請填寫：無 / 自行盤查尚未查證 / 第三方查證 / 已取得 ISO 14064 / 其他。',
       raw_en:
         'Does your company maintain a formal GHG inventory? Please choose: None / Self-reported, unverified / Third-party verified / ISO 14064 certified / Other.',
       expected_unit: null,
@@ -76,7 +76,7 @@ export const CAT1_SUPPLIER_DISCLOSURE: InboundTemplate = {
       tier: 1,
       kind: 'numerical',
       raw_zh:
-        '贵公司供给我方产品的单位碳足迹（kgCO2e/kg 产品）。如有第三方 PCF 报告，请将文件作为附件一并发回，并在备注列注明文件名。',
+        '貴公司供應我方產品的單位碳足跡（kgCO2e/kg 產品）。如有第三方 PCF 報告，請將檔案作為附件一併回傳，並在備註欄註明檔名。',
       raw_en:
         'Per-kg product carbon footprint of goods supplied to us (kgCO2e/kg). If a third-party PCF report exists, please attach it to your reply email and note the filename in the comment column.',
       expected_unit: 'kgCO2e/kg',
@@ -88,7 +88,7 @@ export const CAT1_SUPPLIER_DISCLOSURE: InboundTemplate = {
       position: 'tier2.1',
       tier: 2,
       kind: 'numerical',
-      raw_zh: '贵公司报告期内 Scope 1 + Scope 2 排放总量（kgCO2e）。',
+      raw_zh: '貴公司報告期間內範疇一（Scope 1）+ 範疇二（Scope 2）排放總量（kgCO2e）。',
       raw_en: "Your company's total Scope 1 + Scope 2 emissions for the reporting period (kgCO2e).",
       expected_unit: 'kgCO2e',
       cell_ref: 'tier2!B5',
@@ -97,7 +97,7 @@ export const CAT1_SUPPLIER_DISCLOSURE: InboundTemplate = {
       position: 'tier2.2',
       tier: 2,
       kind: 'categorical',
-      raw_zh: '排放归因方法（按质量份额 / 按经济价值 / 按物理量 / 其他）。',
+      raw_zh: '排放分配方法（按質量比例 / 按經濟價值 / 按物理量 / 其他）。',
       raw_en: 'Allocation method (mass-based / economic / physical / other).',
       expected_unit: null,
       cell_ref: 'tier2!B7',
@@ -106,7 +106,7 @@ export const CAT1_SUPPLIER_DISCLOSURE: InboundTemplate = {
       position: 'tier2.3',
       tier: 2,
       kind: 'numerical',
-      raw_zh: '按上述分配方法归因于我方采购的排放量（kgCO2e）。',
+      raw_zh: '依上述分配方法歸屬於我方採購的排放量（kgCO2e）。',
       raw_en: 'Emissions attributable to our purchase (kgCO2e), per the allocation method above.',
       expected_unit: 'kgCO2e',
       cell_ref: 'tier2!B9',

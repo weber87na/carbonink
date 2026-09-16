@@ -18,16 +18,16 @@ import LogoMark from './LogoMark.astro';
  * prefix so deep links survive a language swap.
  */
 
-const { lang } = Astro.props as { lang: 'zh-CN' | 'en' };
+const { lang } = Astro.props as { lang: 'zh-TW' | 'en' };
 
-const isZh = lang === 'zh-CN';
+const isZh = lang === 'zh-TW';
 const tx = isZh
   ? {
       brand: '碳墨',
-      source: '源码',
-      download: '下载',
+      source: '原始碼',
+      download: '下載',
       docs: '指南',
-      trial: '免费下载',
+      trial: '免費下載',
       langLabel: 'EN',
     }
   : {
@@ -36,7 +36,7 @@ const tx = isZh
       download: 'Download',
       docs: 'Guides',
       trial: 'Download',
-      langLabel: '中文',
+      langLabel: '繁體中文',
     };
 
 // Build the mirror-language URL for the current path. English is the
@@ -52,7 +52,7 @@ const swapHref = isZh
 // handler in Base.astro — clicking sets `carbonink_locale` to this
 // value before navigation, so the user's explicit choice survives
 // future visits and stops the auto-detector from bouncing them back.
-const swapTargetLang = isZh ? 'en' : 'zh-CN';
+const swapTargetLang = isZh ? 'en' : 'zh-TW';
 
 // Path prefix for in-site links — '' for en (the default locale),
 // '/zh' for Chinese. The href builder below pre-fixes every link with
@@ -100,7 +100,7 @@ const links = [
       id="nav-burger"
       type="button"
       class="md:hidden text-muted-foreground"
-      aria-label={isZh ? '展开菜单' : 'Toggle menu'}
+      aria-label={isZh ? '展開選單' : 'Toggle menu'}
     >
       <svg id="nav-burger-icon-open" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <line x1="4" y1="6" x2="20" y2="6" />

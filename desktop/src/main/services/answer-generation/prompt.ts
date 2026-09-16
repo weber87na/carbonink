@@ -21,9 +21,9 @@ import { type ZodSchema, z } from 'zod';
  * below — e.g. the narrative `valueMax = 2000` mirrors the "≤300 字" guidance.
  */
 export const KIND_INSTRUCTIONS: Record<'numerical' | 'categorical' | 'narrative', string> = {
-  numerical: '请返回数字字符串 + 单位。优先从 inventory 总排放 / 活动数据中推算。',
-  categorical: '请返回一个短词答案（≤10 字），如"是"/"否"/"部分"/"不适用"或行业代码/类型名。',
-  narrative: '请返回 1-3 句中文叙述（≤300 字），结合 inventory 给出可审计的回答。',
+  numerical: '請返回數字字串 + 單位。優先從 inventory 總排放 / 活動資料中推算。',
+  categorical: '請返回一個短詞答案（≤10 字），如"是"/"否"/"部分"/"不適用"或產業代碼／類型名稱。',
+  narrative: '請返回 1-3 句繁體中文（台灣用語）敘述（≤300 字），結合 inventory 給出可稽核的回答。',
 };
 
 export interface InventoryContext {
@@ -78,25 +78,27 @@ export function buildAnswerSchema(
  * Matches the broader pi-ai migration pattern.
  */
 export function buildAnswerPrompt(question: QuestionContext, inventory: InventoryContext): string {
-  return `你是一名碳核算助理。下面是一道供应商问卷的题目，以及当前组织 ${inventory.year} 年度的 inventory 数据。请基于 inventory 给出答案。
+  return `你是一名碳核算助理。下面是一道供應商問卷的題目，以及目前組織 ${inventory.year} 年度的 inventory 資料。請根據 inventory 給出答案。
 
-题目类型：${question.question_kind}
+題目類型：${question.question_kind}
 ${KIND_INSTRUCTIONS[question.question_kind]}
 
 <question>
 ${question.raw_text}
-${question.expected_unit ? `期望单位：${question.expected_unit}` : ''}
+${question.expected_unit ? `期望單位：${question.expected_unit}` : ''}
 </question>
 
 <inventory>
-活动数据行数：${inventory.activity_count}
-活动数据摘要：${inventory.activities_summary}
-${inventory.totals ? `总排放：${JSON.stringify(inventory.totals)}` : '无总排放快照。'}
+活動資料行數：${inventory.activity_count}
+活動資料摘要：${inventory.activities_summary}
+${inventory.totals ? `總排放：${JSON.stringify(inventory.totals)}` : '無總排放快照。'}
 </inventory>
 
-返回 JSON: { value: <答案字符串，可以是数字字符串或文本>, unit: <单位字符串，若题面有要求；否则 null>, source_summary: <1-2 句中文，说明答案是从 inventory 哪部分推出来的> }
+返回 JSON: { value: <答案字串，可以是數字字串或文本>, unit: <單位字串，若題面有要求；否則 null>, source_summary: <1-2 句繁體中文（台灣用語），說明答案是從 inventory 哪部分推出來的> }
 
-如果 inventory 里没有相关数据，value 用空字符串 ""，source_summary 解释为何无法回答。`;
+中文敘述請使用台灣繁體中文；保留原始組織名稱、人名、單位、編碼，以及問卷要求逐字填寫的選項。
+
+如果 inventory 裡沒有相關資料，value 用空字串 ""，source_summary 解釋為何無法回答。`;
 }
 
 /**
@@ -105,7 +107,7 @@ ${inventory.totals ? `总排放：${JSON.stringify(inventory.totals)}` : '无总
  * call, source_summary must reference activity IDs or EF factor codes,
  * and the agent must finalize via `submit_response` exactly once.
  *
- * Kept bilingual on purpose — questions are bilingual (zh-CN + EN), and
+ * Kept bilingual on purpose — questions are bilingual (zh-TW + EN), and
  * the existing single-shot prompt is mostly Chinese; this prompt mirrors
  * that voice while keeping critical rules in English for emphasis.
  */
@@ -124,7 +126,8 @@ CRITICAL RULES:
 3. If the inventory genuinely lacks the data, return value="" and explain in source_summary.
 4. Don't over-call tools. Plan: think about which one query gets you the answer; call it; submit.
 5. Use submit_response to deliver your final answer — only call it once.
-6. Answers should be terse (numerical/categorical ≤ 50 chars; narrative ≤ 2000 chars).`;
+6. Answers should be terse (numerical/categorical ≤ 50 chars; narrative ≤ 2000 chars).
+7. Use Taiwan Traditional Chinese for Chinese prose and source_summary. Preserve original organization names, personal names, units, codes, and any response options that the questionnaire requires verbatim.`;
 
 /**
  * Render the trimmed user prompt for the agent path. Deliberately omits the
@@ -137,19 +140,19 @@ export function buildAgentUserPrompt(
   question: QuestionContext,
   inventory: InventoryContext,
 ): string {
-  return `题目类型：${question.question_kind}
+  return `題目類型：${question.question_kind}
 ${KIND_INSTRUCTIONS[question.question_kind]}
 
 <question>
 ${question.raw_text}
-${question.expected_unit ? `期望单位：${question.expected_unit}` : ''}
+${question.expected_unit ? `期望單位：${question.expected_unit}` : ''}
 </question>
 
 <inventory_headline>
 年度：${inventory.year}
-活动数据行数：${inventory.activity_count}
-${inventory.totals ? `总排放（kg co2e）：${JSON.stringify(inventory.totals)}` : '无总排放快照。'}
+活動資料行數：${inventory.activity_count}
+${inventory.totals ? `總排放（kg co2e）：${JSON.stringify(inventory.totals)}` : '無總排放快照。'}
 </inventory_headline>
 
-使用工具查询具体活动数据（list_activities、sum_co2e 等），然后用 submit_response 给出最终答案。`;
+使用工具查詢具體活動資料（list_activities、sum_co2e 等），然後用 submit_response 給出最終答案。`;
 }

@@ -107,14 +107,12 @@ function NewOutboundQuestionnaireRoute(): JSX.Element {
             onClick={() => void navigate({ to: '/questionnaires' })}
           >
             <ArrowLeft className="mr-1 h-4 w-4" />
-            返回
+            {m.common_back()}
           </Button>
           <h1 className="text-2xl font-semibold">{m.questionnaires_wizard_title()}</h1>
         </div>
 
-        <p className="text-sm text-muted-foreground">
-          上传客户/评级机构发来的 .xlsx 问卷，系统自动提取问题并用本企业数据生成答案。
-        </p>
+        <p className="text-sm text-muted-foreground">{m.questionnaire_new_description()}</p>
 
         <div className="rounded-md border border-border bg-card p-6 space-y-5">
           <div className="grid grid-cols-2 gap-4">
@@ -128,7 +126,7 @@ function NewOutboundQuestionnaireRoute(): JSX.Element {
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
                 disabled={disabled}
-                placeholder="例：上海某科技有限公司"
+                placeholder={m.questionnaire_customer_placeholder()}
               />
             </div>
 

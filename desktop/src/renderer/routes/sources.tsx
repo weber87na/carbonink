@@ -20,6 +20,8 @@ import {
   sourceCategoryLabel,
 } from '@renderer/lib/category-labels';
 import { formatCo2e, formatInteger } from '@renderer/lib/format';
+import { sourceDisplayName } from '@renderer/lib/source-labels';
+import { toTaiwanTraditional } from '@renderer/lib/traditional-chinese';
 import { cn } from '@renderer/lib/utils';
 import * as m from '@renderer/paraglide/messages';
 import type { EmissionSourceWithStats, PresetSource } from '@shared/types';
@@ -98,7 +100,7 @@ function scopeShortLabel(scope: 1 | 2 | 3): string {
 // Static — referencing the module-scope object lets the filter hook's
 // memos see a stable reference across re-renders.
 const SOURCE_EXTRACTORS: SourceFilterExtractors<EmissionSourceWithStats> = {
-  getName: (s) => s.name,
+  getName: (s) => `${s.name} ${toTaiwanTraditional(s.name)}`,
   getScope: (s) => s.scope,
   // Chips group by the standard code where a row has one, so the filter
   // row reads the same as the card ("3.6 Business travel", not the coarse
@@ -282,8 +284,11 @@ function SourcesList({
                   <div className="min-w-0 flex-1 space-y-1">
                     {/* Row 1 — primary identifier + status chip */}
                     <div className="flex items-center gap-2">
-                      <div className="truncate font-medium text-foreground" title={src.name}>
-                        {src.name}
+                      <div
+                        className="truncate font-medium text-foreground"
+                        title={sourceDisplayName(src, presetsById)}
+                      >
+                        {sourceDisplayName(src, presetsById)}
                       </div>
                       {!src.is_active && (
                         <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">

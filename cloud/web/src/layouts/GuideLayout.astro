@@ -14,9 +14,9 @@ import Base from './Base.astro';
  */
 const { entry, lang } = Astro.props as {
   entry: CollectionEntry<'guides'>;
-  lang: 'zh-CN' | 'en';
+  lang: 'zh-TW' | 'en';
 };
-const isZh = lang === 'zh-CN';
+const isZh = lang === 'zh-TW';
 const prefix = isZh ? '/zh' : '';
 const localePrefix = isZh ? 'zh/' : 'en/';
 const slug = entry.id.replace(/^(en|zh)\//, '');
@@ -26,21 +26,23 @@ const toc = headings.filter((h) => h.depth === 2);
 
 const tx = isZh
   ? {
-      home: '首页',
+      home: '首頁',
+      breadcrumb: '導覽路徑',
       guides: '指南',
-      toc: '本文目录',
-      related: '相关指南',
-      published: '发布于',
-      updated: '更新于',
-      ctaTitle: '把这套流程交给碳墨',
+      toc: '本文目錄',
+      related: '相關指南',
+      published: '發布於',
+      updated: '更新於',
+      ctaTitle: '把這套流程交給碳墨',
       ctaBody:
-        '免费开源的桌面碳核算软件：AI 解析票据单据、自动匹配排放因子、一键导出 ISO 14064-1 盘查报告。完全离线运行，数据不出内网。',
-      ctaDownload: '免费下载',
-      ctaSource: 'GitHub 源码',
+        '免費開放原始碼的桌面碳核算軟體：AI 解析票據單據、自動比對排放係數、一鍵匯出 ISO 14064-1 盤查報告。完全離線執行，資料不出內網。',
+      ctaDownload: '免費下載',
+      ctaSource: 'GitHub 原始碼',
       siteTitle: '碳墨指南',
     }
   : {
       home: 'Home',
+      breadcrumb: 'Breadcrumb',
       guides: 'Guides',
       toc: 'On this page',
       related: 'Related guides',
@@ -95,7 +97,7 @@ const fmtDate = (d: Date) =>
 
   <article class="py-14 px-5">
     <div class="max-w-3xl mx-auto">
-      <nav aria-label="Breadcrumb" class="text-xs text-muted-foreground mb-8">
+      <nav aria-label={tx.breadcrumb} class="text-xs text-muted-foreground mb-8">
         <a href={`${prefix}/`} class="hover:text-foreground transition-colors">{tx.home}</a>
         <span class="mx-1.5" aria-hidden="true">/</span>
         <a href={`${prefix}/guides/`} class="hover:text-foreground transition-colors">{tx.guides}</a>

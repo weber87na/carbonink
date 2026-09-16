@@ -1,7 +1,8 @@
 import '@renderer/styles/report-preview.css';
 import type { ReportNarrative } from '@main/llm/report-narrative';
 import type { InventoryReportData } from '@main/services/report-data-service';
-import { boundaryKindLabel, formatCo2e, granularityLabel } from '@renderer/lib/format';
+import { formatCo2e } from '@renderer/lib/format';
+import * as m from '@renderer/paraglide/messages';
 
 export interface ReportPreviewProps {
   data: InventoryReportData;
@@ -20,25 +21,6 @@ const SECTION_ORDER: Array<keyof ReportNarrative> = [
   'notable_observations',
 ];
 
-const SECTION_HEADINGS = {
-  'zh-CN': {
-    boundary_description: '5.1 组织边界',
-    reporting_boundary_description: '5.2 报告范围',
-    methodology_description: '7.1 方法学',
-    emissions_summary: '8 排放概要',
-    significant_changes: '9.3.11 重大变动',
-    notable_observations: '附录 A 观察发现',
-  },
-  en: {
-    boundary_description: '5.1 Organizational boundary',
-    reporting_boundary_description: '5.2 Reporting boundary',
-    methodology_description: '7.1 Methodology',
-    emissions_summary: '8 Emissions summary',
-    significant_changes: '9.3.11 Significant changes',
-    notable_observations: 'Appendix A Notable observations',
-  },
-} as const;
-
 export function ReportPreview({
   data,
   narrative,
@@ -47,7 +29,15 @@ export function ReportPreview({
   onChange,
 }: ReportPreviewProps) {
   const lang = data.language;
-  const headings = SECTION_HEADINGS[lang];
+  const locale = { locale: lang };
+  const headings: Record<keyof ReportNarrative, string> = {
+    boundary_description: `5.1 ${m.reports_narrative_field_boundary({}, locale)}`,
+    reporting_boundary_description: `5.2 ${m.reports_narrative_field_reporting_boundary({}, locale)}`,
+    methodology_description: `7.1 ${m.reports_narrative_field_methodology({}, locale)}`,
+    emissions_summary: `8 ${m.reports_narrative_field_emissions({}, locale)}`,
+    significant_changes: `9.3.11 ${m.reports_narrative_field_changes({}, locale)}`,
+    notable_observations: m.report_preview_observations_heading({}, locale),
+  };
 
   const handleNarrativeEdit = (key: keyof ReportNarrative, value: string) => {
     if (onChange) {
@@ -82,11 +72,10 @@ export function ReportPreview({
 function CoverPage({ data }: { data: InventoryReportData }) {
   const lang = data.language;
   const orgName =
-    lang === 'zh-CN'
+    lang !== 'en'
       ? (data.org.name_zh ?? data.org.name_en ?? '')
       : (data.org.name_en ?? data.org.name_zh ?? '');
-  const title =
-    lang === 'zh-CN' ? 'ISO 14064-1 温室气体盘查报告' : 'ISO 14064-1 GHG Inventory Report';
+  const title = m.report_preview_iso_title({}, { locale: lang });
   return (
     <section className="report-preview__cover">
       {data.org.logo_data_url && (
@@ -99,8 +88,8 @@ function CoverPage({ data }: { data: InventoryReportData }) {
       <h1>{title}</h1>
       <h2>{orgName}</h2>
       <p>
-        {lang === 'zh-CN' ? '报告期' : 'Reporting period'}: {data.period.year} (
-        {data.period.granularity})
+        {m.activities_form_period({}, { locale: lang })}: {data.period.year} (
+        {reportGranularityLabel(data.period.granularity, lang)})
       </p>
     </section>
   );
@@ -110,13 +99,13 @@ function OrgProfile({ data }: { data: InventoryReportData }) {
   const lang = data.language;
   return (
     <section className="report-preview__org-profile">
-      <h2>{lang === 'zh-CN' ? '1 组织信息' : '1 Organization profile'}</h2>
+      <h2>{m.report_preview_org_heading({}, { locale: lang })}</h2>
       <dl>
-        <dt>{lang === 'zh-CN' ? '行业' : 'Industry'}</dt>
-        <dd>{data.org.industry ?? (lang === 'zh-CN' ? '未填写' : 'Not provided')}</dd>
-        <dt>{lang === 'zh-CN' ? '边界方法' : 'Consolidation approach'}</dt>
-        <dd>{boundaryKindLabel(data.org.boundary_kind)}</dd>
-        <dt>{lang === 'zh-CN' ? '责任人' : 'Responsible person'}</dt>
+        <dt>{m.onboarding_step_company_industry({}, { locale: lang })}</dt>
+        <dd>{data.org.industry ?? m.report_preview_not_provided({}, { locale: lang })}</dd>
+        <dt>{m.report_preview_boundary_label({}, { locale: lang })}</dt>
+        <dd>{reportBoundaryKindLabel(data.org.boundary_kind, lang)}</dd>
+        <dt>{m.report_preview_responsible_label({}, { locale: lang })}</dt>
         <dd>
           {data.org.responsible.name ?? '—'}
           {data.org.responsible.role ? ` (${data.org.responsible.role})` : ''}
@@ -130,34 +119,23 @@ function OrgProfile({ data }: { data: InventoryReportData }) {
 // the metrics pillar shows the same scope table the ISO report opens with.
 export function ScopeTable({ data }: { data: InventoryReportData }) {
   const lang = data.language;
-  const labels =
-    lang === 'zh-CN'
-      ? {
-          scope: '范围',
-          kg: 'kg CO2e',
-          scope1: '范围一',
-          scope2: '范围二',
-          scope3: '范围三',
-          total: '合计',
-          biogenic: '生物质 (单独披露)',
-        }
-      : {
-          scope: 'Scope',
-          kg: 'kg CO2e',
-          scope1: 'Scope 1',
-          scope2: 'Scope 2',
-          scope3: 'Scope 3',
-          total: 'Total',
-          biogenic: 'Biogenic (separately disclosed)',
-        };
+  const locale = { locale: lang };
+  const labels = {
+    scope: m.report_preview_scope({}, locale),
+    scope1: m.report_preview_scope1({}, locale),
+    scope2: m.report_preview_scope2({}, locale),
+    scope3: m.report_preview_scope3({}, locale),
+    total: m.report_preview_total({}, locale),
+    biogenic: m.report_preview_biogenic({}, locale),
+  };
   return (
     <section className="report-preview__scope-table">
-      <h2>{lang === 'zh-CN' ? '2 排放汇总' : '2 Emissions summary'}</h2>
+      <h2>{m.report_preview_emissions_heading({}, locale)}</h2>
       <table>
         <thead>
           <tr>
             <th>{labels.scope}</th>
-            <th>{labels.kg}</th>
+            <th>kg CO2e</th>
           </tr>
         </thead>
         <tbody>
@@ -189,4 +167,39 @@ export function ScopeTable({ data }: { data: InventoryReportData }) {
       </table>
     </section>
   );
+}
+
+/** Report labels follow the selected export language, independently of the UI. */
+export function reportGranularityLabel(
+  granularity: string,
+  language: InventoryReportData['language'],
+): string {
+  const locale = { locale: language };
+  switch (granularity) {
+    case 'annual':
+      return m.period_granularity_annual({}, locale);
+    case 'quarterly':
+      return m.period_granularity_quarterly({}, locale);
+    case 'monthly':
+      return m.period_granularity_monthly({}, locale);
+    default:
+      return granularity;
+  }
+}
+
+function reportBoundaryKindLabel(
+  boundary: string,
+  language: InventoryReportData['language'],
+): string {
+  const locale = { locale: language };
+  switch (boundary) {
+    case 'equity_share':
+      return m.settings_boundary_equity_share({}, locale);
+    case 'financial_control':
+      return m.settings_boundary_financial_control({}, locale);
+    case 'operational_control':
+      return m.settings_boundary_operational_control({}, locale);
+    default:
+      return boundary;
+  }
 }

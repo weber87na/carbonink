@@ -12,19 +12,19 @@ import LogoMark from './LogoMark.astro';
  * preserves the user's current page.
  */
 
-const { lang } = Astro.props as { lang: 'zh-CN' | 'en' };
-const isZh = lang === 'zh-CN';
+const { lang } = Astro.props as { lang: 'zh-TW' | 'en' };
+const isZh = lang === 'zh-TW';
 
 const tx = isZh
   ? {
       brand: '碳墨',
       tagline: '把碳核算搬到桌面端',
       links: [
-        { label: '源码', href: 'https://github.com/lxzxl/carbonink' },
-        { label: '下载', href: '/zh/download/' },
+        { label: '原始碼', href: 'https://github.com/lxzxl/carbonink' },
+        { label: '下載', href: '/zh/download/' },
         { label: '指南', href: '/zh/guides/' },
-        { label: '隐私政策', href: '/zh/privacy/' },
-        { label: '联系支持', href: 'mailto:support@carbonink.xyz' },
+        { label: '隱私政策', href: '/zh/privacy/' },
+        { label: '聯絡支援', href: 'mailto:support@carbonink.xyz' },
       ],
       langLabel: 'EN',
       copy: '© 2026 CarbonInk',
@@ -39,7 +39,7 @@ const tx = isZh
         { label: 'Privacy', href: '/privacy/' },
         { label: 'Contact', href: 'mailto:support@carbonink.xyz' },
       ],
-      langLabel: '中文',
+      langLabel: '繁體中文',
       copy: '© 2026 CarbonInk',
     };
 

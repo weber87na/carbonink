@@ -1,3 +1,5 @@
+import { localizeChineseText } from '@renderer/lib/localized-data';
+
 /**
  * Shared lookup tables for onboarding form fields. Lives in the feature
  * folder rather than `src/shared/` because these are renderer-only
@@ -5,6 +7,11 @@
  * server-side validation that needs the same values we'll promote the
  * raw value list to `src/shared/`.
  */
+
+/** Keep bilingual reference labels while following the current Chinese script. */
+export function lookupLabel(option: { label_zh: string; label_en: string }): string {
+  return `${localizeChineseText(option.label_zh)} · ${option.label_en}`;
+}
 
 /**
  * Industry classification — simplified sector taxonomy modeled on

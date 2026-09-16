@@ -6,6 +6,8 @@ import { activityApi } from '@renderer/lib/api/activity-data';
 import { answerApi } from '@renderer/lib/api/answer';
 import { orgApi } from '@renderer/lib/api/organization';
 import { questionnaireApi } from '@renderer/lib/api/questionnaire';
+import { currentLocale } from '@renderer/lib/i18n';
+import { localizeChineseText } from '@renderer/lib/localized-data';
 import { outboundStatusLabel } from '@renderer/lib/questionnaire-status';
 import * as m from '@renderer/paraglide/messages';
 import type { Answer, Question } from '@shared/types';
@@ -45,7 +47,7 @@ function QuestionnaireDetailRoute() {
       toast.success(m.answer_generate_all_done({ ok, failed }));
       void queryClient.invalidateQueries({ queryKey: ['answer:list-by-questionnaire', id] });
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : String(e)),
+    onError: (e) => toast.error(localizeChineseText(e instanceof Error ? e.message : String(e))),
   });
 
   const exportToExcel = useMutation({
@@ -55,7 +57,7 @@ function QuestionnaireDetailRoute() {
       toast.success(m.answer_export_done({ written: result.written, drafts: result.drafts }));
       void queryClient.invalidateQueries({ queryKey: ['questionnaire:get-by-id', id] });
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : String(e)),
+    onError: (e) => toast.error(localizeChineseText(e instanceof Error ? e.message : String(e))),
   });
 
   const finalizeMutation = useMutation({
@@ -67,7 +69,7 @@ function QuestionnaireDetailRoute() {
       void queryClient.invalidateQueries({ queryKey: ['answer:list-by-questionnaire', id] });
       toast.success(m.questionnaires_finalize_button());
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : String(e)),
+    onError: (e) => toast.error(localizeChineseText(e instanceof Error ? e.message : String(e))),
   });
 
   if (q.isLoading) return <p className="text-muted-foreground">{m.loading()}</p>;
@@ -91,13 +93,13 @@ function QuestionnaireDetailRoute() {
   if (questionnaire.direction === 'inbound') {
     return (
       <div className="space-y-3 p-6">
-        <p className="text-sm text-destructive">这条记录是「供应商披露」，不在此处。</p>
+        <p className="text-sm text-destructive">{m.questionnaire_inbound_redirect_note()}</p>
         <Link
           to="/supplier-disclosures/$id"
           params={{ id }}
           className="text-sm text-primary hover:underline"
         >
-          → 转到供应商披露详情
+          → {m.questionnaire_inbound_redirect_link()}
         </Link>
       </div>
     );
@@ -143,7 +145,7 @@ function DetailBody({
   finalizeMutation: { mutate: () => void; isPending: boolean };
 }) {
   const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
-  const [pdfLanguage, setPdfLanguage] = useState<'zh-CN' | 'en'>('zh-CN');
+  const [pdfLanguage, setPdfLanguage] = useState<'zh-CN' | 'zh-TW' | 'en'>(currentLocale);
   const exportPdf = useMutation({
     mutationFn: () => questionnaireApi.exportPdf({ questionnaire_id: id, language: pdfLanguage }),
     onSuccess: (result) => {
@@ -151,12 +153,16 @@ function DetailBody({
       if ('ok' in result && result.ok) {
         toast.success(m.questionnaire_export_pdf_success({ path: result.path }));
       } else if ('ok' in result && !result.ok) {
-        toast.error(m.questionnaire_export_pdf_failed({ message: result.error }));
+        toast.error(
+          m.questionnaire_export_pdf_failed({ message: localizeChineseText(result.error) }),
+        );
       }
       setPdfDialogOpen(false);
     },
     onError: (e) =>
-      toast.error(m.questionnaire_export_pdf_failed({ message: (e as Error).message })),
+      toast.error(
+        m.questionnaire_export_pdf_failed({ message: localizeChineseText((e as Error).message) }),
+      ),
   });
   // Inventory availability chain — org → reporting periods (filter to this
   // questionnaire's year) → activities. If 0 activities, show a banner so
@@ -305,9 +311,10 @@ function DetailBody({
               {m.questionnaire_export_pdf_lang_label()}
               <select
                 value={pdfLanguage}
-                onChange={(e) => setPdfLanguage(e.target.value as 'zh-CN' | 'en')}
+                onChange={(e) => setPdfLanguage(e.target.value as 'zh-CN' | 'zh-TW' | 'en')}
                 className="block mt-1 border rounded px-2 py-1 w-full"
               >
+                <option value="zh-TW">{m.questionnaire_export_pdf_lang_zh_tw()}</option>
                 <option value="zh-CN">{m.questionnaire_export_pdf_lang_zh()}</option>
                 <option value="en">{m.questionnaire_export_pdf_lang_en()}</option>
               </select>

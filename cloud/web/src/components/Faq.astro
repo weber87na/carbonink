@@ -8,59 +8,59 @@
  * crawlers and AI engines read them without interaction. The JSON-LD
  * uses the same strings, plain-text only.
  */
-const { lang } = Astro.props as { lang: 'zh-CN' | 'en' };
-const isZh = lang === 'zh-CN';
+const { lang } = Astro.props as { lang: 'zh-TW' | 'en' };
+const isZh = lang === 'zh-TW';
 const prefix = isZh ? '/zh' : '';
 
 const tx = isZh
   ? {
-      label: '常见问题',
-      title: '关于碳墨',
+      label: '常見問題',
+      title: '關於碳墨',
       items: [
         {
-          q: '碳墨真的免费吗？',
-          a: '真的。碳墨以 MIT 协议开源，没有账号、激活码、订阅或任何付费墙。下载即用，源代码公开在 GitHub。',
-          more: { href: 'https://github.com/lxzxl/carbonink', label: '查看源码' },
+          q: '碳墨真的免費嗎？',
+          a: '真的。碳墨以 MIT 授權條款開放原始碼，沒有帳號、啟用碼、訂閱或任何付費牆。下載即用，原始碼公開在 GitHub。',
+          more: { href: 'https://github.com/lxzxl/carbonink', label: '檢視原始碼' },
         },
         {
-          q: '什么是碳核算（碳盘查）？',
-          a: '按 ISO 14064-1 或 GHG Protocol 等标准，把企业一年的温室气体排放量化成一份可追溯、可核查的清单 —— 从电费单、燃料发票等原始凭证，到活动数据、排放因子，再到分类别的 CO₂e 排放量。',
-          more: { href: `${prefix}/guides/ghg-inventory/`, label: '盘查七步指南' },
+          q: '什麼是碳核算（碳盤查）？',
+          a: '按 ISO 14064-1 或 GHG Protocol 等標準，把企業一年的溫室氣體排放量化成一份可追溯、可查證的清單 —— 從電費單、燃料發票等原始憑證，到活動資料、排放係數，再到分類別的 CO₂e 排放量。',
+          more: { href: `${prefix}/guides/ghg-inventory/`, label: '盤查七步指南' },
         },
         {
-          q: '我的数据存在哪里？',
-          a: '只存在你自己电脑上的 SQLite 数据库里。碳墨完全离线运行，没有云端同步、没有账号体系，活动数据、排放因子和报告内容永远不出你的内网。',
-          more: { href: `${prefix}/privacy/`, label: '隐私政策' },
+          q: '我的資料存在哪裡？',
+          a: '只存在你自己電腦上的 SQLite 資料庫裡。碳墨完全離線執行，沒有雲端同步、沒有帳號體系，活動資料、排放係數和報告內容永遠不出你的內網。',
+          more: { href: `${prefix}/privacy/`, label: '隱私政策' },
         },
         {
-          q: '支持什么标准？',
-          a: '报告导出遵循 ISO 14064-1:2018（类别 1–6），同时提供范围一 / 二 / 三（GHG Protocol）映射 —— 一套数据，两种口径。',
-          more: { href: `${prefix}/guides/iso-14064-1-vs-ghg-protocol/`, label: '两个标准的区别' },
+          q: '支援什麼標準？',
+          a: '報告匯出遵循 ISO 14064-1:2018（類別 1–6），同時提供範疇一 / 二 / 三（GHG Protocol）對應 —— 一套資料，兩種口徑。',
+          more: { href: `${prefix}/guides/iso-14064-1-vs-ghg-protocol/`, label: '兩個標準的區別' },
         },
         {
-          q: '该用哪个 AI 服务？',
-          a: '看你所在的位置。在中国大陆通常推荐 DeepSeek —— 国内直连延迟通常更低、中文能力强、按 token 计费成本低。境外用户可选 OpenAI 或 Anthropic，模型选择丰富。碳墨在「设置 → AI 服务」里会按你的区域提供选型参考；所有模型输出口径相同，差异主要在网络延迟与计费价格。',
-          more: { href: `${prefix}/download/`, label: '下载碳墨' },
+          q: '該用哪個 AI 服務？',
+          a: '看你所在的位置。在中國大陸通常推薦 DeepSeek —— 當地直連延遲通常更低、中文能力強、按 token 計費成本低。境外使用者可選 OpenAI 或 Anthropic，模型選擇豐富。碳墨在「設定 → AI 服務」裡會按你的區域提供選型參考；所有模型輸出口徑相同，差異主要在網路延遲與計費價格。',
+          more: { href: `${prefix}/download/`, label: '下載碳墨' },
         },
         {
-          q: '怎么向供应商收 Scope 3 数据？对方要注册账户吗？',
-          a: '不用注册任何东西。碳墨内置供应商披露流程：导出一份 xlsx 披露表发给供应商，对方用 Excel / WPS 填完邮件发回，你审核后一键入库成活动数据；逾期会红字提醒，催办邮件也是一键生成。供应商零账户、零平台注册、零新软件 —— 会开表格就能填。',
-          more: { href: `${prefix}/guides/collect-supplier-emissions-data/`, label: '供应商数据收集实操指南' },
+          q: '怎麼向供應商收 Scope 3 資料？對方要註冊帳號嗎？',
+          a: '不用註冊任何東西。碳墨內建供應商揭露流程：匯出一份 xlsx 揭露表發給供應商，對方用 Excel / WPS 填完郵件發回，你稽核後一鍵入庫成活動資料；逾期會紅字提醒，催辦郵件也是一鍵產生。供應商零帳號、零平台註冊、零新軟體 —— 會開表格就能填。',
+          more: { href: `${prefix}/guides/collect-supplier-emissions-data/`, label: '供應商資料收集實務指南' },
         },
         {
-          q: '已有 Excel 台账，能整表搬进来吗？',
-          a: '能。上传 xlsx / csv 活动数据台账：中英文表头自动映射列，逐行校验（问题行跳过并报行号），排放因子按「描述 + 单位 + 排放源」分组确认 —— 几千行也只需拍板几十次，且每个数字都经过人工确认。台账原件存档、逐行留证据链，随时可溯源。',
-          more: { href: `${prefix}/download/`, label: '下载碳墨' },
+          q: '已有 Excel 台帳，能整表搬進來嗎？',
+          a: '能。上傳 xlsx / csv 活動資料台帳：中英文表頭自動對應欄位，逐行驗證（問題行跳過並報行號），排放係數按「描述 + 單位 + 排放源」分組確認 —— 幾千行也只需拍板幾十次，且每個數字都經過人工確認。台帳原件存檔、逐行留證據鏈，隨時可溯源。',
+          more: { href: `${prefix}/download/`, label: '下載碳墨' },
         },
         {
-          q: '顾问怎么同时管多个客户？',
-          a: '用账套：一个客户一个独立的本地数据库文件，物理隔离、可单独备份或交付。在设置里新建、重命名、一键切换；新账套直接进入引导流程，侧栏随时显示当前客户。没有云端多租户，也就没有客户数据混库的风险。',
-          more: { href: `${prefix}/download/`, label: '下载碳墨' },
+          q: '顧問怎麼同時管多個客戶？',
+          a: '用帳套：一個客戶一個獨立的本機資料庫檔案，物理隔離、可單獨備份或交付。在設定裡新建、重新命名、一鍵切換；新帳套直接進入引導流程，側欄隨時顯示目前客戶。沒有雲端多租戶，也就沒有客戶資料混庫的風險。',
+          more: { href: `${prefix}/download/`, label: '下載碳墨' },
         },
         {
-          q: '支持哪些系统？',
-          a: 'macOS 和 Windows 桌面端，Windows 自动更新、macOS 新版提示，中英双语界面。',
-          more: { href: `${prefix}/download/`, label: '前往下载' },
+          q: '支援哪些系統？',
+          a: 'macOS 和 Windows 桌面端，Windows 自動更新、macOS 新版提示，中英雙語介面。',
+          more: { href: `${prefix}/download/`, label: '前往下載' },
         },
       ],
     }

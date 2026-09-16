@@ -1,3 +1,4 @@
+import * as m from '@renderer/paraglide/messages';
 import { Route as DocumentsRoute } from '@renderer/routes/documents';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
@@ -247,8 +248,8 @@ describe('/documents route', () => {
     vi.mocked(documentApi.list).mockResolvedValue([docWithType]);
     render(buildHarness());
 
-    // The label map should translate 'fuel_receipt.v1' to '加油发票'
-    const fuelReceiptChip = await screen.findByText('加油发票');
+    // The document type follows the active locale.
+    const fuelReceiptChip = await screen.findByText(m.documents_type_fuel());
     expect(fuelReceiptChip).toBeTruthy();
   });
 });

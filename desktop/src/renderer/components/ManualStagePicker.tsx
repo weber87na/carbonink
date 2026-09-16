@@ -3,16 +3,17 @@ import { Button } from '@renderer/components/ui/button';
 import { Label } from '@renderer/components/ui/label';
 import { extractionApi } from '@renderer/lib/api/extraction';
 import { friendlyErrorDescription } from '@renderer/lib/error-message';
+import { stageLabel } from '@renderer/lib/stage-labels';
 import * as m from '@renderer/paraglide/messages';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
 const STAGES = [
-  { id: 'china_utility.v1', label: '电费账单' },
-  { id: 'fuel_receipt.v1', label: '加油发票' },
-  { id: 'freight.v1', label: '货运发票' },
-  { id: 'purchase.v1', label: '采购发票' },
-  { id: 'travel.v1', label: '差旅票据' },
+  { id: 'china_utility.v1' },
+  { id: 'fuel_receipt.v1' },
+  { id: 'freight.v1' },
+  { id: 'purchase.v1' },
+  { id: 'travel.v1' },
 ];
 
 export interface ManualStagePickerProps {
@@ -106,7 +107,7 @@ export function ManualStagePicker({
           >
             {STAGES.map((s) => (
               <option key={s.id} value={s.id}>
-                {s.label}
+                {stageLabel(s.id)}
               </option>
             ))}
           </select>

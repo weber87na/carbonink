@@ -43,6 +43,26 @@ function makeCtx() {
 }
 
 describe('questionnaire:export-pdf handler', () => {
+  it('accepts zh-TW and passes the selected language to PDF assembly', async () => {
+    const ctx = makeCtx();
+    vi.mocked(dialog.showSaveDialog).mockResolvedValue({
+      canceled: true,
+      filePath: undefined,
+    } as never);
+    const handlers = questionnaireHandlers(ctx);
+    await handlers['questionnaire:export-pdf']?.({
+      questionnaire_id: 'qn-1',
+      language: 'zh-TW',
+    });
+    expect(ctx.questionnairePdfDataService.assemble).toHaveBeenCalledWith({
+      questionnaire_id: 'qn-1',
+      language: 'zh-TW',
+    });
+    expect(dialog.showSaveDialog).toHaveBeenCalledWith(
+      expect.objectContaining({ defaultPath: 'acme-questionnaire-2025-zh-TW.pdf' }),
+    );
+  });
+
   it('writes PDF to disk on save dialog confirm', async () => {
     const ctx = makeCtx();
     vi.mocked(dialog.showSaveDialog).mockResolvedValue({

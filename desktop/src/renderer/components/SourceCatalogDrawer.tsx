@@ -44,7 +44,7 @@ export interface SourceCatalogDrawerProps {
 // Static extractor object — keeping it module-scope means the hook's
 // memos don't see a new reference on every render.
 const PRESET_EXTRACTORS: SourceFilterExtractors<PresetSource> = {
-  getName: (p) => `${p.name_zh} ${p.name_en}`,
+  getName: (p) => `${p.name_zh} ${toTaiwanTraditional(p.name_zh)} ${p.name_en}`,
   getScope: (p) => p.scope,
   getCategory: (p) => p.category,
   // Include the Chinese label in the search corpus so a user typing
@@ -271,7 +271,7 @@ export function SourceCatalogDrawer({ organizationId, open, onClose }: SourceCat
                         <div className="min-w-0 flex-1">
                           <div
                             className="truncate text-sm font-medium text-foreground"
-                            title={preset.name_zh}
+                            title={primaryName}
                           >
                             {primaryName}
                           </div>

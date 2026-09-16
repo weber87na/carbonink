@@ -18,18 +18,18 @@
  * reserves the slot during load so CLS stays at zero on slow conns.
  */
 
-const { lang } = Astro.props as { lang: 'zh-CN' | 'en' };
-const isZh = lang === 'zh-CN';
+const { lang } = Astro.props as { lang: 'zh-TW' | 'en' };
+const isZh = lang === 'zh-TW';
 
 const tx = isZh
   ? {
-      badge: '本地运行 · 数据不上云',
+      badge: '本機執行 · 資料不上雲',
       h1: '把碳核算搬到桌面端',
-      sub: '完全离线运行，数据不出内网。AI 帮你做数据工程，一键出 ISO 14064-1 报告。',
-      cta1: '免费下载',
-      cta2: 'GitHub 源码',
-      windowTitle: '碳墨 — 2025 年度 GHG 盘查',
-      screenshotAlt: '碳墨桌面端：2025 年度 GHG 盘查仪表盘截图',
+      sub: '完全離線執行，資料不出內網。AI 幫你做資料工程，一鍵出 ISO 14064-1 報告。',
+      cta1: '免費下載',
+      cta2: 'GitHub 原始碼',
+      windowTitle: '碳墨 — 2025 年度 GHG 盤查',
+      screenshotAlt: '碳墨桌面端：2025 年度 GHG 盤查儀表板螢幕擷取畫面',
     }
   : {
       badge: 'Local-first · Your data stays on device',

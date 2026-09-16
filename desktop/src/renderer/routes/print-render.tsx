@@ -14,13 +14,13 @@ type InventoryReportPayload = {
   kind: 'inventory_report';
   data: InventoryReportData;
   narrative: ReportNarrative;
-  language: 'zh-CN' | 'en';
+  language: 'zh-CN' | 'zh-TW' | 'en';
 };
 type TcfdReportPayload = {
   kind: 'tcfd_report';
   data: InventoryReportData;
   narrative: TcfdNarrative;
-  language: 'zh-CN' | 'en';
+  language: 'zh-CN' | 'zh-TW' | 'en';
 };
 type QuestionnairePdfPayload = {
   kind: 'questionnaire_pdf';

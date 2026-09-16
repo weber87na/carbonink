@@ -5,6 +5,7 @@ import { Input } from '@renderer/components/ui/input';
 import { Label } from '@renderer/components/ui/label';
 import { Textarea } from '@renderer/components/ui/textarea';
 import { answerApi } from '@renderer/lib/api/answer';
+import { localizeChineseText } from '@renderer/lib/localized-data';
 import * as m from '@renderer/paraglide/messages';
 import type { Answer, Question } from '@shared/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -34,20 +35,20 @@ export function AnswerReviewCard({ question, answer, questionnaireId }: AnswerRe
       setUnit(a.unit ?? '');
       void invalidate();
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : String(e)),
+    onError: (e) => toast.error(localizeChineseText(e instanceof Error ? e.message : String(e))),
   });
 
   const save = useMutation({
     mutationFn: (finalize: boolean) =>
       answerApi.save({ question_id: question.id, value, unit: unit || null, finalize }),
     onSuccess: () => void invalidate(),
-    onError: (e) => toast.error(e instanceof Error ? e.message : String(e)),
+    onError: (e) => toast.error(localizeChineseText(e instanceof Error ? e.message : String(e))),
   });
 
   const unfinalize = useMutation({
     mutationFn: () => answerApi.unfinalize(question.id),
     onSuccess: () => void invalidate(),
-    onError: (e) => toast.error(e instanceof Error ? e.message : String(e)),
+    onError: (e) => toast.error(localizeChineseText(e instanceof Error ? e.message : String(e))),
   });
 
   const isFinalized = !!answer?.finalized_at;
@@ -66,8 +67,8 @@ export function AnswerReviewCard({ question, answer, questionnaireId }: AnswerRe
   if (!answer) {
     const lastError = generate.isError
       ? generate.error instanceof Error
-        ? generate.error.message
-        : String(generate.error)
+        ? localizeChineseText(generate.error.message)
+        : localizeChineseText(String(generate.error))
       : null;
     return (
       <div
@@ -211,7 +212,7 @@ export function AnswerReviewCard({ question, answer, questionnaireId }: AnswerRe
               size="sm"
               onClick={() => save.mutate(true)}
               disabled={save.isPending || value.trim() === ''}
-              title={value.trim() === '' ? '请先填写数值后再定稿' : undefined}
+              title={value.trim() === '' ? m.answer_finalize_requires_value() : undefined}
             >
               {m.answer_save_finalize()}
             </Button>

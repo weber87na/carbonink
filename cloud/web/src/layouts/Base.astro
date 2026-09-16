@@ -3,14 +3,14 @@ import Footer from '../components/Footer.astro';
 import Nav from '../components/Nav.astro';
 import '../styles/global.css';
 
-const { title, lang = 'zh-CN', description } = Astro.props as {
+const { title, lang = 'zh-TW', description } = Astro.props as {
   title: string;
-  lang?: 'zh-CN' | 'en';
+  lang?: 'zh-TW' | 'en';
   description?: string;
 };
 
-const defaultDesc = lang === 'zh-CN'
-  ? '碳墨（CarbonInk）是免费开源的桌面碳核算 / 碳盘查软件，完全离线运行、数据不出内网。AI 解析票据单据，一键导出 ISO 14064-1 温室气体盘查报告。'
+const defaultDesc = lang === 'zh-TW'
+  ? '碳墨（CarbonInk）是免費開放原始碼的桌面碳核算 / 碳盤查軟體，完全離線執行、資料不出內網。AI 解析票據單據，一鍵匯出 ISO 14064-1 溫室氣體盤查報告。'
   : 'Free, open-source carbon accounting software for macOS & Windows. Fully offline: AI extracts data from your bills, one click exports an ISO 14064-1 GHG report.';
 
 // Canonical URL + OG image URL — we use carbonink.xyz as the
@@ -22,7 +22,7 @@ const defaultDesc = lang === 'zh-CN'
 // indexable surface.
 const canonicalUrl = new URL(Astro.url.pathname, 'https://carbonink.xyz').toString();
 const ogImage =
-  lang === 'zh-CN'
+  lang === 'zh-TW'
     ? 'https://carbonink.xyz/screenshots/dashboard.png'
     : 'https://carbonink.xyz/screenshots/en/dashboard.png';
 
@@ -66,7 +66,7 @@ const structuredData = {
   applicationCategory: 'BusinessApplication',
   applicationSubCategory: 'GHG accounting',
   operatingSystem: 'macOS, Windows',
-  inLanguage: ['zh-CN', 'en'],
+  inLanguage: ['zh-TW', 'en'],
   offers: {
     '@type': 'Offer',
     price: '0',
@@ -115,15 +115,15 @@ const websiteData = {
   name: 'CarbonInk',
   alternateName: '碳墨',
   url: 'https://carbonink.xyz',
-  inLanguage: ['zh-CN', 'en'],
+  inLanguage: ['zh-TW', 'en'],
 };
 
 // Baidu / Sogou still parse `<meta name="keywords">`; Google ignores
 // it. Cheap to include for the China-side audience. Don't keyword-
 // stuff — these are the *actual* search queries we want to rank for.
 const keywords =
-  lang === 'zh-CN'
-    ? '碳核算软件,碳盘查软件,碳盘查,温室气体清单,ISO 14064-1,碳排放核算,排放因子,碳足迹,免费碳核算'
+  lang === 'zh-TW'
+    ? '碳核算軟體,碳盤查軟體,碳盤查,溫室氣體清單,ISO 14064-1,碳排放核算,排放係數,碳足跡,免費碳核算'
     : 'carbon accounting software,free carbon accounting software,open source carbon accounting,GHG accounting,ISO 14064-1,ghg inventory,scope 1 2 3,carbon footprint software';
 ---
 <!doctype html>
@@ -141,12 +141,12 @@ const keywords =
         1. On marketing-surface paths (`/`, `/download`,
            `/privacy` + `/zh/*` mirrors), read the `carbonink_locale`
            cookie. If unset, detect from `navigator.languages` — any
-           `zh*` prefix wins → zh-CN, otherwise default to English. Write
+           `zh*` prefix wins → zh-TW, otherwise default to English. Write
            the choice to the cookie (1y). Redirect to the mirror URL if
            the current path doesn't match the preferred locale.
 
         2. On every page, intercept clicks on any element tagged
-           `data-locale-target=zh-CN|en` (the language-toggle button in
+           `data-locale-target=zh-TW|en` (the language-toggle button in
            Nav.astro) and write the cookie BEFORE the browser navigates.
            Persists the user's explicit choice across visits and stops
            the detector from bouncing them back to the auto-detected
@@ -179,8 +179,12 @@ const keywords =
         var isMarketing = /^\/(zh\/?)?(download|privacy)?\/?$/.test(path);
         if (isMarketing) {
           var isZh = path === '/zh' || path.indexOf('/zh/') === 0;
-          var m = document.cookie.match(/(?:^|;\s*)carbonink_locale=(zh-CN|en)/);
-          var preferred = m ? m[1] : null;
+          var m = document.cookie.match(/(?:^|;\s*)carbonink_locale=(zh-TW|zh-CN|en)(?:;|$)/);
+          // Preserve the language choice saved before the Traditional Chinese migration.
+          var preferred = m ? (m[1] === 'zh-CN' ? 'zh-TW' : m[1]) : null;
+          if (m && m[1] === 'zh-CN') {
+            document.cookie = 'carbonink_locale=zh-TW; path=/; max-age=31536000; SameSite=Lax';
+          }
           if (!preferred) {
             var langs = (navigator.languages && navigator.languages.length)
               ? navigator.languages
@@ -188,12 +192,12 @@ const keywords =
             preferred = 'en';
             for (var i = 0; i < langs.length; i++) {
               var l = (langs[i] || '').toLowerCase();
-              if (l.indexOf('zh') === 0) { preferred = 'zh-CN'; break; }
+              if (l.indexOf('zh') === 0) { preferred = 'zh-TW'; break; }
               if (l.indexOf('en') === 0) { preferred = 'en'; break; }
             }
             document.cookie = 'carbonink_locale=' + preferred + '; path=/; max-age=31536000; SameSite=Lax';
           }
-          if (preferred === 'zh-CN' && !isZh) {
+          if (preferred === 'zh-TW' && !isZh) {
             location.replace('/zh' + path + location.search + location.hash);
             return;
           }
@@ -211,7 +215,7 @@ const keywords =
           }
           if (t && t !== document.body) {
             var target = t.getAttribute('data-locale-target');
-            if (target === 'zh-CN' || target === 'en') {
+            if (target === 'zh-TW' || target === 'en') {
               document.cookie = 'carbonink_locale=' + target + '; path=/; max-age=31536000; SameSite=Lax';
             }
           }
@@ -223,13 +227,13 @@ const keywords =
     <meta name="description" content={description ?? defaultDesc} />
     <link rel="canonical" href={canonicalUrl} />
 
-    {/* hreflang alternates — declare the zh-CN ↔ en mirror
+    {/* hreflang alternates — declare the zh-TW ↔ en mirror
         relationship so Google merges link-equity across both
         locales instead of treating them as duplicates. `x-default`
         falls back to English for international searchers (matches
         the auto-detect default in the script above). Both `href`
         values are absolute URLs (Google ignores relative ones). */}
-    <link rel="alternate" hreflang="zh-CN" href={zhUrl} />
+    <link rel="alternate" hreflang="zh-TW" href={zhUrl} />
     <link rel="alternate" hreflang="en" href={enUrl} />
     <link rel="alternate" hreflang="x-default" href={enUrl} />
 
@@ -275,9 +279,9 @@ const keywords =
     <meta property="og:image" content={ogImage} />
     <meta property="og:image:width" content="1400" />
     <meta property="og:image:height" content="900" />
-    <meta property="og:image:alt" content={lang === 'zh-CN' ? '碳墨桌面端 — 仪表盘截图' : 'CarbonInk desktop — dashboard screenshot'} />
-    <meta property="og:locale" content={lang === 'zh-CN' ? 'zh_CN' : 'en_US'} />
-    <meta property="og:locale:alternate" content={lang === 'zh-CN' ? 'en_US' : 'zh_CN'} />
+    <meta property="og:image:alt" content={lang === 'zh-TW' ? '碳墨桌面端 — 儀表板螢幕擷取畫面' : 'CarbonInk desktop — dashboard screenshot'} />
+    <meta property="og:locale" content={lang === 'zh-TW' ? 'zh_TW' : 'en_US'} />
+    <meta property="og:locale:alternate" content={lang === 'zh-TW' ? 'en_US' : 'zh_TW'} />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description ?? defaultDesc} />

@@ -1,8 +1,14 @@
 import type { ReportNarrative } from '@main/llm/report-narrative';
 import type { InventoryReportData } from '@main/services/report-data-service';
 import { ReportPreview } from '@renderer/components/report/ReportPreview';
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { setLocale } from '@renderer/paraglide/runtime';
+import { cleanup, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+afterEach(() => {
+  cleanup();
+  setLocale('en', { reload: false });
+});
 
 const data: InventoryReportData = {
   org: {
@@ -43,6 +49,54 @@ const narrative: ReportNarrative = {
 };
 
 describe('ReportPreview', () => {
+  it('uses Traditional Chinese report labels with an English UI and preserves organization data', () => {
+    setLocale('en', { reload: false });
+    render(
+      <ReportPreview
+        data={{
+          ...data,
+          language: 'zh-TW',
+          org: { ...data.org, boundary_kind: 'financial_control' },
+        }}
+        narrative={narrative}
+        printMode={true}
+      />,
+    );
+    for (const label of [
+      'ISO 14064-1 溫室氣體盤查報告',
+      '1 組織資訊',
+      '2 排放彙總',
+      '5.1 組織邊界',
+      '5.2 報告範圍',
+      '9.3.11 重大變動',
+      '附錄 A 觀察發現',
+      '範疇一',
+      '範疇二',
+      '範疇三',
+      '財務控制法',
+    ]) {
+      expect(screen.getByText(label)).toBeTruthy();
+    }
+    expect(screen.getByText('報告期: 2025 (年度)')).toBeTruthy();
+    expect(screen.getByText('测试公司')).toBeTruthy();
+    expect(screen.getByText('制造业')).toBeTruthy();
+    expect(screen.getByText('张三 (可持续发展负责人)')).toBeTruthy();
+    expect(screen.getByText(narrative.boundary_description)).toBeTruthy();
+    expect(screen.queryByText('Test Co')).toBeNull();
+  });
+
+  it('uses English report labels when the UI locale is Traditional Chinese', () => {
+    setLocale('zh-TW', { reload: false });
+    render(
+      <ReportPreview data={{ ...data, language: 'en' }} narrative={narrative} printMode={true} />,
+    );
+    expect(screen.getByText('ISO 14064-1 GHG Inventory Report')).toBeTruthy();
+    expect(screen.getByText('Test Co')).toBeTruthy();
+    expect(screen.getByText('Operational control')).toBeTruthy();
+    expect(screen.getByText('Reporting period: 2025 (Annual)')).toBeTruthy();
+    expect(screen.getByText('Scope 1')).toBeTruthy();
+  });
+
   it('renders all 6 narrative sections', () => {
     render(<ReportPreview data={data} narrative={narrative} printMode={false} />);
     expect(screen.getByText('BOUNDARY TEXT')).toBeTruthy();

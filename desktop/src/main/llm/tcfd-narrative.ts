@@ -6,6 +6,7 @@ import {
 import { runAiObject } from '@main/llm/run-ai.js';
 import type { CredentialService } from '@main/services/credential-service.js';
 import type { InventoryReportData } from '@main/services/report-data-service';
+import { toTaiwanTraditional } from '@shared/traditional-chinese.js';
 import type { ProviderConfigV2 } from '@shared/types.js';
 import { z } from 'zod';
 
@@ -30,7 +31,10 @@ export type TcfdNarrativeSubPhase =
   | 'risk-management'
   | 'metrics-targets';
 
-function buildSystemPrompt(lang: 'zh-CN' | 'en'): string {
+function buildSystemPrompt(lang: 'zh-CN' | 'zh-TW' | 'en'): string {
+  if (lang === 'zh-TW') {
+    return `${toTaiwanTraditional(buildSystemPrompt('zh-CN'))}\n7. 所有敘述使用臺灣繁體中文與臺灣慣用語；保留 inventory 中提供的人名、組織名稱、地名與其他專有名稱原文，不要轉換或翻譯。使用「範疇一／二／三」、「排放係數」、「揭露」與「盤查資料」等用語；營運控制法對應 operational_control。`;
+  }
   if (lang === 'zh-CN') {
     return `你是气候相关财务信息披露 (TCFD) 报告撰稿人, 为一家企业撰写四支柱披露: 治理 (governance)、战略 (strategy)、风险管理 (risk_management)、指标与目标 (metrics_targets)。严格遵循以下规则:
 

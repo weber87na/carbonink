@@ -2,7 +2,8 @@ import '@renderer/styles/report-preview.css';
 import type { TcfdNarrative } from '@main/llm/tcfd-narrative';
 import type { InventoryReportData } from '@main/services/report-data-service';
 import { formatCo2e } from '@renderer/lib/format';
-import { ScopeTable } from './ReportPreview';
+import * as m from '@renderer/paraglide/messages';
+import { reportGranularityLabel, ScopeTable } from './ReportPreview';
 
 export interface TcfdReportPreviewProps {
   data: InventoryReportData;
@@ -20,21 +21,6 @@ const PILLAR_ORDER: Array<keyof TcfdNarrative> = [
   'metrics_targets',
 ];
 
-const PILLAR_HEADINGS = {
-  'zh-CN': {
-    governance: '1 治理',
-    strategy: '2 战略',
-    risk_management: '3 风险管理',
-    metrics_targets: '4 指标与目标',
-  },
-  en: {
-    governance: '1 Governance',
-    strategy: '2 Strategy',
-    risk_management: '3 Risk management',
-    metrics_targets: '4 Metrics and targets',
-  },
-} as const;
-
 /**
  * TCFD four-pillar report (spec 2026-07-22-tcfd-report). Shares the ISO
  * report's print stylesheet + ScopeTable; the metrics pillar is followed
@@ -50,7 +36,13 @@ export function TcfdReportPreview({
   onChange,
 }: TcfdReportPreviewProps) {
   const lang = data.language;
-  const headings = PILLAR_HEADINGS[lang];
+  const locale = { locale: lang };
+  const headings: Record<keyof TcfdNarrative, string> = {
+    governance: m.report_preview_tcfd_governance({}, locale),
+    strategy: m.report_preview_tcfd_strategy({}, locale),
+    risk_management: m.report_preview_tcfd_risk({}, locale),
+    metrics_targets: m.report_preview_tcfd_metrics({}, locale),
+  };
 
   const handleEdit = (key: keyof TcfdNarrative, value: string) => {
     if (onChange) onChange({ ...narrative, [key]: value });
@@ -84,13 +76,10 @@ export function TcfdReportPreview({
 function TcfdCover({ data }: { data: InventoryReportData }) {
   const lang = data.language;
   const orgName =
-    lang === 'zh-CN'
+    lang !== 'en'
       ? (data.org.name_zh ?? data.org.name_en ?? '')
       : (data.org.name_en ?? data.org.name_zh ?? '');
-  const title =
-    lang === 'zh-CN'
-      ? '气候相关财务信息披露报告（TCFD）'
-      : 'Climate-related Financial Disclosures (TCFD) Report';
+  const title = m.report_preview_tcfd_title({}, { locale: lang });
   return (
     <section className="report-preview__cover">
       {data.org.logo_data_url && (
@@ -103,8 +92,8 @@ function TcfdCover({ data }: { data: InventoryReportData }) {
       <h1>{title}</h1>
       <h2>{orgName}</h2>
       <p>
-        {lang === 'zh-CN' ? '报告期' : 'Reporting period'}: {data.period.year} (
-        {data.period.granularity})
+        {m.activities_form_period({}, { locale: lang })}: {data.period.year} (
+        {reportGranularityLabel(data.period.granularity, lang)})
       </p>
     </section>
   );
@@ -116,14 +105,14 @@ function TopSourcesTable({ data }: { data: InventoryReportData }) {
   if (top.length === 0) return null;
   return (
     <section className="report-preview__scope-table">
-      <h2>{lang === 'zh-CN' ? '附表 1 主要排放源' : 'Table 1 Main emission sources'}</h2>
+      <h2>{m.report_preview_sources_heading({}, { locale: lang })}</h2>
       <table>
         <thead>
           <tr>
-            <th>{lang === 'zh-CN' ? '排放源' : 'Source'}</th>
-            <th>{lang === 'zh-CN' ? '范围' : 'Scope'}</th>
+            <th>{m.activities_table_source({}, { locale: lang })}</th>
+            <th>{m.report_preview_scope({}, { locale: lang })}</th>
             <th>kg CO2e</th>
-            <th>{lang === 'zh-CN' ? '占比' : 'Share'}</th>
+            <th>{m.report_preview_share({}, { locale: lang })}</th>
           </tr>
         </thead>
         <tbody>
@@ -146,31 +135,31 @@ function ComparisonTable({ data }: { data: InventoryReportData }) {
   const rows: Array<{ label: string; year: number; total_kg: number }> = [];
   if (data.base_year_summary) {
     rows.push({
-      label: lang === 'zh-CN' ? '基准年' : 'Base year',
+      label: m.settings_base_year_label({}, { locale: lang }),
       ...data.base_year_summary,
     });
   }
   if (data.prior_period_summary) {
     rows.push({
-      label: lang === 'zh-CN' ? '上一期' : 'Prior period',
+      label: m.report_preview_prior_period({}, { locale: lang }),
       ...data.prior_period_summary,
     });
   }
   if (rows.length === 0) return null;
   return (
     <section className="report-preview__scope-table">
-      <h2>{lang === 'zh-CN' ? '附表 2 期间对比' : 'Table 2 Period comparison'}</h2>
+      <h2>{m.report_preview_comparison_heading({}, { locale: lang })}</h2>
       <table>
         <thead>
           <tr>
-            <th>{lang === 'zh-CN' ? '期间' : 'Period'}</th>
-            <th>{lang === 'zh-CN' ? '年度' : 'Year'}</th>
-            <th>{lang === 'zh-CN' ? '合计 kg CO2e' : 'Total kg CO2e'}</th>
+            <th>{m.report_preview_period({}, { locale: lang })}</th>
+            <th>{m.report_preview_year({}, { locale: lang })}</th>
+            <th>{m.report_preview_total_kg({}, { locale: lang })}</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td>{lang === 'zh-CN' ? '本期' : 'This period'}</td>
+            <td>{m.report_preview_this_period({}, { locale: lang })}</td>
             <td>{data.period.year}</td>
             <td>{formatCo2e(data.scope_totals.total_kg)}</td>
           </tr>

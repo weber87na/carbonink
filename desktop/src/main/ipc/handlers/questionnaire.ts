@@ -17,7 +17,7 @@ const idInput = z.object({ id: z.string().min(1) });
 
 const exportPdfInput = z.object({
   questionnaire_id: z.string().min(1),
-  language: z.enum(['zh-CN', 'en']),
+  language: z.enum(['zh-CN', 'zh-TW', 'en']),
 });
 
 /**

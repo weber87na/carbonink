@@ -13,6 +13,7 @@ import { activityApi } from '@renderer/lib/api/activity-data';
 import { sourceApi } from '@renderer/lib/api/emission-source';
 import { orgApi } from '@renderer/lib/api/organization';
 import { formatCo2e } from '@renderer/lib/format';
+import { useSourceDisplayName } from '@renderer/lib/source-labels';
 import { cn } from '@renderer/lib/utils';
 import * as m from '@renderer/paraglide/messages';
 import type { ActivityDataWithDocument, EmissionSource, ReportingPeriod } from '@shared/types';
@@ -158,6 +159,7 @@ function ActivitiesList({
   }, [activitiesQuery.isError]);
 
   const sources = sourcesQuery.data ?? [];
+  const displaySourceName = useSourceDisplayName(sources);
   const activities = activitiesQuery.data ?? [];
 
   // Build a Map for O(1) source name lookup. useMemo so we don't rebuild on
@@ -178,12 +180,14 @@ function ActivitiesList({
     if (!q) return activities;
     return activities.filter((a) => {
       const src = sourceById.get(a.emission_source_id);
-      const name = (src?.name ?? a.emission_source_id).toLowerCase();
+      const name = (
+        src ? `${src.name} ${displaySourceName(src)}` : a.emission_source_id
+      ).toLowerCase();
       const unit = a.unit.toLowerCase();
       const ef = a.ef_factor_code.toLowerCase();
       return name.includes(q) || unit.includes(q) || ef.includes(q);
     });
-  }, [activities, search, sourceById]);
+  }, [activities, search, sourceById, displaySourceName]);
 
   const scopeCounts = useMemo(() => {
     const counts = { all: searched.length, 1: 0, 2: 0, 3: 0 };
@@ -418,9 +422,9 @@ function ActivitiesList({
                   <div className="flex flex-wrap items-baseline gap-x-2">
                     <span
                       className="truncate font-medium text-foreground"
-                      title={src?.name ?? a.emission_source_id}
+                      title={src ? displaySourceName(src) : a.emission_source_id}
                     >
-                      {src?.name ?? a.emission_source_id}
+                      {src ? displaySourceName(src) : a.emission_source_id}
                     </span>
                     <span className="text-xs text-muted-foreground tabular-nums">
                       {a.occurred_at_start.slice(0, 10)}

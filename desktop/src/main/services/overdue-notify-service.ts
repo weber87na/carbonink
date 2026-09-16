@@ -16,10 +16,9 @@ import { Notification } from 'electron';
  * (sent + due_date < local today; `received` past due is our own
  * pending ingest, not the supplier's lateness) — keep the two in sync.
  *
- * Strings are inline Chinese by design: the paraglide locale lives in
- * renderer localStorage where main can't read it, and the surface this
- * deep-links to (供应商披露) is the v2.0 inline-Chinese area. Same
- * acknowledged i18n debt, not a new pattern.
+ * The notification uses the application's Traditional Chinese default.
+ * Renderer locale preferences are unavailable during this startup check;
+ * supplier names retain their original spelling.
  */
 
 const LAST_NOTIFIED_SETTING = 'overdue_notify.last_notified_date';
@@ -72,10 +71,10 @@ export function notifyOverdueDisclosures(
     .join('、');
   const body =
     rows.length <= 2
-      ? `${named}的披露已过截止日期，点击查看。`
-      : `${named}等 ${rows.length} 份披露已过截止日期，点击查看。`;
+      ? `${named}的揭露已過截止日期，點選查看。`
+      : `${named}等 ${rows.length} 份揭露已過截止日期，點選查看。`;
 
-  const notification = new Notification({ title: '供应商披露逾期', body });
+  const notification = new Notification({ title: '供應商揭露逾期', body });
   notification.on('click', () => openSupplierDisclosures());
   notification.show();
 

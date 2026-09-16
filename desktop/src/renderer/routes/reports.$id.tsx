@@ -18,7 +18,9 @@ import { toast } from '@renderer/components/toast';
 import { GuidedTour } from '@renderer/features/guidance';
 import { readinessApi } from '@renderer/lib/api/readiness';
 import { reportApi } from '@renderer/lib/api/report';
+import { currentLocale } from '@renderer/lib/i18n';
 import { subscribe } from '@renderer/lib/ipc';
+import { localizeChineseText } from '@renderer/lib/localized-data';
 import * as m from '@renderer/paraglide/messages';
 import { useMutation } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
@@ -61,7 +63,7 @@ function narrativeWarningDescription(warnings: ReportNarrativeLengthWarning[]): 
 
 function ReportDetail() {
   const { id } = Route.useParams();
-  const [language, setLanguage] = useState<'zh-CN' | 'en'>('zh-CN');
+  const [language, setLanguage] = useState<'zh-CN' | 'zh-TW' | 'en'>(currentLocale);
   // TCFD four-pillar report (spec 2026-07-22): one detail page, two kinds.
   const [reportKind, setReportKind] = useState<ReportKind>('iso');
   const [reportId, setReportId] = useState<string | null>(null);
@@ -139,7 +141,11 @@ function ReportDetail() {
         if (outcome.error._tag === 'NoProvider') {
           toast.error(m.reports_no_provider());
         } else {
-          toast.error(m.reports_generate_failed({ message: outcome.error.message ?? '' }));
+          toast.error(
+            m.reports_generate_failed({
+              message: localizeChineseText(outcome.error.message ?? ''),
+            }),
+          );
         }
         return;
       }
@@ -152,7 +158,9 @@ function ReportDetail() {
     },
     onError: (err) => {
       setReportId(null);
-      toast.error(m.reports_generate_failed({ message: (err as Error).message }));
+      toast.error(
+        m.reports_generate_failed({ message: localizeChineseText((err as Error).message) }),
+      );
     },
   });
 
@@ -166,25 +174,25 @@ function ReportDetail() {
       const pdfResult = await reportApi.exportTcfdPdf({
         data: generated.data,
         narrative: generated.narrative,
-        language,
+        language: generated.data.language,
       });
       if ('canceled' in pdfResult && pdfResult.canceled) return;
       if ('ok' in pdfResult && pdfResult.ok) {
         toast.success(m.reports_export_success({ kind: 'PDF', path: pdfResult.path }));
       } else if ('ok' in pdfResult && !pdfResult.ok) {
-        toast.error(m.reports_export_failed({ message: pdfResult.error }));
+        toast.error(m.reports_export_failed({ message: localizeChineseText(pdfResult.error) }));
         return;
       }
       const xlsxResult = await reportApi.exportTcfdXlsx({
         data: generated.data,
         narrative: generated.narrative,
-        language,
+        language: generated.data.language,
       });
       if ('canceled' in xlsxResult && xlsxResult.canceled) return;
       if ('ok' in xlsxResult && xlsxResult.ok) {
         toast.success(m.reports_export_success({ kind: 'Excel', path: xlsxResult.path }));
       } else if ('ok' in xlsxResult && !xlsxResult.ok) {
-        toast.error(m.reports_export_failed({ message: xlsxResult.error }));
+        toast.error(m.reports_export_failed({ message: localizeChineseText(xlsxResult.error) }));
       }
     },
   });
@@ -217,7 +225,7 @@ function ReportDetail() {
       const result = await reportApi.exportDeliverable({
         data: generated.data,
         narrative: generated.narrative,
-        language,
+        language: generated.data.language,
         kind: generated.kind,
         readiness,
       });
@@ -240,7 +248,7 @@ function ReportDetail() {
           );
         }
       } else if ('ok' in result && !result.ok) {
-        toast.error(m.reports_export_failed({ message: result.error }));
+        toast.error(m.reports_export_failed({ message: localizeChineseText(result.error) }));
       }
     },
   });
@@ -251,25 +259,25 @@ function ReportDetail() {
       const pdfResult = await reportApi.exportPdf({
         data: generated.data,
         narrative: generated.narrative,
-        language,
+        language: generated.data.language,
       });
       if ('canceled' in pdfResult && pdfResult.canceled) return;
       if ('ok' in pdfResult && pdfResult.ok) {
         toast.success(m.reports_export_success({ kind: 'PDF', path: pdfResult.path }));
       } else if ('ok' in pdfResult && !pdfResult.ok) {
-        toast.error(m.reports_export_failed({ message: pdfResult.error }));
+        toast.error(m.reports_export_failed({ message: localizeChineseText(pdfResult.error) }));
         return;
       }
       const xlsxResult = await reportApi.exportXlsx({
         data: generated.data,
         narrative: generated.narrative,
-        language,
+        language: generated.data.language,
       });
       if ('canceled' in xlsxResult && xlsxResult.canceled) return;
       if ('ok' in xlsxResult && xlsxResult.ok) {
         toast.success(m.reports_export_success({ kind: 'Excel', path: xlsxResult.path }));
       } else if ('ok' in xlsxResult && !xlsxResult.ok) {
-        toast.error(m.reports_export_failed({ message: xlsxResult.error }));
+        toast.error(m.reports_export_failed({ message: localizeChineseText(xlsxResult.error) }));
       }
     },
   });
@@ -299,9 +307,10 @@ function ReportDetail() {
               <span className="text-sm">{m.reports_lang_label()}</span>
               <select
                 value={language}
-                onChange={(e) => setLanguage(e.target.value as 'zh-CN' | 'en')}
+                onChange={(e) => setLanguage(e.target.value as 'zh-CN' | 'zh-TW' | 'en')}
                 className="block mt-1 border rounded px-2 py-1"
               >
+                <option value="zh-TW">{m.reports_lang_zh_tw()}</option>
                 <option value="zh-CN">{m.reports_lang_zh()}</option>
                 <option value="en">{m.reports_lang_en()}</option>
               </select>

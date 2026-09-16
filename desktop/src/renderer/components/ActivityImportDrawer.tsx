@@ -7,6 +7,7 @@ import { activityImportApi } from '@renderer/lib/api/activity-import';
 import { sourceApi } from '@renderer/lib/api/emission-source';
 import { orgApi } from '@renderer/lib/api/organization';
 import { friendlyErrorDescription } from '@renderer/lib/error-message';
+import { useSourceDisplayName } from '@renderer/lib/source-labels';
 import { cn } from '@renderer/lib/utils';
 import * as m from '@renderer/paraglide/messages';
 import type {
@@ -670,6 +671,7 @@ function SourceRow({
   onTokenExpired: () => void;
 }) {
   const [creating, setCreating] = useState(false);
+  const displaySourceName = useSourceDisplayName(orgSources);
   const [scope, setScope] = useState<'1' | '2' | '3'>('1');
   const [siteId, setSiteId] = useState('');
   const [category, setCategory] = useState('');
@@ -737,7 +739,7 @@ function SourceRow({
           <option value="">{m.activity_import_source_select_placeholder()}</option>
           {orgSources.map((s) => (
             <option key={s.id} value={s.id}>
-              {s.name} · S{s.scope}
+              {displaySourceName(s)} · S{s.scope}
             </option>
           ))}
         </select>
